@@ -266,29 +266,24 @@ export function BottomNav() {
       {NAV.map(({ to, key, icon: Icon }) => (
         <NavLink key={to} to={to} aria-label={t(key)} className="flex">
           {({ isActive }) => (
-            <motion.div
-              layout
-              transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 ${
+            <div
+              className={`flex items-center rounded-full px-3.5 py-2 transition-colors duration-200 ${
                 isActive ? 'grad-brand-fluid text-white shadow-[0_4px_14px_rgb(139_92_246/0.45)]' : 'text-faint'
               }`}
             >
               <Icon size={20} strokeWidth={2} className="shrink-0" />
-              <AnimatePresence initial={false}>
-                {isActive && (
-                  <motion.span
-                    key="label"
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 'auto', opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
-                  >
-                    {t(key)}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.div>
+              {/* Label width is a pure function of isActive — always mounted, so it
+                  reliably collapses to 0 when another tab becomes active (no orphaned
+                  exit animations). A non-overshooting tween removes the end-of-motion jitter. */}
+              <motion.span
+                initial={false}
+                animate={{ width: isActive ? 'auto' : 0, opacity: isActive ? 1 : 0 }}
+                transition={{ duration: 0.26, ease: EASE }}
+                className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
+              >
+                <span className="block pl-1.5">{t(key)}</span>
+              </motion.span>
+            </div>
           )}
         </NavLink>
       ))}
@@ -332,7 +327,8 @@ export function Page({ children, className = '' }: { children: ReactNode; classN
       initial={rm || reduce ? false : { opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: 'spring', stiffness: 230, damping: 26, mass: 0.7 }}
-      className={`mx-auto min-h-dvh max-w-lg px-4 pb-24 pt-4 ${className}`}
+      style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
+      className={`mx-auto min-h-dvh max-w-lg px-4 pb-24 ${className}`}
     >
       {children}
     </motion.main>

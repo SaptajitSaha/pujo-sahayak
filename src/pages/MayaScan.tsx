@@ -51,8 +51,11 @@ export default function MayaScan() {
         <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_40%,#2a1a10,#120c08)]" />
       )}
 
-      {/* Top bar */}
-      <header className="relative z-10 flex items-center justify-between p-4">
+      {/* Top bar — clears the Android status bar via the safe-area inset */}
+      <header
+        style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
+        className="relative z-10 flex items-center justify-between px-4 pb-4"
+      >
         <button onClick={() => nav('/maya')} aria-label="Close scanner" className="rounded-full bg-night/60 p-2">
           <X size={18} />
         </button>

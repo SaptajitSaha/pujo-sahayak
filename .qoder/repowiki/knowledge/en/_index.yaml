@@ -1,0 +1,17 @@
+# 知识卡导出索引文件
+schema_version: 1
+locale: en-US
+branch: Q0DeR-MaG1C-BrAnCh-Fo2-NoN-GiT-Or-No-C0MmIt
+nodes_managed: true
+exported_at: "2026-09-28T13:15:55Z"
+modules:
+    "":
+        dir_name: Project Planning & Master Context (Pujo Sahayak)
+        title: Project Planning & Master Context (Pujo Sahayak)
+        scope:
+            - tasks/
+            - Pujo_Sahayak_Master_Project_Context.md
+        source_files: []
+        children: []
+        depends_on: []
+        related_to: []

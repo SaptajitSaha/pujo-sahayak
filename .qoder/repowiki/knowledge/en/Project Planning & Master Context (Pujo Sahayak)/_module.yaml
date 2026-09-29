@@ -1,0 +1,9 @@
+schema_version: 1
+module_path: ""
+title: Project Planning & Master Context (Pujo Sahayak)
+scope:
+    - tasks/
+    - Pujo_Sahayak_Master_Project_Context.md
+source_files: []
+depends_on: []
+related_to: []

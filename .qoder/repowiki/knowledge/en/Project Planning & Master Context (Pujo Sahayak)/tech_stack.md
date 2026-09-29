@@ -1,0 +1,1 @@
+React 18 + TypeScript + Vite + Tailwind CSS v4 + React Router v6 + Zustand (persist middleware) + Framer Motion + Leaflet + OpenStreetMap tiles + vite-plugin-pwa — chosen explicitly in plan.md as the user-selected stack for the mobile-first PWA.

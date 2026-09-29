@@ -1,0 +1,102 @@
+import { useNavigate } from 'react-router-dom'
+import { MapPin, Route as RouteIcon } from 'lucide-react'
+import type { Place } from '../data/types'
+import { crowdLabel, useT } from '../i18n'
+import { Card, Chip, CrowdTag, Img, Stars } from './ui'
+
+export function placeHref(p: Place) {
+  return p.type === 'pandal' ? `/pandal/${p.id}` : `/restaurant/${p.id}`
+}
+
+/** Full-width directory card — the Explore list pattern from the mockups. */
+export function PlaceCard({ place }: { place: Place }) {
+  const t = useT()
+  const nav = useNavigate()
+  return (
+    <Card className="p-3">
+      <div className="flex gap-3">
+        <button onClick={() => nav(placeHref(place))} className="shrink-0" aria-label={`Open ${place.name}`}>
+          <Img palette={place.palette} alt={place.name} className="h-[72px] w-[72px] rounded-lg" />
+        </button>
+        <div className="min-w-0 flex-1">
+          <button onClick={() => nav(placeHref(place))} className="block w-full text-left">
+            <h3 className="truncate text-sm font-semibold">{place.name}</h3>
+            {place.subtitle && <p className="truncate text-xs text-ink-soft">{place.subtitle}</p>}
+          </button>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <Stars rating={place.rating} />
+            <span className="text-xs text-faint">• {place.distanceKm} km •</span>
+            {place.crowd && <CrowdTag level={place.crowd} />}
+          </div>
+          {place.theme && <p className="mt-0.5 truncate text-xs text-ink-soft">Theme: {place.theme}</p>}
+        </div>
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {place.metro && <Chip className="!text-[10px]">🚇 {place.metro}</Chip>}
+        {place.facilities.map((f) => (
+          <Chip key={f} className="!text-[10px]">{f}</Chip>
+        ))}
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button
+          onClick={() => nav(placeHref(place))}
+          className="flex-1 rounded-full border border-vermilion/40 py-1.5 text-xs font-medium text-vermilion hover:bg-vermilion-tint"
+        >
+          {t('viewDetails')}
+        </button>
+        <button
+          onClick={() => nav(`/trip/saptami`)}
+          className="flex flex-1 items-center justify-center gap-1 rounded-full grad-brand py-1.5 text-xs font-medium text-white"
+        >
+          <RouteIcon size={12} /> {t('route')}
+        </button>
+      </div>
+    </Card>
+  )
+}
+
+/** Compact image card for horizontal rails (restaurants, trending, nearby). */
+export function RailCard({ place, width = 'w-40' }: { place: Place; width?: string }) {
+  const t = useT()
+  const nav = useNavigate()
+  return (
+    <button onClick={() => nav(placeHref(place))} className={`${width} flex shrink-0 text-left`}>
+      <Card className="flex w-full flex-col">
+        <Img palette={place.palette} alt={place.name} className="h-24 shrink-0">
+          {place.crowd && (
+            <span className="absolute bottom-1.5 left-1.5 rounded-full bg-night/70 px-2 py-0.5 text-[10px] text-on-image">
+              {t(crowdLabel[place.crowd])}
+            </span>
+          )}
+        </Img>
+        <div className="flex-1 p-2.5">
+          <h3 className="truncate text-[13px] font-semibold">{place.name}</h3>
+          <div className="mt-1 flex items-center gap-1.5 text-xs text-faint">
+            <Stars rating={place.rating} /> • {place.distanceKm} km
+          </div>
+          {place.cuisine && <p className="mt-0.5 truncate text-[11px] text-ink-soft">{place.cuisine} • {place.priceBand}</p>}
+          {place.theme && <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-soft">Theme: {place.theme}</p>}
+        </div>
+      </Card>
+    </button>
+  )
+}
+
+/** Small square tile — trending pandals on Search. */
+export function TileCard({ place }: { place: Place }) {
+  const nav = useNavigate()
+  return (
+    <button onClick={() => nav(placeHref(place))} className="w-[47%] shrink-0 text-left">
+      <Card>
+        <Img palette={place.palette} alt={place.name} className="h-24" />
+        <div className="p-2">
+          <h3 className="truncate text-[13px] font-semibold">{place.name}</h3>
+          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-faint">
+            <MapPin size={10} /> {place.area}
+          </div>
+          <div className="mt-1"><Stars rating={place.rating} /></div>
+        </div>
+      </Card>
+    </button>
+  )
+}

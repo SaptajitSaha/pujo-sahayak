@@ -1,0 +1,4 @@
+- Each planned task in todo.md carries a dependency list, a scope tag (S/M/L), and a Verify line describing how to prove completion.
+- Feature requirements are cross-referenced by section number from the master context doc (e.g. §50, §52, §42, §58) rather than re-quoted inline.
+- The plan fixes a Screen→Route table as the canonical navigation contract, with nested routes (`/pandal/:id`, `/restaurant/:id`, `/trip/:planDayId`) mirroring the mockup IA.
+- Demo data is marked `isDemo: true` and AI features are labeled as local simulations with honest 'demo' markers instead of being presented as production integrations.

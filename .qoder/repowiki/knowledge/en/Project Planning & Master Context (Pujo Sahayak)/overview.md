@@ -1,0 +1,1 @@
+Authoritative product context and phased implementation plan for the Pujo Sahayak React+Vite PWA, defining scope, architecture decisions, screen routes, and a task checklist.

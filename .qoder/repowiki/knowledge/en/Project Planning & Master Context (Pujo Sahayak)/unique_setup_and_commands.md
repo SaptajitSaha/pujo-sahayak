@@ -1,0 +1,1 @@
+Build verification command is `npm run build` (clean, no TS errors); dev server must serve every route reachable via the documented bottom nav or deep links; Lighthouse PWA installability is checked in Phase 6.

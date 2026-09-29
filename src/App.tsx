@@ -1,8 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { AnimatePresence, MotionConfig } from 'framer-motion'
+import { lazy, Suspense, useEffect } from 'react'
+import { MotionConfig } from 'framer-motion'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AmbientBackground, BottomNav, MayaFab, useScrollIdlePause } from './components/ui'
-import { Intro } from './components/Intro'
 import { useApp } from './store'
 import { describeCurrentLocation } from './lib/geo'
 // Home is eager for an instant first paint; every other route is code-split and
@@ -73,31 +72,14 @@ export default function App() {
   useAutoDetectLocation()
   useScrollIdlePause()
 
-  // First-open brand intro shown as an overlay over Home, masking cold-start
-  // paint + font load. Dismisses once fonts are ready, but never before a short
-  // minimum beat (so it doesn't flash); tap-to-skip any time.
-  const [intro, setIntro] = useState(true)
-  useEffect(() => {
-    if (!intro) return
-    let alive = true
-    const fast = useApp.getState().reduceMotion || matchMedia('(prefers-reduced-motion: reduce)').matches
-    const minMs = fast ? 350 : 1750
-    const start = performance.now()
-    const fonts = document.fonts?.ready ?? Promise.resolve()
-    Promise.race([fonts, new Promise((r) => setTimeout(r, 2600))])
-      .then(() => new Promise((r) => setTimeout(r, Math.max(0, minMs - (performance.now() - start)))))
-      .then(() => { if (alive) setIntro(false) })
-    return () => { alive = false }
-  }, [intro])
-
+  // The festive first-open intro is a pure-CSS boot splash declared inline in
+  // index.html so it paints on the very first frame (before this bundle even
+  // executes). main.tsx fades it out once the app has mounted + fonts settled.
   return (
     <MotionConfig reducedMotion="user">
       <Suspense fallback={<RouteFallback />}>
         <Shell />
       </Suspense>
-      <AnimatePresence>
-        {intro && <Intro key="intro" onSkip={() => setIntro(false)} />}
-      </AnimatePresence>
     </MotionConfig>
   )
 }

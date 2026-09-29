@@ -37,3 +37,24 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 )
+
+/* ── Boot-splash hand-off ──────────────────────────────────────────────────
+   The festive intro is pure CSS/HTML inline in index.html, so it paints on the
+   very first frame and animates on the compositor (no JS) while this ~116 KB
+   bundle + fonts + Home are still loading. Once the app has mounted and fonts
+   have settled, fade it out to reveal Home. Tap dismisses it immediately. */
+function hideBoot() {
+  const boot = document.getElementById('boot')
+  if (!boot || boot.classList.contains('boot-hide')) return
+  boot.classList.add('boot-hide')
+  boot.addEventListener('transitionend', () => boot.remove(), { once: true })
+  window.setTimeout(() => boot.remove(), 700) // safety if transitionend never fires
+}
+document.getElementById('boot')?.addEventListener('pointerdown', hideBoot)
+
+const bootStart = performance.now()
+const bootReduce = matchMedia('(prefers-reduced-motion: reduce)').matches
+const bootMin = bootReduce ? 200 : 700
+;(document.fonts?.ready ?? Promise.resolve())
+  .then(() => new Promise((r) => setTimeout(r, Math.max(0, bootMin - (performance.now() - bootStart)))))
+  .then(hideBoot)

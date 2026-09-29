@@ -33,3 +33,6 @@ Thumbs.db
 
 # Large screenshot intermediates (composited phone-*.png are tracked)
 assets/screens/raw/
+
+# Capacitor — native Android project is generated in CI (npx cap add android)
+/android

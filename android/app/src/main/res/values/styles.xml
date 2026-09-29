@@ -13,6 +13,10 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Window-level refresh-rate hint (API 23+). Value is a target in Hz;
+             the OS picks the nearest supported mode. Applied alongside the
+             runtime View.setRequestedFrameRate(HIGH) call in MainActivity. -->
+        <item name="android:preferredRefreshRate">240</item>
     </style>
 
 
@@ -30,5 +34,6 @@
         <!-- Pre-12 legacy path: the ImageView uses this as the window bg. -->
         <item name="android:windowBackground">@color/splash_bg</item>
         <item name="android:background">@color/splash_bg</item>
+        <item name="android:preferredRefreshRate">240</item>
     </style>
 </resources>

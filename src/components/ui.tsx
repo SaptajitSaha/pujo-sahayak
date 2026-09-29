@@ -1,6 +1,6 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
-import { Children, useEffect, useId, useRef, type ReactNode } from 'react'
+import { Children, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { Palette } from '../data/types'
@@ -272,22 +272,41 @@ export function BottomNav() {
               }`}
             >
               <Icon size={20} strokeWidth={2} className="shrink-0" />
-              {/* Label width is a pure function of isActive — always mounted, so it
-                  reliably collapses to 0 when another tab becomes active (no orphaned
-                  exit animations). A non-overshooting tween removes the end-of-motion jitter. */}
-              <motion.span
-                initial={false}
-                animate={{ width: isActive ? 'auto' : 0, opacity: isActive ? 1 : 0 }}
-                transition={{ duration: 0.26, ease: EASE }}
-                className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
-              >
-                <span className="block pl-1.5">{t(key)}</span>
-              </motion.span>
+              <NavLabel active={isActive} label={t(key)} />
             </div>
           )}
         </NavLink>
       ))}
     </nav>
+  )
+}
+
+/* Active-tab label. Width is a pure function of `active` (always mounted → never
+   an orphaned exit animation). We animate to a measured pixel width rather than
+   'auto' because Framer can't measure 'auto' while the box is collapsed (0 +
+   overflow-hidden), which previously left every non-initial tab stuck at 0. */
+function NavLabel({ active, label }: { active: boolean; label: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [w, setW] = useState(0)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const measure = () => setW(el.scrollWidth)
+    measure()
+    // Re-measure once web fonts settle — Bengali/Devanagari glyphs differ in width.
+    const fonts = (document as { fonts?: FontFaceSet }).fonts
+    if (fonts?.ready) void fonts.ready.then(measure)
+  }, [label])
+  return (
+    <motion.span
+      ref={ref}
+      initial={false}
+      animate={{ width: active ? w : 0, opacity: active ? 1 : 0 }}
+      transition={{ duration: 0.26, ease: EASE }}
+      className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
+    >
+      <span className="block pl-1.5">{label}</span>
+    </motion.span>
   )
 }
 

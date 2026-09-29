@@ -281,28 +281,27 @@ export function BottomNav() {
   )
 }
 
-/* Active-tab label. Uses the CSS grid 0fr→1fr auto-expand technique: the browser
-   sizes the column to the label's intrinsic width, so there's no JS measurement and
-   no font-load race (the previous scrollWidth approach measured 0 on first mount,
-   so only the second click onward expanded). Width is a pure function of `active`,
-   so labels always collapse when another tab is active. Reduced-motion is honoured
-   by the global `transition-duration: 0.01ms !important` rule in index.css. */
+/* Active-tab label. Expands via a `max-width` transition rather than the CSS
+   grid 0fr→1fr trick or JS measurement: max-width interpolation is supported by
+   every WebView engine (the device WebView left the grid approach collapsed, so
+   no label ever showed), needs no scrollWidth/font-read timing, and clips
+   cleanly. The element's own width is its intrinsic content width, capped at the
+   (generous) active max-width — so the pill never over-widens and long i18n
+   labels never clip. Width is a pure function of `active`, so labels always
+   collapse when another tab is active. Reduced-motion is honoured by the global
+   `transition-duration: 0.01ms !important` rule in index.css. */
 function NavLabel({ active, label }: { active: boolean; label: string }) {
   return (
     <span
       aria-hidden={!active}
-      className="grid leading-none"
+      className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
       style={{
-        gridTemplateColumns: active ? '1fr' : '0fr',
-        transition: 'grid-template-columns 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+        maxWidth: active ? '9rem' : '0',
+        opacity: active ? 1 : 0,
+        transition: 'max-width 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease',
       }}
     >
-      <span
-        className="min-w-0 overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
-        style={{ opacity: active ? 1 : 0, transition: 'opacity 0.2s ease' }}
-      >
-        <span className="block pl-1.5">{label}</span>
-      </span>
+      <span className="block pl-1.5">{label}</span>
     </span>
   )
 }

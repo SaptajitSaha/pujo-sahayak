@@ -73,6 +73,18 @@
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    /* Native-app feel: no rubber-band overscroll glow/re-layout on Android. */
+    overscroll-behavior-y: none;
+    /* Hide the page scrollbar in the APK WebView — a desktop affordance that
+       only clutters a full-screen app. Content is still fully scrollable. */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
   body {
     @apply bg-ivory text-ink font-sans antialiased;
@@ -144,8 +156,8 @@
   .glass {
     position: relative;
     background: rgb(255 253 244 / 0.66);
-    backdrop-filter: blur(18px) saturate(180%);
-    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     border: 1px solid rgb(255 255 255 / 0.6);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.7),
@@ -175,8 +187,8 @@
   /* Stronger, more opaque variant for floating chrome (nav, FAB) */
   .glass-strong {
     background: rgb(255 253 244 / 0.9);
-    backdrop-filter: blur(26px) saturate(190%);
-    -webkit-backdrop-filter: blur(26px) saturate(190%);
+    backdrop-filter: blur(16px) saturate(190%);
+    -webkit-backdrop-filter: blur(16px) saturate(190%);
     border: 1px solid rgb(255 255 255 / 0.7);
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.8),
@@ -247,10 +259,13 @@
   width: 78vmax;
   height: 78vmax;
   border-radius: 50%;
-  filter: blur(100px);
+  filter: blur(64px);
   opacity: 0.55;
   mix-blend-mode: multiply;
-  will-change: transform, filter;
+  /* Only the cheap, GPU-composited transform animates. The previous keyframes
+     also animated `filter` (blur + hue-rotate) every frame, which re-rasterized
+     these 78vmax layers continuously and pinned the WebView near 60 fps. */
+  will-change: transform;
 }
 .dark .ambient .blob {
   mix-blend-mode: screen;
@@ -266,16 +281,16 @@
 /* Each blob glides the full height of its own side: blob-a descends top-right →
    bottom-right, blob-b climbs bottom-left → top-left. Travel is in vh so the
    sweep spans the viewport (satisfying corner-to-corner motion), while the
-   horizontal position stays pinned to its edge. Same duration + identical hue
-   stops keep the two corners cycling colour in sync; only the vertical travel
-   differs (opposite direction). */
+   horizontal position stays pinned to its edge. Only `transform` animates now —
+   the colour comes from each blob's own radial gradient, so there is no per-frame
+   filter re-rasterization and the drift stays GPU-composited at panel refresh. */
 @keyframes drift-a {
-  0%, 100% { transform: translate(0, -6vh) scale(1.04);  filter: blur(100px) hue-rotate(0deg); }
-  50%      { transform: translate(0, 80vh) scale(1.14);  filter: blur(100px) hue-rotate(-70deg); }
+  0%, 100% { transform: translate(0, -6vh) scale(1.04); }
+  50%      { transform: translate(0, 80vh) scale(1.14); }
 }
 @keyframes drift-b {
-  0%, 100% { transform: translate(0, 6vh)  scale(1.14);  filter: blur(100px) hue-rotate(0deg); }
-  50%      { transform: translate(0, -80vh) scale(1.04); filter: blur(100px) hue-rotate(-70deg); }
+  0%, 100% { transform: translate(0, 6vh)  scale(1.14); }
+  50%      { transform: translate(0, -80vh) scale(1.04); }
 }
 
 /* Respect user reduced-motion preference + in-app setting */

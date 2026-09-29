@@ -36,8 +36,13 @@ jobs:
       - name: Build web assets
         run: npm run build
 
-      - name: Add Android platform
-        run: npx cap add android
+      - name: Sync web assets into the committed Android project
+        # android/ is committed to the repo (themed OS splash + MainActivity
+        # frame-rate request live there). `cap sync` copies dist/ into
+        # app/src/main/assets/public and regenerates the Capacitor plugin
+        # gradle files. `cap add android` is no longer run — it would refuse
+        # against an existing folder and would clobber our edits anyway.
+        run: npx cap sync android
 
       - name: Assemble debug APK
         working-directory: android

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the CSS #boot inline splash bg in index.html so the OS splash
+         window and the web-painted boot share exactly one colour. -->
+    <color name="splash_bg">#160E0A</color>
+</resources>

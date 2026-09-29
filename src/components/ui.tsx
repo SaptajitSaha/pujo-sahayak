@@ -10,6 +10,29 @@ import { useT } from '../i18n'
 /* Signature easing curve — soft overshoot settle, used across the app. */
 export const EASE = [0.22, 1, 0.36, 1] as const
 
+/* Pause the always-on paint animations (fluid nav gradient, animated search
+   border) for the duration of each scroll, resuming ~160ms after it stops. Those
+   loops animate background-position / a conic @property angle on the MAIN thread,
+   so every frame forces a repaint — the thing that pins Android WebView to 60 Hz.
+   With them paused mid-scroll, the compositor only blits GPU layers (transform
+   blobs + content) and can hold 90/120 Hz. Toggled as a class on <html>. */
+export function useScrollIdlePause() {
+  useEffect(() => {
+    const root = document.documentElement
+    let timer = 0
+    const onScroll = () => {
+      if (!root.classList.contains('is-scrolling')) root.classList.add('is-scrolling')
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => root.classList.remove('is-scrolling'), 160)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.clearTimeout(timer)
+    }
+  }, [])
+}
+
 /* Scroll-into-view reveal — the core of the app's "come alive on scroll" feel. */
 export function Reveal({
   children, delay = 0, y = 26, className = '', once = true,

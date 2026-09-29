@@ -293,6 +293,17 @@
   50%      { transform: translate(0, -80vh) scale(1.04); }
 }
 
+/* Mid-scroll, freeze the two always-on MAIN-THREAD paint loops (the fluid nav
+   gradient animates background-position; the search border animates a conic
+   @property angle through a mask). Each forces a full repaint every frame, which
+   is what pins Android WebView to 60 Hz. While `html.is-scrolling` (set by
+   useScrollIdlePause, cleared ~160ms after scrolling stops) they pause, leaving
+   only GPU-composited layers to blit so the compositor can hold 90/120 Hz. */
+html.is-scrolling .grad-brand-fluid,
+html.is-scrolling .animated-border::before {
+  animation-play-state: paused;
+}
+
 /* Respect user reduced-motion preference + in-app setting */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

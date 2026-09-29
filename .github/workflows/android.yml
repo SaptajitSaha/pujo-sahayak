@@ -18,11 +18,11 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install SDK platform & build-tools
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install SDK platform & build-tools (preinstalled Android SDK)
+        run: |
+          SDKMGR="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMGR" --licenses > /dev/null 2>&1 || true
+          "$SDKMGR" "platforms;android-36" "build-tools;36.0.0" "platform-tools"
 
       - name: Use Node.js 20
         uses: actions/setup-node@v4

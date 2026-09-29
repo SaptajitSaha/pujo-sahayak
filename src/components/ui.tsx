@@ -15,7 +15,10 @@ export function Reveal({
   children, delay = 0, y = 26, className = '', once = true,
 }: { children: ReactNode; delay?: number; y?: number; className?: string; once?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
+  const reduce = useReducedMotion()
   const inView = useInView(ref, { once, margin: '-48px' })
+  // Honour reduced-motion: show content immediately, no scroll-triggered fade.
+  if (reduce) return <div ref={ref} className={className}>{children}</div>
   return (
     <motion.div
       ref={ref}
@@ -32,15 +35,17 @@ export function Reveal({
 /* Animated number that counts up when it scrolls into view. */
 export function CountUp({ to, decimals = 0, suffix = '', className = '' }: { to: number; decimals?: number; suffix?: string; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null)
+  const reduce = useReducedMotion()
   const inView = useInView(ref, { once: true, margin: '-20px' })
   const mv = useMotionValue(0)
   const display = useTransform(mv, (v) => `${v.toFixed(decimals)}${suffix}`)
   useEffect(() => {
-    if (inView) {
+    if (inView && !reduce) {
       const controls = animate(mv, to, { duration: 0.9, ease: EASE })
       return () => controls.stop()
     }
-  }, [inView, mv, to])
+  }, [inView, mv, to, reduce])
+  if (reduce) return <span ref={ref} className={className}>{`${to.toFixed(decimals)}${suffix}`}</span>
   return <motion.span ref={ref} className={className}>{display}</motion.span>
 }
 
@@ -187,6 +192,16 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
 
 /** Horizontal scroll rail — cards slide in on a spring stagger as they enter view. */
 export function Rail({ children }: { children: ReactNode }) {
+  const reduce = useReducedMotion()
+  if (reduce) {
+    return (
+      <div className="no-scrollbar -mx-4 flex items-stretch gap-3 overflow-x-auto px-4 pb-1">
+        {Children.map(children, (child, i) => (
+          <div key={i} className="flex shrink-0">{child}</div>
+        ))}
+      </div>
+    )
+  }
   return (
     <div className="no-scrollbar -mx-4 flex items-stretch gap-3 overflow-x-auto px-4 pb-1">
       {Children.map(children, (child, i) => (

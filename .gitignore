@@ -30,3 +30,6 @@ dist-ssr/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Large screenshot intermediates (composited phone-*.png are tracked)
+assets/screens/raw/

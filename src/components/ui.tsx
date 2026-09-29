@@ -1,6 +1,6 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
-import { Children, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { Children, useEffect, useId, useRef, type ReactNode } from 'react'
 import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { Palette } from '../data/types'
@@ -281,32 +281,29 @@ export function BottomNav() {
   )
 }
 
-/* Active-tab label. Width is a pure function of `active` (always mounted → never
-   an orphaned exit animation). We animate to a measured pixel width rather than
-   'auto' because Framer can't measure 'auto' while the box is collapsed (0 +
-   overflow-hidden), which previously left every non-initial tab stuck at 0. */
+/* Active-tab label. Uses the CSS grid 0fr→1fr auto-expand technique: the browser
+   sizes the column to the label's intrinsic width, so there's no JS measurement and
+   no font-load race (the previous scrollWidth approach measured 0 on first mount,
+   so only the second click onward expanded). Width is a pure function of `active`,
+   so labels always collapse when another tab is active. Reduced-motion is honoured
+   by the global `transition-duration: 0.01ms !important` rule in index.css. */
 function NavLabel({ active, label }: { active: boolean; label: string }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const [w, setW] = useState(0)
-  useLayoutEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const measure = () => setW(el.scrollWidth)
-    measure()
-    // Re-measure once web fonts settle — Bengali/Devanagari glyphs differ in width.
-    const fonts = (document as { fonts?: FontFaceSet }).fonts
-    if (fonts?.ready) void fonts.ready.then(measure)
-  }, [label])
   return (
-    <motion.span
-      ref={ref}
-      initial={false}
-      animate={{ width: active ? w : 0, opacity: active ? 1 : 0 }}
-      transition={{ duration: 0.26, ease: EASE }}
-      className="overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
+    <span
+      aria-hidden={!active}
+      className="grid leading-none"
+      style={{
+        gridTemplateColumns: active ? '1fr' : '0fr',
+        transition: 'grid-template-columns 0.3s cubic-bezier(0.22, 1, 0.36, 1)',
+      }}
     >
-      <span className="block pl-1.5">{label}</span>
-    </motion.span>
+      <span
+        className="min-w-0 overflow-hidden whitespace-nowrap text-[12px] font-semibold leading-none"
+        style={{ opacity: active ? 1 : 0, transition: 'opacity 0.2s ease' }}
+      >
+        <span className="block pl-1.5">{label}</span>
+      </span>
+    </span>
   )
 }
 

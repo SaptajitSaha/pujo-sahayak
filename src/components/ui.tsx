@@ -213,7 +213,12 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
   )
 }
 
-/** Horizontal scroll rail — cards slide in on a spring stagger as they enter view. */
+/** Horizontal scroll rail — cards spring in on a stagger as the rail mounts.
+    Uses `animate` (not `whileInView`) on purpose: `whileInView` observes the
+    browser window viewport, so cards off-screen to the right of a horizontal
+    rail never intersect and stay at opacity:0 until a tiny scroll nudges them
+    into view — the exact "only two cards until I touch it" bug. Entrance
+    animation belongs to mount time here, not to scroll. */
 export function Rail({ children }: { children: ReactNode }) {
   const reduce = useReducedMotion()
   if (reduce) {
@@ -231,8 +236,7 @@ export function Rail({ children }: { children: ReactNode }) {
         <motion.div
           key={i}
           initial={{ opacity: 0, x: 30, scale: 0.96 }}
-          whileInView={{ opacity: 1, x: 0, scale: 1 }}
-          viewport={{ once: true, margin: '-20%' }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 24, delay: i * 0.07 }}
           className="flex shrink-0"
         >

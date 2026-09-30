@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, ChevronRight, Mic, Play, Square } from 'lucide-react'
 import { MayaMark, Page } from '../components/ui'
 import { placeById } from '../data/demo'
-import { answer } from '../maya/brain'
+import { askMaya, type ChatTurn } from '../maya'
 import { useApp } from '../store'
 import type { Place } from '../data/types'
 
@@ -54,17 +54,28 @@ export default function Maya() {
   useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing])
   useEffect(() => () => speechSynthesis?.cancel(), [])
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim()) return
-    const reply = answer(text, ctx)
-    setMsgs((m) => [...m, { from: 'user', text }])
+    const turn = text.trim()
+    const history: ChatTurn[] = msgs.map((m) => ({ from: m.from, text: m.text }))
+    setMsgs((m) => [...m, { from: 'user', text: turn }])
     setInput('')
     setTyping(true)
-    // Brief "thinking" pause so Maya feels like a live companion.
-    setTimeout(() => {
+    try {
+      // Ask Maya (off-topic gate → optional LLM → offline brain fallback).
+      // Promise.race against a 12-second safety timeout so the typing indicator
+      // never strands if a network call hangs. The offline path always resolves
+      // well inside that; if we time out we render a friendly fallback.
+      const reply = await Promise.race([
+        askMaya(turn, ctx, history),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error('maya-timeout')), 12_000)),
+      ])
       setMsgs((m) => [...m, { from: 'maya', ...reply }])
+    } catch {
+      setMsgs((m) => [...m, { from: 'maya', text: 'Sorry, that took too long. Could you rephrase?' }])
+    } finally {
       setTyping(false)
-    }, 650 + Math.random() * 350)
+    }
   }
 
   const onChip = (chip: string) => {

@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
-  Bookmark, BookmarkCheck, CalendarCheck, Check, ChevronRight, Camera,
+  BadgeCheck, Bookmark, BookmarkCheck, CalendarCheck, Check, ChevronRight, Camera,
   MapPin, Route as RouteIcon, Share2, ShieldCheck, Sparkles, TrainFront, Truck,
 } from 'lucide-react'
 import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
-import { haversineKm } from '../lib/geo'
+import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
+import { tithiForTs, withinGeofence } from '../lib/scorecard'
 import { makeShareCard, shareCardFile } from '../lib/shareCard'
 import { useT } from '../i18n'
 
@@ -23,9 +24,37 @@ export default function PandalDetail() {
   const visited = useApp((s) => s.visited)
   const toggleSaved = useApp((s) => s.toggleSaved)
   const toggleVisited = useApp((s) => s.toggleVisited)
+  const checkins = useApp((s) => s.checkins)
+  const addCheckin = useApp((s) => s.addCheckin)
   const track = useApp((s) => s.track)
   const [photoState, setPhotoState] = useState<'idle' | 'checking' | 'ok'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  // On-site check-in: the sole way a visit enters the Scorecard. Gated by real
+  // GPS — no location, no check-in. Honest failure states, never a fake success.
+  const [checkIn, setCheckIn] = useState<'idle' | 'locating' | 'ok' | 'far' | 'denied'>('idle')
+  const [checkInMsg, setCheckInMsg] = useState('')
+  const todayTithi = tithiForTs(Date.now())
+  const checkedInToday = !!place && checkins.some((c) => c.placeId === place.id && c.tithi === todayTithi)
+  const onCheckIn = async () => {
+    if (!place) return
+    setCheckIn('locating')
+    setCheckInMsg('')
+    try {
+      const loc = await getCurrentLocationPrecise()
+      if (withinGeofence(loc, { lat: place.lat, lng: place.lng }, loc.accuracyM)) {
+        addCheckin({ placeId: place.id, tithi: todayTithi, ts: Date.now(), lat: loc.lat, lng: loc.lng, accuracyM: loc.accuracyM })
+        setCheckIn('ok')
+      } else {
+        setCheckIn('far')
+        setCheckInMsg('You’re not at this pandal yet — move closer and try again.')
+      }
+    } catch (e) {
+      const msg = (e as Error).message
+      setCheckIn(msg.toLowerCase().includes('denied') ? 'denied' : 'far')
+      setCheckInMsg(msg)
+    }
+  }
   const reviews = useApp((s) => s.reviews)
   const addReview = useApp((s) => s.addReview)
   const [cardBusy, setCardBusy] = useState(false)
@@ -235,6 +264,26 @@ export default function PandalDetail() {
           <Button size="sm" className="flex-1" onClick={() => nav('/trip/saptami')}>
             <RouteIcon size={14} /> {t('route')}
           </Button>
+        </div>
+
+        {/* On-site check-in — verified by GPS, feeds the Scorecard in Profile. */}
+        <div className="mt-2">
+          <Button
+            variant={checkedInToday || checkIn === 'ok' ? 'dark' : 'outline'}
+            size="sm" className="w-full"
+            disabled={checkIn === 'locating' || checkedInToday}
+            onClick={onCheckIn}
+          >
+            <BadgeCheck size={14} />
+            {checkedInToday || checkIn === 'ok'
+              ? 'Checked in — nice!'
+              : checkIn === 'locating'
+                ? 'Locating…'
+                : 'Check in here (verify on-site)'}
+          </Button>
+          {checkInMsg && (
+            <p role="status" aria-live="polite" className="mt-1 text-[11px] text-faint">{checkInMsg}</p>
+          )}
         </div>
 
         {/* Info tiles */}

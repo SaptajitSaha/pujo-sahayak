@@ -5,6 +5,7 @@ import type {
 } from './data/types'
 import { placeById } from './data/demo'
 import { haversineKm } from './lib/geo'
+import type { Checkin } from './lib/scorecard'
 
 export const PLAN_DAYS: PlanDay[] = ['panchami', 'shashthi', 'saptami', 'ashtami', 'navami', 'dashami']
 
@@ -42,6 +43,11 @@ interface AppState {
   trustedContacts: TrustedContact[]
   selectedCity: City
   sosActive: boolean
+  /** GPS-verified pandal check-ins powering the Scorecard. Pure local log —
+      a check-in is only appended after withinGeofence confirms on-site presence
+      (see PandalDetail). Nothing is invented; the badges/counts are derived from
+      this array alone. */
+  checkins: Checkin[]
   /** Year-round demo mode for the Home "Today: <tithi>" chip. When on,
       the chip renders as if today were Ashtami so reviewers and diaspora
       users outside the 2026 puja window still see the flow. Default off —
@@ -70,6 +76,7 @@ interface AppState {
   markNotifRead: (id: string) => void
   addReview: (r: Omit<UserReview, 'id' | 'createdAt'>) => void
   removeReview: (id: string) => void
+  addCheckin: (c: Checkin) => void
   setTrustedContacts: (c: TrustedContact[]) => void
   setSelectedCity: (c: City) => void
   setSosActive: (v: boolean) => void
@@ -119,6 +126,7 @@ export const useApp = create<AppState>()(
       selectedCity: 'kolkata',
       sosActive: false,
       tithiDemoMode: false,
+      checkins: [],
 
       toggleSaved: (id) =>
         set((s) => ({ saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
@@ -174,6 +182,14 @@ export const useApp = create<AppState>()(
         set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
       addReview: (r) => set((s) => ({ reviews: [{ ...r, id: 'rev-' + Date.now(), createdAt: new Date().toISOString() }, ...s.reviews] })),
       removeReview: (id) => set((s) => ({ reviews: s.reviews.filter((x) => x.id !== id) })),
+      /** Append a check-in, but never a second one for the same pandal on the
+          same tithi — re-tapping the button is idempotent. */
+      addCheckin: (c) =>
+        set((s) => (
+          s.checkins.some((x) => x.placeId === c.placeId && x.tithi === c.tithi)
+            ? s
+            : { checkins: [...s.checkins, c] }
+        )),
       setTrustedContacts: (trustedContacts) => set({ trustedContacts }),
       setSelectedCity: (selectedCity) => set({ selectedCity }),
       setSosActive: (sosActive) => set({ sosActive }),
@@ -181,9 +197,10 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'pujo-sahayak',
-      version: 2,
-      // v2 adds reviews, trustedContacts, selectedCity, sosActive. Existing
+      version: 3,
+      // v2 added reviews, trustedContacts, selectedCity, sosActive. Existing
       // installs persisted without these; provide safe defaults.
+      // v3 adds the checkins log (Scorecard) — additive, defaults to empty.
       migrate: (persisted, oldVersion) => {
         const p = persisted as Partial<AppState> | undefined
         if (!p) return {} as unknown as AppState
@@ -198,6 +215,7 @@ export const useApp = create<AppState>()(
         if (!p.selectedCity) p.selectedCity = 'kolkata'
         if (p.sosActive === undefined) p.sosActive = false
         if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
+        if (!Array.isArray(p.checkins)) p.checkins = []
         return p as AppState
       },
     },

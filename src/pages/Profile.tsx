@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
-  HandHeart, Palette, Phone, Siren, Settings as SettingsIcon, Sparkles, Users,
+  Flame, HandHeart, Lock, MapPin, Palette, Phone, Share2, Siren, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
-import { Card, Img, Page, SectionHeader } from '../components/ui'
+import { Button, Card, Img, Page, SectionHeader } from '../components/ui'
+import { walks } from '../data/demo'
 import { useApp } from '../store'
+import { evaluateBadges, scorecardSummary } from '../lib/scorecard'
 import { useT } from '../i18n'
 
 export default function Profile() {
@@ -14,6 +17,24 @@ export default function Profile() {
   const visited = useApp((s) => s.visited)
   const joined = useApp((s) => s.joinedMeetups)
   const premium = useApp((s) => s.premium)
+  const checkins = useApp((s) => s.checkins)
+  const [copied, setCopied] = useState(false)
+
+  // Everything below is derived only from the user's own GPS-verified check-ins.
+  const summary = scorecardSummary(checkins)
+  const badges = evaluateBadges(checkins, walks)
+  const earnedCount = badges.filter((b) => b.earned).length
+
+  const shareScorecard = async () => {
+    const text =
+      `My Pujo Sahayak scorecard: ${summary.pandals} pandal check-in${summary.pandals === 1 ? '' : 's'} ` +
+      `across ${summary.tithis} tith${summary.tithis === 1 ? 'i' : 'is'}, best streak ${summary.streak} ` +
+      `day${summary.streak === 1 ? '' : 's'}, ${earnedCount}/${badges.length} badges.`
+    if (navigator.share) {
+      try { await navigator.share({ title: 'My Puja Scorecard', text }); return } catch { /* cancelled — fall through */ }
+    }
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2500) } catch { /* clipboard unavailable */ }
+  }
 
   return (
     <Page>
@@ -50,6 +71,54 @@ export default function Profile() {
           </button>
         ))}
       </div>
+
+      {/* Scorecard — counts only what the user actually verified on-site. */}
+      <section className="mt-5">
+        <SectionHeader title="Your Puja Scorecard" />
+        <Card className="p-4">
+          {checkins.length === 0 ? (
+            <p className="text-[13px] leading-snug text-ink-soft">
+              No check-ins yet. When you reach a pandal, open it and tap{' '}
+              <span className="font-medium">Check in here</span> — it confirms you’re on-site
+              with GPS, then your visits count here.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[
+                  { n: summary.pandals, label: 'Pandals', icon: MapPin },
+                  { n: summary.tithis, label: 'Tithis', icon: CalendarCheck },
+                  { n: summary.streak, label: 'Best streak', icon: Flame },
+                ].map(({ n, label, icon: Icon }) => (
+                  <div key={label}>
+                    <p className="text-xl font-semibold">{n}</p>
+                    <p className="flex items-center justify-center gap-1 text-[11px] text-faint"><Icon size={11} /> {label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {badges.map((b) => (
+                  <div
+                    key={b.def.id}
+                    className={`rounded-lg border p-2.5 ${b.earned ? 'border-gold/40 bg-gold/10' : 'border-ink/10 opacity-70'}`}
+                  >
+                    <p className="flex items-center gap-1.5 text-xs font-semibold">
+                      {b.earned ? <BadgeCheck size={13} className="shrink-0 text-gold" /> : <Lock size={13} className="shrink-0 text-faint" />}
+                      <span className="truncate">{b.def.label}</span>
+                    </p>
+                    <p className="mt-0.5 text-[10px] leading-snug text-faint">{b.def.hint}</p>
+                  </div>
+                ))}
+              </div>
+
+              <Button variant="outline" size="sm" className="mt-3 w-full" onClick={shareScorecard}>
+                <Share2 size={14} /> {copied ? 'Copied!' : 'Share scorecard'}
+              </Button>
+            </>
+          )}
+        </Card>
+      </section>
 
       {/* Premium CTA */}
       <button onClick={() => nav('/profile/settings')} className="mt-4 w-full text-left">

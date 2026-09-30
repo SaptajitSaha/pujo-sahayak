@@ -5,6 +5,7 @@
 
 export interface Coords { lat: number; lng: number }
 export interface GeoResult { name: string; lat: number; lng: number }
+export interface PreciseCoords extends Coords { accuracyM: number }
 
 /** Great-circle distance between two points in kilometres. */
 export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -34,6 +35,32 @@ export function getCurrentLocation(timeout = 9000): Promise<Coords> {
           ),
         ),
       { enableHighAccuracy: true, timeout, maximumAge: 60000 },
+    )
+  })
+}
+
+/**
+ * Like getCurrentLocation, but also returns the device's own accuracy radius.
+ * Used by on-site check-in, where the honest gate widens to whatever the phone
+ * itself admits it can resolve.
+ */
+export function getCurrentLocationPrecise(timeout = 9000): Promise<PreciseCoords> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      reject(new Error('Geolocation is not supported on this device.'))
+      return
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracyM: pos.coords.accuracy ?? 0 }),
+      (err) =>
+        reject(
+          new Error(
+            err.code === err.PERMISSION_DENIED
+              ? 'Location permission was denied.'
+              : 'Could not fetch your current location.',
+          ),
+        ),
+      { enableHighAccuracy: true, timeout, maximumAge: 30000 },
     )
   })
 }

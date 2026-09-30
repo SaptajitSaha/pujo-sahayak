@@ -28,7 +28,7 @@ import '@fontsource/noto-serif-bengali/bengali-800.css'
 import '@fontsource/noto-serif-bengali/latin-400.css'
 import '@fontsource/noto-serif-bengali/latin-700.css'
 import './index.css'
-import App from './App'
+import App, { preloadRoutes } from './App'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -37,6 +37,12 @@ createRoot(document.getElementById('root')!).render(
     </BrowserRouter>
   </StrictMode>,
 )
+
+// Warm every code-split page's JS chunk while the inline CSS boot splash is
+// still on-screen and fonts are decoding, so a later tap on any bottom-nav
+// item resolves React.lazy from Vite's module cache — no Suspense fallback,
+// no black loading flash between pages.
+preloadRoutes()
 
 /* ── Boot-splash hand-off ──────────────────────────────────────────────────
    The festive intro is pure CSS/HTML inline in index.html, so it paints on the

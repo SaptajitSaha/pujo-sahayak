@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown } from 'lucide-react'
 import { Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { offers, pandals, restaurants, shopping, sponsored, events } from '../data/demo'
+import { offers, pandals, restaurants, shopping, sponsored, events, walks } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
 import type { Place } from '../data/types'
@@ -216,6 +216,29 @@ export default function Home() {
                   <p className="mt-0.5 truncate text-[10px] text-faint">{s.area}</p>
                 </div>
               </Card>
+            ))}
+          </Rail>
+        </section>
+      </Reveal>
+
+      {/* Curated walks — themed pandal trails (photography, food, family).
+          Tapping a card opens /walks where the full stop-by-stop itinerary is
+          shown with an "Add to Planner" CTA that pre-loads that walk. */}
+      <Reveal>
+        <section className="mt-5">
+          <SectionHeader title={t('walks')} action={t('viewAll')} onAction={() => nav('/walks')} />
+          <Rail>
+            {walks.map((w) => (
+              <button key={w.id} onClick={() => nav('/walks')} className="w-56 shrink-0 text-left">
+                <Card className="overflow-hidden p-0">
+                  <Img palette={w.palette} alt={w.title} className="h-24 w-full" />
+                  <div className="p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-faint">{w.stops.length} stops · {Math.round(w.totalDurationMin / 60 * 10) / 10} h</p>
+                    <h3 className="mt-0.5 text-sm font-semibold leading-snug">{w.title}</h3>
+                    <p className="mt-1 line-clamp-2 text-[11px] text-faint">{w.description}</p>
+                  </div>
+                </Card>
+              </button>
             ))}
           </Rail>
         </section>

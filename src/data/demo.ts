@@ -2,7 +2,7 @@
 // Names, areas, themes and metro stations are real; ratings, crowds, timings,
 // reviews and photos are ILLUSTRATIVE DEMO CONTENT for UI development.
 import type {
-  Artist, BloodBank, CategoryDef, CityDef, Dish, EventItem, Meetup, MetroETA, Offer, Palette, ParkingSpot, Phrase, Place, SafetyPoint, ShoppingProduct, SponsoredItem, Tithi, Walk,
+  Artist, BloodBank, CategoryDef, CityDef, Dish, EventItem, Meetup, MetroETA, Offer, Palette, ParkingSpot, Phrase, Place, PlanDay, SafetyPoint, ShoppingProduct, SponsoredItem, Tithi, Walk,
 } from './types'
 
 export const IS_DEMO = true
@@ -403,3 +403,16 @@ export const phrases: Phrase[] = [
   { id: 'ph-f5', category: 'food', english: 'Do you accept UPI?', bangla: 'UPI চলবে?', transliteration: 'UPI cholbe?' },
   { id: 'ph-g5', category: 'greetings', english: 'Goodbye / See you again', bangla: 'ধন্যবাদ, আবার দেখা হবে', transliteration: 'Dhonnobad, aabar dekha hobe' },
 ]
+
+// ─── 2026 Puja calendar — PlanDay → ISO date string ────────────────────────
+// Used by the ICS exporter to convert a Planner tab into concrete VEVENT
+// dates. Kept in sync with the `tithis` array above; a real deployment reads
+// this from a server-published tithi feed for the year.
+export const PLAN_DAY_DATES: Record<PlanDay, string> = {
+  panchami: '2026-10-03',
+  shashthi: '2026-10-04',
+  saptami: '2026-10-05',
+  ashtami: '2026-10-06',
+  navami: '2026-10-07',
+  dashami: '2026-10-08',
+}

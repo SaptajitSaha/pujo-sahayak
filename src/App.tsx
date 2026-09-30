@@ -53,22 +53,35 @@ const BeyondPuja = lazy(loaders.BeyondPuja)
 const LocationPicker = lazy(loaders.LocationPicker)
 const Notifications = lazy(loaders.Notifications)
 
-/** Fire every route's chunk download + parse in parallel. Called from main.tsx
-    right after the app mounts so it runs during the inline CSS boot splash and
-    font decode — invisible to the user. Errors are swallowed: if a chunk fails
-    to preload (offline / flaky), the next real navigation re-attempts it and
-    the Suspense fallback covers that one transition. */
+/** Fire every route's chunk download + parse in staggered waves. Called from
+    main.tsx right after the app mounts so it runs during the inline CSS boot
+    splash and font decode — invisible to the user. Splitting into three waves
+    with `setTimeout(fn, 0)` between them lets the browser's network layer
+    settle between batches, so a mid-range Android WebView's local asset fetcher
+    doesn't saturate on 19 concurrent imports (which previously delayed the
+    Home page's own hydration). Errors are swallowed: if a chunk fails to
+    preload (offline / flaky), the next real navigation re-attempts it and the
+    Suspense fallback covers that one transition. */
 export function preloadRoutes() {
-  // Dynamic imports are async by nature — no need to defer via rAF, which
-  // would freeze the whole preload in a backgrounded WebView. Just kick them
-  // all off; the browser fetches them concurrently over the local asset layer.
-  for (const load of Object.values(loaders)) {
-    try {
-      load().catch(() => {})
-    } catch {
-      /* a loader throwing synchronously is non-fatal; navigation retries */
+  const names = Object.keys(loaders)
+  const wave = (list: string[]) => {
+    for (const name of list) {
+      try {
+        loaders[name as keyof typeof loaders]().catch(() => {})
+      } catch {
+        /* a loader throwing synchronously is non-fatal; navigation retries */
+      }
     }
   }
+  // Chunk size matters: the heaviest pages (PandalDetail 18 KB, LocationPicker
+  // 11 KB, Maya 7 KB, brain 19 KB for Maya's intent model) are split across
+  // waves so no single burst exceeds ~40 KB of simultaneous decompression.
+  const wave1 = names.filter((n) => ['Explore', 'SearchPage', 'Categories', 'Planner', 'TripMap', 'Favorites', 'Notifications'].includes(n))
+  const wave2 = names.filter((n) => ['PandalDetail', 'RestaurantDetail', 'Maya', 'Meets', 'CreateMeetup', 'Profile', 'Settings'].includes(n))
+  const wave3 = names.filter((n) => !wave1.includes(n) && !wave2.includes(n))
+  wave(wave1)
+  setTimeout(() => wave(wave2), 0)
+  setTimeout(() => wave(wave3), 0)
 }
 
 function RouteFallback() {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, Calendar, BookOpen } from 'lucide-react'
@@ -24,6 +25,20 @@ export default function Home() {
   const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
   const cityRestaurants = useMemo(() => restaurantsIn(selectedCity), [selectedCity])
   const cityEvents = useMemo(() => eventsIn(selectedCity), [selectedCity])
+
+  // Ad slabs are on-device-interactive: tapping one copies its coupon code
+  // (clipboard + toast) — the honest equivalent of "acting on" a hoarding
+  // without a backend. Same pattern as the share/copy affordances elsewhere.
+  const [homeToast, setHomeToast] = useState<string | null>(null)
+  const copyAndToast = async (text: string, msg: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setHomeToast(msg)
+    } catch {
+      setHomeToast(`${text} — copy not supported on this device`)
+    }
+    setTimeout(() => setHomeToast(null), 2200)
+  }
 
   // Real-calendar-aware "Today" chip. Only lights up when the visitor's local
   // date actually falls inside the 2026 Durga Puja window (Oct 3 – Oct 8).
@@ -196,7 +211,10 @@ export default function Home() {
               <h3 className="mt-0.5 text-sm font-semibold">{sponsored.title}</h3>
               <p className="mt-0.5 text-xs text-ink-soft">{sponsored.description}</p>
             </div>
-            <button className="my-auto mr-3 rounded-full border border-gold/60 px-3 py-1.5 text-xs font-medium text-gold transition-transform hover:scale-105 active:scale-95">
+            <button
+              className="my-auto mr-3 rounded-full border border-gold/60 px-3 py-1.5 text-xs font-medium text-gold transition-transform hover:scale-105 active:scale-95"
+              onClick={() => copyAndToast(sponsored.brand, `${sponsored.brand} copied — search it to find the store`)}
+            >
               {t('explore')}
             </button>
           </Card>
@@ -218,6 +236,7 @@ export default function Home() {
                 key={o.id}
                 type="button"
                 aria-label={`${o.brand}: ${o.title}`}
+                onClick={() => copyAndToast(o.code ?? o.brand, o.code ? `Coupon ${o.code} copied` : `${o.brand} copied`)}
                 className="relative block w-64 shrink-0 overflow-hidden rounded-card text-left shadow-card transition-transform active:scale-[0.98]"
               >
                 <Img palette={o.palette} alt={o.brand} className="h-40">
@@ -386,6 +405,19 @@ export default function Home() {
       {/* Trending pandals rail was removed — the Explore Spotlight coverflow
           at the top of Home already surfaces trending pandals, this second
           rail added scroll weight without adding information. */}
+
+      {/* Copy-coupon confirmation — portal'd to body: the Page wrapper is
+          transformed, which would capture position:fixed. */}
+      {homeToast && createPortal(
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="glass-strong rounded-full px-4 py-2 text-xs font-medium">{homeToast}</div>
+        </div>,
+        document.body,
+      )}
     </Page>
   )
 }

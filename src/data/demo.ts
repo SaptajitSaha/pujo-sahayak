@@ -359,8 +359,10 @@ for (const ev of events) if (PHOTOS[ev.id]) ev.palette = { ...ev.palette, img: P
 // (the earlier gap left 24 of 32 pandals imageless across Siliguri/Howrah/
 // Delhi). Chosen by theme keyword with a stable per-id rotation as the last
 // resort. Honest: these are the same AI-generated sample photos as above —
-// no real venue is claimed. Walks/Shopping keep the designed gradient by
-// intent (few, clearly non-photographic), so they are not filled here.
+// no real venue is claimed. Shopping and Walks are filled with category/theme
+// photos just below, so no rail renders as a bare gradient next to its
+// photo-bearing siblings. The Img gradient fallback stays intact as the true
+// last resort for any entity that still has no image.
 const PANDAL_PHOTOS = [
   '/img/pandal-grand.jpg', '/img/pandal-terracotta.jpg', '/img/pandal-traditional.jpg',
   '/img/pandal-tower.jpg', '/img/pandal-heritage.jpg', '/img/pandal-art.jpg',
@@ -408,6 +410,34 @@ export const walks: Walk[] = [
   { id: 'walk-foodie', title: 'Pujo Foodie Circuit', titleBn: 'পুজোর ফুডি সার্কিট', description: 'Street food to fine dining — hit 4 legendary spots between pandal visits. Best done Saptami–Navami evenings.', descBn: 'স্ট্রিট ফুড থেকে ফাইন ডাইনিং — প্যান্ডেলের ফাঁকে ৪টি কিংবদন্তি জায়গা।', theme: 'food', stops: [{ placeId: 'rest-oh-calcutta', highlight: 'Classic Bengali thali', durationMin: 45 }, { placeId: 'pandal-deshapriya', highlight: 'Quick darshan', durationMin: 15 }, { placeId: 'rest-6-ballygunge', highlight: 'Kosha mangsho + luchi', durationMin: 40 }, { placeId: 'pandal-suruchi', highlight: 'Evening aarati timing', durationMin: 20 }, { placeId: 'rest-kasturi', highlight: 'Mishti doi + street snacks', durationMin: 30 }], totalDurationMin: 190, palette: fire },
   { id: 'walk-family', title: 'Family Panchami Stroll', titleBn: 'পরিবারের পঞ্চমী হাঁটা', description: 'Easy pace, 4 pandals with kids-friendly facilities, help desks, and no long queues on Panchami morning.', descBn: 'সহজ গতি, ৪টি প্যান্ডেল — শিশু-বান্ধব, হেল্প ডেস্ক, পঞ্চমী সকালে লম্বা লাইন নেই।', theme: 'family', stops: [{ placeId: 'pandal-baghbazar', highlight: 'Heritage courtyard for kids', durationMin: 25 }, { placeId: 'pandal-kalyani-iti', highlight: 'Village artisans — kids love this', durationMin: 30 }, { placeId: 'pandal-tridhara', highlight: 'Low crowd, easy parking', durationMin: 20 }, { placeId: 'pandal-ekdalia', highlight: 'Traditional pushpanjali', durationMin: 25 }], totalDurationMin: 100, palette: lamp },
 ]
+
+// ─── Shopping + Walks imagery ────────────────────────────────────────────────
+// Illustrative photos for the two rails that previously rendered as bare
+// gradients. Reuses the existing honest AI-sample pool (same convention as the
+// pandal/offers fill above) — chosen by product category / walk theme, so the
+// Shopping and Curated Walks cards read as photographic like every sibling.
+// A few categories share an image (small rail cards, repetition is invisible
+// when scrolling); no real product or venue is claimed.
+const SHOP_PHOTOS: Record<string, string> = {
+  s1: '/img/tanting-saree.jpg',   // Baluchari silk saree
+  s2: '/img/offer-apparel.jpg',   // handloom tant saree
+  s3: '/img/offer-watch.jpg',     // shakha-pola adornment
+  s4: '/img/offer-watch.jpg',     // gold-plated haar
+  s5: '/img/offer-apparel.jpg',   // kids frock lehenga
+  s6: '/img/offer-apparel.jpg',   // dhuti-kurta set
+  s7: '/img/offer-shoes.jpg',     // mojari jutti
+  s8: '/img/food-thali.jpg',      // brass pujo thali
+  s9: '/img/offer-gadgets.jpg',   // hand-painted jute tote
+  s10: '/img/offer-apparel.jpg',  // kantha quilt (textile)
+}
+for (const s of shopping) if (SHOP_PHOTOS[s.id]) s.palette = { ...s.palette, img: SHOP_PHOTOS[s.id] }
+
+const WALK_PHOTOS: Record<string, string> = {
+  'walk-photographer': '/img/pandal-neon.jpg',   // golden-hour → night lights
+  'walk-foodie': '/img/food-bengali.jpg',        // pujo food circuit
+  'walk-family': '/img/pandal-grand.jpg',        // easy family stroll
+}
+for (const w of walks) if (WALK_PHOTOS[w.id]) w.palette = { ...w.palette, img: WALK_PHOTOS[w.id] }
 
 // ─── Parking ─────────────────────────────────────────────────────────────────
 export const parkingSpots: ParkingSpot[] = [

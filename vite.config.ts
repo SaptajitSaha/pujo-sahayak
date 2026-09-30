@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'pwa-192x192.jpg', 'pwa-512x512.jpg', 'maskable-icon-512x512.jpg'],
       manifest: {
         name: 'Pujo Sahayak',
         short_name: 'PujoSahayak',
@@ -23,22 +23,22 @@ export default defineConfig({
         scope: '/',
         start_url: '/',
         icons: [
-          // SVG is the primary form factor on Android and works fine in Chrome
-          // PWA install prompts. The PNG raster icons are generated once via
-          // scripts/gen-icons.mjs (from public/icon.svg) and committed here so
-          // iOS Safari, older Android WebViews and Lighthouse's PWA audit all
-          // see a matching pixel-size entry.
-          { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-          { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          // The launcher/install icon is the Durga-face mark (see
+          // scripts/app-icon-source.png → scripts/make-icons.ps1, which
+          // rasterizes every PNG size). PNGs are committed so iOS Safari,
+          // older Android WebViews and Lighthouse's PWA audit all see a
+          // matching pixel-size entry; the maskable variant lets adaptive
+          // launchers apply their own shape over the white background.
+          { src: 'pwa-192x192.jpg', sizes: '192x192', type: 'image/jpeg', purpose: 'any' },
+          { src: 'pwa-512x512.jpg', sizes: '512x512', type: 'image/jpeg', purpose: 'any' },
+          { src: 'maskable-icon-512x512.jpg', sizes: '512x512', type: 'image/jpeg', purpose: 'maskable' },
         ],
         // Long-press app-icon shortcuts (Android 8.0+ launchers). Each maps to
         // an in-app route so the Service Worker scope handles the navigation.
         shortcuts: [
-          { name: 'Ask Maya', short_name: 'Maya', description: 'Chat with Maya about pandals', url: '/maya', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
-          { name: 'Plan my day', short_name: 'Plan', description: 'Open the Puja Planner', url: '/planner', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
-          { name: 'Emergency', short_name: 'SOS', description: 'Safety and helplines', url: '/safety', icons: [{ src: 'pwa-192x192.png', sizes: '192x192' }] },
+          { name: 'Ask Maya', short_name: 'Maya', description: 'Chat with Maya about pandals', url: '/maya', icons: [{ src: 'pwa-192x192.jpg', sizes: '192x192' }] },
+          { name: 'Plan my day', short_name: 'Plan', description: 'Open the Puja Planner', url: '/planner', icons: [{ src: 'pwa-192x192.jpg', sizes: '192x192' }] },
+          { name: 'Emergency', short_name: 'SOS', description: 'Safety and helplines', url: '/safety', icons: [{ src: 'pwa-192x192.jpg', sizes: '192x192' }] },
         ],
         // Accept shared URLs from other apps (Chrome "Share → Pujo Sahayak").
         // The service worker intercepts POST/GET on /share-target and redirects

@@ -11,6 +11,14 @@ import { useT } from '../i18n'
 /* Signature easing curve — soft overshoot settle, used across the app. */
 export const EASE = [0.22, 1, 0.36, 1] as const
 
+/* Flip the .dark class on <html> right now, without waiting for React's
+   effect pass. Same derivation as App's useApplyTheme. Used by the theme
+   toggle's View Transition, whose update callback must change the DOM
+   synchronously for the snapshot pair to capture old → new. */
+export function applyThemeClassNow(dark: boolean) {
+  document.documentElement.classList.toggle('dark', dark)
+}
+
 /* Pause the always-on paint animations (fluid nav gradient, animated search
    border) for the duration of each scroll, resuming ~160ms after it stops. Those
    loops animate background-position / a conic @property angle on the MAIN thread,
@@ -530,12 +538,47 @@ export function ThemeToggle() {
   // class here would be one render stale because App toggles it in a useEffect.
   const systemDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
   const isDark = theme === 'dark' || (theme === 'system' && systemDark)
+  const btnRef = useRef<HTMLButtonElement>(null)
+
+  const flip = () => {
+    const nextDark = !isDark
+    // Reveal animation: a circle grows out of the exact centre of this icon
+    // and unveils the other theme (View Transitions API). The html class is
+    // flipped synchronously inside the callback — waiting for App's useEffect
+    // could paint the new theme one frame early, outside the snapshot.
+    type DocWithVT = Document & { startViewTransition?: (o: { updateCallback: () => void | Promise<void> }) => { updateCallback: () => void | Promise<void> } }
+    const doc = document as DocWithVT
+    const reduce = useApp.getState().reduceMotion
+    const apply = () => applyThemeClassNow(nextDark)
+    if (doc.startViewTransition && !reduce) {
+      const rect = btnRef.current?.getBoundingClientRect()
+      const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
+      const y = rect ? rect.top + rect.height / 2 : 0
+      // Farthest viewport corner from the icon — circle must cover everything.
+      const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+      // Custom-update callback: applying the class here hands the transition
+      // an explicit old→new DOM pair; both theme snapshots are captured
+      // inside it (one rAF so React's sync pass has flushed).
+      doc.startViewTransition({
+        updateCallback: async () => { apply(); await new Promise((res) => requestAnimationFrame(res)) },
+      })
+      const st = document.documentElement.style
+      st.setProperty('--vt-x', `${x}px`)
+      st.setProperty('--vt-y', `${y}px`)
+      st.setProperty('--vt-r', `${Math.ceil(r)}px`)
+    } else {
+      apply()
+    }
+    setTheme(nextDark ? 'dark' : 'light')
+  }
+
   return (
     <motion.button
+      ref={btnRef}
       whileTap={{ scale: 0.82, rotate: 90 }}
       transition={{ type: 'spring', stiffness: 380, damping: 16 }}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      onClick={flip}
       className="relative grid h-8 w-8 place-items-center rounded-full text-vermilion"
     >
       <AnimatePresence mode="wait" initial={false}>

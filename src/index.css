@@ -314,3 +314,28 @@ html.is-scrolling .animated-border::before {
   font: inherit;
   background: var(--color-ivory-deep);
 }
+
+/* Theme reveal — a circle grows from the toggle icon's centre (--vt-x/--vt-y,
+   set by ThemeToggle before the transition starts) and unveils the new theme.
+   Custom properties are inheritable, so they reach the ::view-transition
+   pseudo-elements. On Chromium below 115 (no custom-update callback) the
+   :root cross-fade below still applies as the graceful fallback; in browsers
+   with no View Transitions at all the class flip is simply instant. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 480ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Old theme snapshot holds still underneath… */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* …while the new one is unveiled by a circle growing out of the icon. */
+::view-transition-new(root) {
+  animation-name: vt-reveal-circle;
+}
+@keyframes vt-reveal-circle {
+  from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  to   { clip-path: circle(var(--vt-r, 0) at var(--vt-x, 50%) var(--vt-y, 50%)); }
+}

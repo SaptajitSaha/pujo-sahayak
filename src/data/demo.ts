@@ -354,6 +354,31 @@ const PHOTOS: Record<string, string> = {
 for (const pl of places) if (PHOTOS[pl.id]) pl.palette = { ...pl.palette, img: PHOTOS[pl.id] }
 for (const ev of events) if (PHOTOS[ev.id]) ev.palette = { ...ev.palette, img: PHOTOS[ev.id] }
 
+// Illustrative stand-ins for pandals that have no curated photo, so a card
+// never renders as a bare gradient right next to its photo-bearing siblings
+// (the earlier gap left 24 of 32 pandals imageless across Siliguri/Howrah/
+// Delhi). Chosen by theme keyword with a stable per-id rotation as the last
+// resort. Honest: these are the same AI-generated sample photos as above —
+// no real venue is claimed. Walks/Shopping keep the designed gradient by
+// intent (few, clearly non-photographic), so they are not filled here.
+const PANDAL_PHOTOS = [
+  '/img/pandal-grand.jpg', '/img/pandal-terracotta.jpg', '/img/pandal-traditional.jpg',
+  '/img/pandal-tower.jpg', '/img/pandal-heritage.jpg', '/img/pandal-art.jpg',
+  '/img/pandal-sculpture.jpg', '/img/pandal-neon.jpg',
+]
+const hashIdx = (s: string, n: number) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h % n }
+const themePhoto = (theme: string, id: string): string => {
+  const t = (theme || '').toLowerCase()
+  if (/terracotta|clay/.test(t)) return '/img/pandal-terracotta.jpg'
+  if (/light|neon|cathedral|installation|modern/.test(t)) return '/img/pandal-neon.jpg'
+  if (/sculpt|idol|stone|cave|kumortuli|ravana|three worlds/.test(t)) return '/img/pandal-sculpture.jpg'
+  if (/heritage|traditional|tradition|barowari|barari|bonedi|boat|river|renaissance|journey|haat|shakti/.test(t)) return '/img/pandal-heritage.jpg'
+  if (/\bart\b|weav|folk|craft|paper|eternal|city|tower/.test(t)) return '/img/pandal-art.jpg'
+  if (/nature|tea|green|marigold|silk/.test(t)) return '/img/pandal-grand.jpg'
+  return PANDAL_PHOTOS[hashIdx(id, PANDAL_PHOTOS.length)]
+}
+for (const pl of places) if (!pl.palette.img && pl.type === 'pandal') pl.palette = { ...pl.palette, img: themePhoto(pl.theme ?? '', pl.id) }
+
 /** Approximate user position for demo distance rendering (Ballygunge, Kolkata). */
 export const DEMO_USER = { lat: 22.527, lng: 88.359 }
 

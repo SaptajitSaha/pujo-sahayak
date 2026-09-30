@@ -5,11 +5,12 @@ import {
   Bookmark, BookmarkCheck, CalendarCheck, Check, ChevronRight, Camera,
   MapPin, Route as RouteIcon, Share2, ShieldCheck, Sparkles, TrainFront, Truck,
 } from 'lucide-react'
-import { Button, Card, EASE, Img, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag } from '../components/ui'
+import { Button, Card, EASE, Img, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
 import { haversineKm } from '../lib/geo'
+import { makeShareCard, shareCardFile } from '../lib/shareCard'
 import { useT } from '../i18n'
 
 export default function PandalDetail() {
@@ -24,6 +25,45 @@ export default function PandalDetail() {
   const track = useApp((s) => s.track)
   const [photoState, setPhotoState] = useState<'idle' | 'checking' | 'ok'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
+  const reviews = useApp((s) => s.reviews)
+  const addReview = useApp((s) => s.addReview)
+  const [cardBusy, setCardBusy] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [draftRating, setDraftRating] = useState(0)
+  const [draftText, setDraftText] = useState('')
+  const [toast, setToast] = useState<string | null>(null)
+
+  const onShareCard = async () => {
+    if (!place) return
+    setCardBusy(true)
+    try {
+      const url = `${window.location.origin}/pandal/${place.id}`
+      const blob = await makeShareCard(place, { url })
+      const shared = await shareCardFile(blob, `pujo-${place.id}.png`, place.name)
+      setToast(shared ? 'Card shared' : 'Card saved to Downloads')
+    } catch {
+      setToast('Card generation failed on this device')
+    } finally {
+      setCardBusy(false)
+      setTimeout(() => setToast(null), 2500)
+    }
+  }
+
+  const userReviews = place ? reviews.filter((r) => r.placeId === place.id) : []
+
+  const submitReview = () => {
+    if (!place || draftRating < 1) return
+    addReview({
+      placeId: place.id,
+      rating: draftRating,
+      text: draftText.trim() || ' ',
+    })
+    setReviewOpen(false)
+    setDraftRating(0)
+    setDraftText('')
+    setToast('Thanks — review saved on this device')
+    setTimeout(() => setToast(null), 2500)
+  }
 
   const similar = useMemo(() => {
     if (!place) return []
@@ -113,7 +153,9 @@ export default function PandalDetail() {
             <ChevronRight size={18} className="rotate-180" />
           </button>
           <div className="flex gap-2">
-            <button aria-label="Share" className="rounded-full bg-night/50 p-2 text-on-image"><Share2 size={16} /></button>
+            <button aria-label="Share" onClick={onShareCard} disabled={cardBusy} className="rounded-full bg-night/50 p-2 text-on-image disabled:opacity-60">
+              <Share2 size={16} className={cardBusy ? 'animate-pulse' : ''} />
+            </button>
             <button
               aria-label={isSaved ? 'Remove from saved' : 'Save'}
               onClick={() => toggleSaved(place.id)}
@@ -193,7 +235,14 @@ export default function PandalDetail() {
             <p className="text-sm leading-relaxed text-ink-soft">{place.story}</p>
             <div className="mt-2 flex flex-wrap gap-2 text-xs text-faint">
               <span className="rounded-full bg-ivory-deep px-2.5 py-1">Theme: <b className="text-ink">{place.theme}</b></span>
-              {place.artist && <span className="rounded-full bg-ivory-deep px-2.5 py-1">Artist: <b className="text-ink">{place.artist}</b></span>}
+              {place.artist && (
+                <button
+                  onClick={() => nav(`/artist/${encodeURIComponent(place.artist!)}`)}
+                  className="rounded-full bg-ivory-deep px-2.5 py-1 transition-colors hover:bg-vermilion/10"
+                >
+                  Artist: <b className="text-ink">{place.artist}</b> ›
+                </button>
+              )}
               {place.metro && <span className="rounded-full bg-ivory-deep px-2.5 py-1">🚇 {place.metro}</span>}
             </div>
           </section>
@@ -226,10 +275,23 @@ export default function PandalDetail() {
           </section>
         ) : null}
 
-        {/* What others say */}
+        {/* What others say — user reviews (persisted) on top, demo seed under */}
         <section className="mt-5">
-          <SectionHeader title={t('whatOthersSay')} />
+          <div className="mb-2 flex items-center justify-between">
+            <SectionHeader title={t('whatOthersSay')} />
+            <Chip onClick={() => setReviewOpen(true)}>{t('rateThis')}</Chip>
+          </div>
           <div className="space-y-2">
+            {userReviews.map((r) => (
+              <Card key={r.id} className="p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium">You</p>
+                  <Stars rating={r.rating} />
+                </div>
+                {r.text.trim() && <p className="mt-1 text-sm text-ink-soft">“{r.text}”</p>}
+                <p className="mt-1 text-[10px] text-faint">{new Date(r.createdAt).toLocaleDateString()}</p>
+              </Card>
+            ))}
             {place.reviews?.length ? place.reviews.map((r) => (
               <Card key={r.id} className="p-3">
                 <div className="flex items-center justify-between">
@@ -239,9 +301,46 @@ export default function PandalDetail() {
                 <p className="mt-1 text-sm text-ink-soft">“{r.text}”</p>
                 <p className="mt-1 text-[10px] text-faint">{r.date}</p>
               </Card>
-            )) : <p className="text-sm text-faint">No reviews yet.</p>}
+            )) : userReviews.length === 0 && <p className="text-sm text-faint">No reviews yet.</p>}
           </div>
         </section>
+
+        {reviewOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-night/60" onClick={() => setReviewOpen(false)}>
+            <motion.div
+              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+              className="w-full max-w-lg rounded-t-2xl bg-card p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-base font-semibold">{t('rateThis')} — {place.name}</h3>
+              <div className="mt-3 flex justify-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button key={n} aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`} onClick={() => setDraftRating(n)} className="p-1 text-2xl">
+                    <span className={n <= draftRating ? 'text-gold-bright' : 'text-ink/20'}>★</span>
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={draftText}
+                onChange={(e) => setDraftText(e.target.value)}
+                placeholder="Optional: what stood out?"
+                rows={3}
+                className="mt-3 w-full rounded-card border border-ink/10 bg-ivory-deep p-3 text-sm outline-none focus:border-vermilion"
+              />
+              <div className="mt-3 flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setReviewOpen(false)}>Cancel</Button>
+                <Button className="flex-1" disabled={draftRating === 0} onClick={submitReview}>Save review</Button>
+              </div>
+              <p className="mt-2 text-[10px] text-faint">Reviews stay on this device in the demo build — no account, no upload.</p>
+            </motion.div>
+          </div>
+        )}
+
+        {toast && (
+          <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">
+            <div className="glass-strong rounded-full px-4 py-2 text-xs font-medium">{toast}</div>
+          </div>
+        )}
 
         {/* Top clicks + upload */}
         <section className="mt-5">

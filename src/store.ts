@@ -1,9 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
-  AppNotification, Lang, MissingPersonReport, PlanDay, PlanStop, SavedAddress, Theme,
+  AppNotification, City, Lang, MissingPersonReport, PlanDay, PlanStop, SavedAddress, Theme, TrustedContact, UserReview,
 } from './data/types'
 import { placeById } from './data/demo'
+import { haversineKm } from './lib/geo'
 
 export const PLAN_DAYS: PlanDay[] = ['panchami', 'shashthi', 'saptami', 'ashtami', 'navami', 'dashami']
 
@@ -36,6 +37,12 @@ interface AppState {
   // Notifications
   notifications: AppNotification[]
 
+  // Phase 1 new slices
+  reviews: UserReview[]
+  trustedContacts: TrustedContact[]
+  selectedCity: City
+  sosActive: boolean
+
   toggleSaved: (id: string) => void
   toggleVisited: (id: string) => void
   addStop: (day: PlanDay, stop: PlanStop) => void
@@ -56,6 +63,11 @@ interface AppState {
   removeAddress: (id: string) => void
   markAllNotifsRead: () => void
   markNotifRead: (id: string) => void
+  addReview: (r: Omit<UserReview, 'id' | 'createdAt'>) => void
+  removeReview: (id: string) => void
+  setTrustedContacts: (c: TrustedContact[]) => void
+  setSelectedCity: (c: City) => void
+  setSosActive: (v: boolean) => void
 }
 
 const emptyPlanner: Record<PlanDay, PlanStop[]> = {
@@ -96,6 +108,10 @@ export const useApp = create<AppState>()(
       geoTried: false,
       savedAddresses: SEED_ADDRESSES,
       notifications: SEED_NOTIFICATIONS,
+      reviews: [],
+      trustedContacts: [],
+      selectedCity: 'kolkata',
+      sosActive: false,
 
       toggleSaved: (id) =>
         set((s) => ({ saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
@@ -149,33 +165,32 @@ export const useApp = create<AppState>()(
       markAllNotifsRead: () => set((s) => ({ notifications: s.notifications.map((n) => ({ ...n, read: true })) })),
       markNotifRead: (id) =>
         set((s) => ({ notifications: s.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) })),
+      addReview: (r) => set((s) => ({ reviews: [{ ...r, id: 'rev-' + Date.now(), createdAt: new Date().toISOString() }, ...s.reviews] })),
+      removeReview: (id) => set((s) => ({ reviews: s.reviews.filter((x) => x.id !== id) })),
+      setTrustedContacts: (trustedContacts) => set({ trustedContacts }),
+      setSelectedCity: (selectedCity) => set({ selectedCity }),
+      setSosActive: (sosActive) => set({ sosActive }),
     }),
     {
       name: 'pujo-sahayak',
-      version: 1,
-      // v1 introduced notification deep-links. Existing installs already persisted a
-      // notifications array without `href`, and that stored array would otherwise win
-      // over the seed. Re-attach href by id while preserving each item's read state.
-      migrate: (persisted) => {
+      version: 2,
+      // v2 adds reviews, trustedContacts, selectedCity, sosActive. Existing
+      // installs persisted without these; provide safe defaults.
+      migrate: (persisted, oldVersion) => {
         const p = persisted as Partial<AppState> | undefined
-        if (p && Array.isArray(p.notifications)) {
+        if (!p) return {} as unknown as AppState
+        if (oldVersion < 1 && Array.isArray(p.notifications)) {
           p.notifications = p.notifications.map((n) => {
             const seed = SEED_NOTIFICATIONS.find((s) => s.id === n.id)
             return seed ? { ...n, href: seed.href } : n
           })
         }
+        if (!p.reviews) p.reviews = []
+        if (!p.trustedContacts) p.trustedContacts = []
+        if (!p.selectedCity) p.selectedCity = 'kolkata'
+        if (p.sosActive === undefined) p.sosActive = false
         return p as AppState
       },
     },
   ),
 )
-
-export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLng = ((lng2 - lng1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}

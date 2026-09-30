@@ -2,7 +2,7 @@
 // Names, areas, themes and metro stations are real; ratings, crowds, timings,
 // reviews and photos are ILLUSTRATIVE DEMO CONTENT for UI development.
 import type {
-  CategoryDef, Dish, EventItem, Meetup, Offer, Palette, Place, SafetyPoint, ShoppingProduct, SponsoredItem,
+  Artist, BloodBank, CategoryDef, CityDef, Dish, EventItem, Meetup, MetroETA, Offer, Palette, ParkingSpot, Phrase, Place, SafetyPoint, ShoppingProduct, SponsoredItem, Tithi, Walk,
 } from './types'
 
 export const IS_DEMO = true
@@ -304,3 +304,102 @@ for (const ev of events) if (PHOTOS[ev.id]) ev.palette = { ...ev.palette, img: P
 
 /** Approximate user position for demo distance rendering (Ballygunge, Kolkata). */
 export const DEMO_USER = { lat: 22.527, lng: 88.359 }
+
+// ─── Cities ──────────────────────────────────────────────────────────────────
+export const CITIES: CityDef[] = [
+  { id: 'kolkata', label: 'Kolkata', labelBn: 'কলকাতা', lat: 22.5726, lng: 88.3639 },
+  { id: 'siliguri', label: 'Siliguri', labelBn: 'শিলিগুড়ি', lat: 26.7271, lng: 88.3953 },
+  { id: 'howrah', label: 'Howrah', labelBn: 'হাওড়া', lat: 22.5958, lng: 88.3639 },
+  { id: 'new-delhi', label: 'New Delhi', labelBn: 'নতুন দিল্লি', lat: 28.6139, lng: 77.209 },
+]
+
+// ─── Artists ─────────────────────────────────────────────────────────────────
+export const artists: Artist[] = [
+  { id: 'artist-paresh', name: 'Paresh Das', nameBn: 'পারেশ দাস', specialty: 'Grand pandal architecture', bio: 'Third-generation Kumortuli artisan known for record-breaking pandal structures spanning 100+ feet.', bioBn: 'তিন প্রজন্মের কুমোরটুলি শিল্পী, ১০০+ ফুট বিশাল প্যান্ডেল কাঠামোর জন্য বিখ্যাত।', palette: clay, pandalIds: ['pandal-santosh-mitra', 'pandal-deshapriya'] },
+  { id: 'artist-ramkumar', name: 'Ram Kumar Sutradhar', nameBn: 'রামকুমার সূত্রধর', specialty: 'Idol sculpting', bio: 'Master of traditional idol-making, sculpting Durga murtis with authentic clay from Hooghly riverbanks.', bioBn: 'হুগলি নদীর তীরের মাটিতে ঐতিহ্যবাহী দুর্গা মূর্তি গড়েন।', palette: lamp, pandalIds: ['pandal-ekdalia', 'pandal-baghbazar'] },
+  { id: 'artist-manju', name: 'Manju Didi', nameBn: 'মঞ্জু দিদি', specialty: 'Terracotta panels', bio: 'Revived Bankura terracotta art form in pandal decor; known for hand-fired panels depicting rural Bengal.', bioBn: 'বাঁকুড়ার টেরাকোটা শিল্প প্যান্ডেল সজ্জায় ফিরিয়ে এনেছেন।', palette: fire, pandalIds: ['pandal-kalyani-iti'] },
+  { id: 'artist-arun', name: 'Aun Acharya', nameBn: 'আন আচার্য', specialty: 'Light and shadow installation', bio: 'Pioneer of interactive light art — uses reflections and shadow-play to narrate mythological stories.', bioBn: 'আলো-ছায়া দিয়ে পৌরাণিক গল্প শোনান।', palette: dusk, pandalIds: ['pandal-mudiali', 'pandal-tridhara'] },
+  { id: 'artist-bimal', name: 'Bimal Chitrakar', nameBn: 'বিমল চিত্রকার', specialty: 'Hand-painted backdrops', bio: 'Patua tradition — hand-paints massive canvas backdrops using natural pigments, taking 40+ days per pandal.', bioBn: 'পটুয়া সম্প্রদায়ের শিল্পী, প্রাকৃতিক রঙে ৪০+ দিনে পটভূমি আঁকেন।', palette: silk, pandalIds: ['pandal-suruchi'] },
+  { id: 'artist-kanak', name: 'Kanak Sen', nameBn: 'কনক সেন', specialty: 'Bamboo and cane structures', bio: 'Uses only sustainable bamboo and cane — zero plastic, zero thermocol. Each pandal is 100% biodegradable.', bioBn: 'শুচি বাঁশ ও বেত ব্যবহার করেন — ১০০% বায়োডিগ্রেডেবল।', palette: brass, pandalIds: ['pandal-baghbazar'] },
+  { id: 'artist-santi', name: 'Santi Bose', nameBn: 'শান্তি বসু', specialty: 'Paper craft and marie gold', bio: 'Uses handmade paper and marigold to create ephemeral art installations that change colour through the evening.', bioBn: 'হাতে তৈরি কাগজ ও গাঁদা ফুল দিয়ে ক্ষণস্থায়ী শিল্পInstallation তৈরি করেন।', palette: marigold, pandalIds: ['pandal-deshapriya'] },
+  { id: 'artist-jhantu', name: 'Jhantu Pal', nameBn: 'ঝান্টু পাল', specialty: 'Clay relief murals', bio: "Creates massive clay relief murals telling stories of Bengal's freedom movement and folk legends.", bioBn: 'বাংলার স্বাধীনতা সংগ্রাম ও লোককাহিনী নিয়ে বিশাল মাটির আলেখা তৈরি করেন।', palette: night, pandalIds: ['pandal-santosh-mitra'] },
+]
+
+// ─── Walks ───────────────────────────────────────────────────────────────────
+export const walks: Walk[] = [
+  { id: 'walk-photographer', title: "Photographer's Light Walk", titleBn: 'ফটোগ্রাফারের আলোর হাঁটা', description: 'Golden hour to night lights — five pandals chosen for their interaction with evening light. Wide-angle heaven.', descBn: 'সোনালি সময় থেকে রাতের আলো — পাঁচটি প্যান্ডেল যারা সন্ধ্যার আলোর সাথে খেলে।', theme: 'photography', stops: [{ placeId: 'pandal-mudiali', highlight: 'Light changes every hour', durationMin: 25 }, { placeId: 'pandal-deshapriya', highlight: 'Tower silhouette at dusk', durationMin: 30 }, { placeId: 'pandal-santosh-mitra', highlight: 'Golden glow on facade', durationMin: 25 }, { placeId: 'pandal-suruchi', highlight: 'Sculpture close-ups', durationMin: 20 }, { placeId: 'pandal-tridhara', highlight: 'Neon after dark', durationMin: 20 }], totalDurationMin: 120, palette: dusk },
+  { id: 'walk-foodie', title: 'Pujo Foodie Circuit', titleBn: 'পুজোর ফুডি সার্কিট', description: 'Street food to fine dining — hit 4 legendary spots between pandal visits. Best done Saptami–Navami evenings.', descBn: 'স্ট্রিট ফুড থেকে ফাইন ডাইনিং — প্যান্ডেলের ফাঁকে ৪টি কিংবদন্তি জায়গা।', theme: 'food', stops: [{ placeId: 'rest-oh-calcutta', highlight: 'Classic Bengali thali', durationMin: 45 }, { placeId: 'pandal-deshapriya', highlight: 'Quick darshan', durationMin: 15 }, { placeId: 'rest-6-ballygunge', highlight: 'Kosha mangsho + luchi', durationMin: 40 }, { placeId: 'pandal-suruchi', highlight: 'Evening aarati timing', durationMin: 20 }, { placeId: 'rest-kasturi', highlight: 'Mishti doi + street snacks', durationMin: 30 }], totalDurationMin: 190, palette: fire },
+  { id: 'walk-family', title: 'Family Panchami Stroll', titleBn: 'পরিবারের পঞ্চমী হাঁটা', description: 'Easy pace, 4 pandals with kids-friendly facilities, help desks, and no long queues on Panchami morning.', descBn: 'সহজ গতি, ৪টি প্যান্ডেল — শিশু-বান্ধব, হেল্প ডেস্ক, পঞ্চমী সকালে লম্বা লাইন নেই।', theme: 'family', stops: [{ placeId: 'pandal-baghbazar', highlight: 'Heritage courtyard for kids', durationMin: 25 }, { placeId: 'pandal-kalyani-iti', highlight: 'Village artisans — kids love this', durationMin: 30 }, { placeId: 'pandal-tridhara', highlight: 'Low crowd, easy parking', durationMin: 20 }, { placeId: 'pandal-ekdalia', highlight: 'Traditional pushpanjali', durationMin: 25 }], totalDurationMin: 100, palette: lamp },
+]
+
+// ─── Parking ─────────────────────────────────────────────────────────────────
+export const parkingSpots: ParkingSpot[] = [
+  { id: 'park-1', name: 'Deshapriya Park Ground', area: 'South Kolkata', lat: 22.5082, lng: 88.3415, capacityHint: 'large', walkTimeMin: 3, ratePerHour: 40, nearestPandalIds: ['pandal-deshapriya', 'pandal-mudiali'] },
+  { id: 'park-2', name: 'Ballygunge Bird Park', area: 'Ballygunge', lat: 22.5270, lng: 88.3600, capacityHint: 'medium', walkTimeMin: 5, ratePerHour: 30, nearestPandalIds: ['pandal-ekdalia', 'pandal-tridhara'] },
+  { id: 'park-3', name: 'Suruchi Sangha Maidan', area: 'Rashbehari', lat: 22.5015, lng: 88.3490, capacityHint: 'large', walkTimeMin: 2, ratePerHour: 50, nearestPandalIds: ['pandal-suruchi'] },
+  { id: 'park-4', name: 'Santosh Mitra Square Lot', area: 'Bowbazar', lat: 22.5480, lng: 88.3580, capacityHint: 'medium', walkTimeMin: 1, ratePerHour: 60, nearestPandalIds: ['pandal-santosh-mitra'] },
+  { id: 'park-5', name: 'Baghbazar Bazar Sq.', area: 'Baghbazar', lat: 22.5810, lng: 88.3745, capacityHint: 'small', walkTimeMin: 4, ratePerHour: 25, nearestPandalIds: ['pandal-baghbazar'] },
+  { id: 'park-6', name: 'Koley Market Metro Lot', area: 'Koley Market', lat: 22.5460, lng: 88.3710, capacityHint: 'large', walkTimeMin: 8, ratePerHour: 20, nearestPandalIds: ['pandal-santosh-mitra', 'pandal-kalyani-iti'] },
+  { id: 'park-7', name: 'Gariahat Hat Field', area: 'Gariahat', lat: 22.5195, lng: 88.3610, capacityHint: 'medium', walkTimeMin: 6, ratePerHour: 35, nearestPandalIds: ['pandal-mudiali', 'pandal-deshapriya'] },
+  { id: 'park-8', name: 'Mudiali Club Ground', area: 'Lake Market', lat: 22.5150, lng: 88.3350, capacityHint: 'small', walkTimeMin: 2, ratePerHour: 45, nearestPandalIds: ['pandal-mudiali'] },
+]
+
+// ─── Blood Banks ─────────────────────────────────────────────────────────────
+export const bloodBanks: BloodBank[] = [
+  { id: 'bb1', name: 'BCCGH Blood Bank', hospital: 'Bose & Chandra, Medical College & Hospital', area: 'Ballygunge', lat: 22.5285, lng: 88.3670, phone: '033-2419-4764', availableGroups: ['A+', 'B+', 'O+', 'AB+'], hours: '24/7' },
+  { id: 'bb2', name: 'SSKM Blood Bank', hospital: 'SSKM Institute of Cardiology', area: 'Ballygunge', lat: 22.5320, lng: 88.3580, phone: '033-2283-5444', availableGroups: ['A+', 'A-', 'B+', 'O+', 'O-', 'AB+'], hours: '24/7' },
+  { id: 'bb3', name: 'R.G. Kar Blood Bank', hospital: 'Chittaranjan National Cancer Institute', area: 'Bhowanipore', lat: 22.5348, lng: 88.3450, phone: '033-2247-6400', availableGroups: ['B+', 'O+', 'O-'], hours: '8 AM – 10 PM' },
+  { id: 'bb4', name: 'IPGMER Blood Bank', hospital: 'Indian Post Graduate Medical Institute', area: 'Jadavpur', lat: 22.4945, lng: 88.3670, phone: '033-2373-3905', availableGroups: ['A+', 'B+', 'B-', 'O+', 'AB+'], hours: '24/7' },
+  { id: 'bb5', name: 'Calcuttra Medical Research blood Bank', hospital: 'Calcuttra Medical Research (CMRI)', area: 'Kasba', lat: 22.5280, lng: 88.3750, phone: '033-2379-0601', availableGroups: ['A+', 'O+', 'AB+'], hours: '9 AM – 9 PM' },
+  { id: 'bb6', name: 'NRS Blood Bank', hospital: 'Nil Ratan Sikkhata Memorial', area: 'Surutunga', lat: 22.5340, lng: 88.3530, phone: '033-2225-1602', availableGroups: ['A+', 'A-', 'B+', 'O+', 'O-', 'AB+', 'AB-'], hours: '24/7' },
+]
+
+// ─── Metro Timetable (Sample data) ──────────────────────────────────────────
+export const metroETAs: MetroETA[] = [
+  { id: 'mt1', station: 'Koley Market', line: 'Green Line (Line 3)', firstTrain: '6:15 AM', lastTrain: '11:30 PM', frequencyMin: 8, nearestPandalIds: ['pandal-santosh-mitra', 'pandal-kalyani-iti'] },
+  { id: 'mt2', station: 'Pyne Bazar', line: 'Purple Line (Line 2)', firstTrain: '6:00 AM', lastTrain: '11:15 PM', frequencyMin: 7, nearestPandalIds: ['pandal-baghbazar'] },
+  { id: 'mt3', station: 'Netaji Bhawan', line: 'Blue Line (Line 1)', firstTrain: '6:35 AM', lastTrain: '10:45 PM', frequencyMin: 5, nearestPandalIds: ['pandal-deshapriya', 'pandal-mudiali'] },
+  { id: 'mt4', station: 'Radha Govind Metro', line: 'Orange Line', firstTrain: '6:20 AM', lastTrain: '11:00 PM', frequencyMin: 6, nearestPandalIds: ['pandal-ekdalia', 'pandal-tridhara'] },
+  { id: 'mt5', station: 'Hemanta Mukherjee', line: 'Blue Line (Line 1)', firstTrain: '6:40 AM', lastTrain: '10:30 PM', frequencyMin: 6, nearestPandalIds: ['pandal-suruchi'] },
+  { id: 'mt6', station: 'Jadavpur', line: 'Green Line (Line 3)', firstTrain: '6:25 AM', lastTrain: '11:45 PM', frequencyMin: 8, nearestPandalIds: [] },
+]
+
+// ─── Tithi Calendar (2026 Durga Puja) ────────────────────────────────────────
+export const tithis: Tithi[] = [
+  { id: 't0', day: 0, name: 'Mahalaya', nameBn: 'মহালয়া', date: 'Sep 28, 2026', ritual: 'Chandi Paath, Tarpan at river ghats', ritualBn: 'চণ্ডীপাঠ, নদীঘাটে তর্পণ', window: 'Sunrise – Noon', whatToDo: 'Wake before dawn, visit a river ghat for pitali tarpan. The puja countdown begins with the sound of dhak.', whatToDoBn: 'ব্রহ্মমুহুর্তে উঠে নদীঘাটে পিতৃতর্পণে যান। ঢাকের আওয়াজে পুজো শুরু হয়।' },
+  { id: 't1', day: 1, name: 'Pratipada (Shashthi prep)', nameBn: 'প্রতিপদা', date: 'Oct 2, 2026', ritual: 'Bodhan — invoking the Goddess in the bel tree', ritualBn: 'বোধন — বেল গাছে দুর্গা আমন্ত্রণ', window: 'Morning', whatToDo: 'Visit a local puja to see the banana-trunk "pran Pratistha" ritual before the public darshan begins.', whatToDoBn: 'স্থানীয় পুজোতে গিয়ে "প্রাণপ্রতিষ্ঠা" দেখুন।', planDay: 'shashthi' },
+  { id: 't2', day: 2, name: 'Panchami', nameBn: 'পঞ্চমী', date: 'Oct 3, 2026', ritual: 'Ghatasthapna — the kalash is installed', ritualBn: 'ঘটস্থাপনা — কলশ স্থাপন', window: 'Morning – Evening', whatToDo: 'First full day of public darshan. Pandals open but crowds are low. Best day for families with kids.', whatToDoBn: 'প্রথম পূর্ণ জনসমার্থের দিন। প্যান্ডেল খোলা, ভীড় কম। শিশু-পরিবারের সেরা দিন।', planDay: 'panchami' },
+  { id: 't3', day: 3, name: 'Shashthi', nameBn: 'ষষ্ঠী', date: 'Oct 4, 2026', ritual: 'Kumari Puja, Nabapatrika snan', ritualBn: 'কুমারী পুজো, নবপত্রিকা স্নান', window: 'Afternoon – Night', whatToDo: 'The "Karvaj" — the unveiling of the idol face after completion. Visit your favourite pandal in the evening.', whatToDoBn: '"করওয়াজ" — সম্পূর্ণ মূর্তির মুখোশ উন্মোচন। সন্ধ্যায় প্রিয় প্যান্ডেলে যান।', planDay: 'shashthi' },
+  { id: 't4', day: 4, name: 'Saptami', nameBn: 'সপ্তমী', date: 'Oct 5, 2026', ritual: 'Maha Puja begins, Sandhi Puja prep', ritualBn: 'মহাপুজো শুরু, সন্ধি পুজোর প্রস্তুতি', window: 'All day', whatToDo: 'Barowari puja starts with the "Snana Yatra". Crowd builds through the evening — arrive by 6 PM.', whatToDoBn: 'বারোয়ারি পুজো "স্নানযাত্রা" দিয়ে শুরু। সন্ধ্যায় ভীড় বাড়ে — ৬টার আগে পৌঁছুন।', planDay: 'saptami' },
+  { id: 't5', day: 5, name: 'Ashtami', nameBn: 'অষ্টমী', date: 'Oct 6, 2026', ritual: 'Anjali (Pushpanjali), Kumari Puja, Sandhi Puja at dusk', ritualBn: 'অঞ্জলি (পুষ্পাঞ্জলি), কুমারী পুজো, সন্ধি পুজো', window: 'Morning Anjali 9:30 / Sandhi 7:45 PM', whatToDo: 'THE puja day. Mornings for pushpanjali at bonedi baris. Evening is Sandhi — the most sacred 48 minutes. Don\'t miss the dhak.', whatToDoBn: 'সেরা পুজো দিন। সকালে বোনদি ঘরের পুষ্পাঞ্জলি। সন্ধ্যায় সন্ধি — পবিত্রতম ৪৮ মিনিট। ঢাক মিস করো না।', planDay: 'ashtami' },
+  { id: 't6', day: 6, name: 'Navami', nameBn: 'নবমী', date: 'Oct 7, 2026', ritual: 'Maha Snan, bhog aarati, final prayers', ritualBn: 'মহাস্নান, ভোগ আরতি, শেষ প্রার্থনা', window: 'Morning – Night', whatToDo: 'Last full day of worship. Maximum pandal illumination. After sundown, it\'s "Sundar-Pod" (shopping + adda).', whatToDoBn: 'শেষ পূর্ণ পুজো দিন। সর্বোচ্চ আলো-সাজ। সূর্যাস্তের পর "সুন্দর-পড"।', planDay: 'navami' },
+  { id: 't7', day: 7, name: 'Dashami (Bijoya)', nameBn: 'দশমী (বিজয়া)', date: 'Oct 8, 2026', ritual: 'Visarjan — idol immersion, sindoor khela, Vijaya Nammi', ritualBn: 'বিসর্জন — মূর্তি ডুবানো, সিঁদুর খেলা, বিজয়াননী', window: 'Afternoon – Evening', whatToDo: 'The farewell. Be ready for "Sindoor Khela" among women at the immersion ghat. Emotions run high. Plan to return by 7 PM.', whatToDoBn: 'বিদায়ের দিন। ডুবুর ঘাটে "সিঁদুর খেলা"। আবেগ প্রচুর। ৭টার আগে ফিরুন।', planDay: 'dashami' },
+]
+
+// ─── Bengali Phrasebook ──────────────────────────────────────────────────────
+export const phrases: Phrase[] = [
+  { id: 'ph-g1', category: 'greetings', english: 'Happy Durga Puja!', bangla: 'শুভ দুর্গা পুজো!', transliteration: 'Shubho Durga Pujo!' },
+  { id: 'ph-g2', category: 'greetings', english: 'Hello / Welcome', bangla: 'নমস্কার / স্বাগতম', transliteration: 'Nomoskar / Swagotom' },
+  { id: 'ph-g3', category: 'greetings', english: 'How are you?', bangla: 'আপনি কেমন আছেন?', transliteration: 'Apni kemon achen?' },
+  { id: 'ph-g4', category: 'greetings', english: 'Thank you', bangla: 'ধন্যবাদ', transliteration: 'Dhonnobad' },
+  { id: 'ph-p1', category: 'pandal', english: 'Where is the entrance?', bangla: 'প্রবেশপথ কোথায়?', transliteration: 'Probosh-path kothay?' },
+  { id: 'ph-p2', category: 'pandal', english: 'How long is the queue?', bangla: 'লাইন কত লম্বা?', transliteration: 'Line kot lomba?' },
+  { id: 'ph-p3', category: 'pandal', english: 'Can I take a photo here?', bangla: 'এখানে ছবি তুলতে পারব?', transliteration: 'Ekhane chobi tulte partbo?' },
+  { id: 'ph-p4', category: 'pandal', english: 'What is the theme this year?', bangla: 'এবারের থিম কী?', transliteration: 'Ebarer theme ki?' },
+  { id: 'ph-f1', category: 'food', english: 'I\'m vegetarian', bangla: 'আমি নিরামিষাশী', transliteration: 'Ami niramishashi' },
+  { id: 'ph-f2', category: 'food', english: 'How much does it cost?', bangla: 'দাম কত?', transliteration: 'Daam kot?' },
+  { id: 'ph-f3', category: 'food', english: 'One plate of singara, please', bangla: 'এক প্লেট সিঙ্গারা দিন', transliteration: 'Ek plate singara din' },
+  { id: 'ph-f4', category: 'food', english: 'Less spicy, please', bangla: 'কম ঝাল দিন', transliteration: 'Kom jhal din' },
+  { id: 'ph-h1', category: 'help', english: 'I need help!', bangla: 'আমার সাহায্য দরকার!', transliteration: 'Amar sahayjo dokar!' },
+  { id: 'ph-h2', category: 'help', english: 'Where is the police station?', bangla: 'পুলিশ স্টেশন কোথায়?', transliteration: 'Police station kothay?' },
+  { id: 'ph-h3', category: 'help', english: 'I lost my child', bangla: 'আমার বাচ্চা হারিয়ে গেছে', transliteration: 'Aar bacha hariye geche' },
+  { id: 'ph-h4', category: 'help', english: 'Call an ambulance', bangla: 'অ্যাম্বুলেন্স ডাকুন', transliteration: 'Ambulance daakun' },
+  { id: 'ph-t1', category: 'transit', english: 'Where is the metro?', bangla: 'মেট্রো স্টেশন কোথায়?', transliteration: 'Metro station kothay?' },
+  { id: 'ph-t2', category: 'transit', english: 'Auto to Gariahat, please', bangla: 'গড়িয়াহাট অটো, দয়া করে', transliteration: 'Gariahat auto, doyaa kore' },
+  { id: 'ph-t3', category: 'transit', english: 'How far is this on foot?', bangla: 'হেঁটে কত দূর?', transliteration: 'Hete kot duur?' },
+  { id: 'ph-t4', category: 'transit', english: 'Stop here, please', bangla: 'এখানে থামান', transliteration: 'Ekhane thaman' },
+  { id: 'ph-p5', category: 'pandal', english: 'Where can I keep my shoes?', bangla: 'জুতা রাখার জায়গা কোথায়?', transliteration: 'Juta rakhar jayga kothay?' },
+  { id: 'ph-p6', category: 'pandal', english: 'Is there a help desk?', bangla: 'হেল্প ডেস্ক আছে?', transliteration: 'Help desk ache?' },
+  { id: 'ph-f5', category: 'food', english: 'Do you accept UPI?', bangla: 'UPI চলবে?', transliteration: 'UPI cholbe?' },
+  { id: 'ph-g5', category: 'greetings', english: 'Goodbye / See you again', bangla: 'ধন্যবাদ, আবার দেখা হবে', transliteration: 'Dhonnobad, aabar dekha hobe' },
+]

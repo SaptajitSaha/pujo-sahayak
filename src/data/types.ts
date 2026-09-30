@@ -7,6 +7,15 @@ export type PlaceType = 'pandal' | 'restaurant'
 export type Lang = 'en' | 'bn' | 'hi'
 export type Theme = 'light' | 'dark' | 'system'
 export type PlanDay = 'panchami' | 'shashthi' | 'saptami' | 'ashtami' | 'navami' | 'dashami'
+export type City = 'kolkata' | 'siliguri' | 'howrah' | 'new-delhi'
+
+export interface CityDef {
+  id: City
+  label: string
+  labelBn: string
+  lat: number
+  lng: number
+}
 
 export interface Palette {
   /** Deterministic warm gradient used when no photography is available. */
@@ -68,6 +77,7 @@ export interface Place {
   openNow?: boolean
   hours?: string
   popularDishes?: Dish[]
+  cityId?: City
 }
 
 export interface EventItem {
@@ -78,6 +88,7 @@ export interface EventItem {
   venue: string
   category: string
   palette: Palette
+  cityId?: City
 }
 
 export interface Meetup {
@@ -95,6 +106,7 @@ export interface Meetup {
   visibility: 'public' | 'restricted'
   palette: Palette
   host: string
+  cityId?: City
 }
 
 export interface Offer {
@@ -197,4 +209,116 @@ export interface AppNotification {
   read: boolean
   /** Optional deep link — the specific screen/item this notification points to. */
   href?: string
+}
+
+// ─── Phase 1 new entities ────────────────────────────────────────────────────
+
+/** A pandal artist / idol-maker. Grounded in real Kumortuli / puja artists. */
+export interface Artist {
+  id: string
+  name: string
+  nameBn?: string
+  specialty: string
+  bio: string
+  bioBn?: string
+  palette: Palette
+  pandalIds: string[]
+}
+
+/** A stop within a curated walk. */
+export interface WalkStop {
+  placeId: string
+  highlight: string
+  durationMin: number
+}
+
+/** A curated themed walking route (Photographer, Foodie, Family, etc.). */
+export interface Walk {
+  id: string
+  title: string
+  titleBn?: string
+  description: string
+  descBn?: string
+  theme: 'photography' | 'food' | 'family' | 'heritage'
+  stops: WalkStop[]
+  totalDurationMin: number
+  palette: Palette
+  cityId?: City
+}
+
+/** Parking ground near a pandal cluster. */
+export interface ParkingSpot {
+  id: string
+  name: string
+  area: string
+  lat: number
+  lng: number
+  capacityHint: 'small' | 'medium' | 'large'
+  walkTimeMin: number
+  ratePerHour: number
+  nearestPandalIds: string[]
+}
+
+/** Blood bank near a hospital (demo seed — real names, sample availability). */
+export interface BloodBank {
+  id: string
+  name: string
+  hospital: string
+  area: string
+  lat: number
+  lng: number
+  phone: string
+  availableGroups: string[]
+  hours: string
+}
+
+/** Static metro timetable entry (sample — labeled "verify on-site"). */
+export interface MetroETA {
+  id: string
+  station: string
+  line: string
+  firstTrain: string
+  lastTrain: string
+  frequencyMin: number
+  nearestPandalIds: string[]
+}
+
+/** A day in the puja tithi calendar (Mahalaya → Bijoya). */
+export interface Tithi {
+  id: string
+  day: number
+  name: string
+  nameBn: string
+  date: string
+  ritual: string
+  ritualBn: string
+  window: string
+  whatToDo: string
+  whatToDoBn: string
+  planDay?: PlanDay
+}
+
+/** Bengali phrasebook entry. */
+export interface Phrase {
+  id: string
+  category: 'greetings' | 'pandal' | 'food' | 'help' | 'transit'
+  english: string
+  bangla: string
+  transliteration: string
+}
+
+/** User-submitted review persisted on-device via Zustand. */
+export interface UserReview {
+  id: string
+  placeId: string
+  rating: number
+  text: string
+  createdAt: string
+}
+
+/** Trusted contact for emergency SOS. */
+export interface TrustedContact {
+  id: string
+  name: string
+  phone: string
 }

@@ -8,7 +8,8 @@ import {
 import { Button, Card, EASE, Img, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { meetups, pandals, placeById, restaurants } from '../data/demo'
-import { useApp, haversineKm } from '../store'
+import { useApp } from '../store'
+import { haversineKm } from '../lib/geo'
 import { useT } from '../i18n'
 
 export default function PandalDetail() {

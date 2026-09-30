@@ -117,24 +117,43 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Offers — kept editorial, not a coupon wall (doc §5D) */}
+      {/* Offers — small advertisement tablets, not product cards. Each slab is
+          a single full-bleed visual with the brand + headline overlaid on a
+          dark scrim and a coupon code as a tactile CTA pill. Deliberately
+          no <SectionHeader> above: a hoarding on a road doesn't announce
+          itself with a "deals here" caption. Tiny "Ad" tag on every slab
+          keeps honesty intact (doc §58 — no native content pretending to
+          be organic). */}
       <Reveal>
         <section className="mt-6">
-          <SectionHeader title={t('offers')} />
           <Rail>
             {offers.map((o) => (
-              <Card key={o.id} className="flex w-60 shrink-0 flex-col">
-                <Img palette={o.palette} alt={o.brand} className="h-24 shrink-0">
-                  <span className="absolute left-2 top-2 rounded-full bg-night/70 px-2 py-0.5 text-[10px] text-gold-bright backdrop-blur-sm">
-                    <Ticket size={10} className="mr-1 inline" />{o.code}
+              <button
+                key={o.id}
+                type="button"
+                aria-label={`${o.brand}: ${o.title}`}
+                className="relative block w-64 shrink-0 overflow-hidden rounded-card text-left shadow-card transition-transform active:scale-[0.98]"
+              >
+                <Img palette={o.palette} alt={o.brand} className="h-40">
+                  <div className="absolute inset-0 bg-gradient-to-t from-night via-night/70 to-transparent" />
+                  <span className="absolute left-2 top-2 rounded-full border border-white/25 px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-on-image">
+                    Ad
                   </span>
+                  <div className="absolute inset-x-3 bottom-3">
+                    <p className="text-[10px] uppercase tracking-wider text-gold-bright">{o.brand}</p>
+                    <h3 className="font-display mt-0.5 line-clamp-2 text-[17px] leading-tight text-on-image [text-shadow:0_1px_10px_rgba(0,0,0,0.55)]">
+                      {o.title}
+                    </h3>
+                    <p className="mt-1 line-clamp-1 text-[11px] text-on-image/85">{o.description}</p>
+                    {o.code && (
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[10px] font-semibold text-vermilion">
+                        <Ticket size={11} />
+                        <span className="font-mono tracking-wider">{o.code}</span>
+                      </span>
+                    )}
+                  </div>
                 </Img>
-                <div className="flex-1 p-2.5">
-                  <p className="text-[10px] uppercase tracking-wide text-faint">{o.brand}</p>
-                  <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{o.title}</h3>
-                  <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-soft">{o.description}</p>
-                </div>
-              </Card>
+              </button>
             ))}
           </Rail>
         </section>
@@ -222,15 +241,9 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Trending pandals quick rail */}
-      <Reveal>
-        <section className="mt-5">
-          <SectionHeader title={t('trending')} action={t('viewAll')} onAction={() => nav('/explore')} />
-          <Rail>
-            {pandals.slice(0, 5).map((pd) => <RailCard key={pd.id} place={pd} />)}
-          </Rail>
-        </section>
-      </Reveal>
+      {/* Trending pandals rail was removed — the Explore Spotlight coverflow
+          at the top of Home already surfaces trending pandals, this second
+          rail added scroll weight without adding information. */}
     </Page>
   )
 }

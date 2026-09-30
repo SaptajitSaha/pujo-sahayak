@@ -15,9 +15,32 @@ export default function Home() {
   const session = useApp((s) => s.session)
   const currentAddress = useApp((s) => s.currentAddress)
   const unreadCount = useApp((s) => s.notifications.filter((n) => !n.read).length)
+  const sosActive = useApp((s) => s.sosActive)
+  const setSosActive = useApp((s) => s.setSosActive)
 
   return (
     <Page>
+      {/* Persistent SOS dismiss — visible on every opening of Home until the
+          user taps "I'm safe", so the flag survives a backgrounding + reopen.
+          Zustand persist keeps it in localStorage across reloads. */}
+      {sosActive && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-3 rounded-card border-2 border-red-500 bg-red-500/10 p-3"
+          role="alert"
+        >
+          <p className="text-sm font-semibold text-red-700 dark:text-red-400">SOS is active</p>
+          <p className="mt-0.5 text-[11px] text-ink-soft">
+            Your last share went out. Tap below once you're safe — the banner clears.
+          </p>
+          <button
+            onClick={() => setSosActive(false)}
+            className="mt-2 w-full rounded-full bg-red-600 py-2 text-sm font-bold text-white active:scale-95"
+          >
+            {t('iAmSafe')}
+          </button>
+        </motion.div>
+      )}
       {/* Greeting — staged entrance */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}

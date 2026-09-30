@@ -106,6 +106,33 @@ export interface Offer {
   palette: Palette
 }
 
+/**
+ * A best-selling product from a Kolkata-area mall's Durga Puja sale.
+ * In production this list is aggregated from mall feeds (online + in-store).
+ * Today it's demo content — same honesty convention as the rest of `demo.ts`
+ * (see IS_DEMO). Prices are in INR; `originalPrice` is the MRP shown struck
+ * through, `discountPct` is the pre-computed savings badge.
+ */
+export interface ShoppingProduct {
+  id: string
+  name: string
+  nameBn?: string
+  /** Display-formatted mall/retail destination (e.g. "Quest Mall", "Mani Square"). */
+  mall: string
+  /** Neighborhood/area the mall is in — helps users orient (e.g. "Ballygunge"). */
+  area: string
+  category: 'Saree' | 'Kurta' | 'Jewellery' | 'Footwear' | 'Kids' | 'Home Decor' | 'Puja Essentials' | 'Bags'
+  /** Current sale price in INR. */
+  price: number
+  /** MRP in INR — rendered struck-through. */
+  originalPrice: number
+  /** 1-99 — rendered as a "-X%" badge. */
+  discountPct: number
+  /** Editorial tag: "Bestseller", "Handloom", "Trending", etc. Optional. */
+  tag?: string
+  palette: Palette
+}
+
 export interface SafetyPoint {
   id: string
   kind: 'police' | 'medical' | 'helpdesk' | 'lostfound' | 'fire'

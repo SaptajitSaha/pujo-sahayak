@@ -2,7 +2,7 @@
 // Names, areas, themes and metro stations are real; ratings, crowds, timings,
 // reviews and photos are ILLUSTRATIVE DEMO CONTENT for UI development.
 import type {
-  CategoryDef, Dish, EventItem, Meetup, Offer, Palette, Place, SafetyPoint, SponsoredItem,
+  CategoryDef, Dish, EventItem, Meetup, Offer, Palette, Place, SafetyPoint, ShoppingProduct, SponsoredItem,
 } from './types'
 
 export const IS_DEMO = true
@@ -221,6 +221,28 @@ export const offers: Offer[] = [
   { id: 'o4', brand: 'Bata', title: 'Buy 1 Get 1 on footwear', description: 'Formals, casuals and the kids\' range.', code: 'STRIDE', palette: { ...lamp, img: '/img/offer-shoes.jpg' } },
   { id: 'o5', brand: 'Samsung', title: 'No-cost EMI on the new Galaxy', description: 'Extra ₹5,000 exchange bonus this Pujo.', code: 'GADGET5', palette: { ...night, img: '/img/offer-gadgets.jpg' } },
   { id: 'o6', brand: 'Balaram Mullick', title: 'Puja mishti gift boxes', description: 'Assorted sweets, home delivery citywide.', code: 'MITHAI', palette: { ...marigold, img: '/img/offer-sweets.jpg' } },
+]
+
+/**
+ * Shopping — best-selling Durga Puja sale picks from real Kolkata-area malls
+ * and traditional shopping hubs. In production this is replaced by an
+ * aggregated feed from mall partner APIs + in-store catalogs; today it's demo
+ * content that mirrors what a shopper actually finds at these destinations
+ * during Sharad sales (Baluchari sarees at Mani Square, shakha-pola at Fancy
+ * Bazaar, festive kidswear at South City, etc.). Mall names and neighborhoods
+ * are real; prices, discounts, and stock are illustrative.
+ */
+export const shopping: ShoppingProduct[] = [
+  { id: 's1', name: 'Baluchari Silk Saree', nameBn: 'বালাচর রেশম শাড়ি', mall: 'Mani Square', area: 'Kankurgachi', category: 'Saree', price: 8499, originalPrice: 12900, discountPct: 34, tag: 'Bestseller', palette: silk },
+  { id: 's2', name: 'Handloom Tant Pujo Saree', nameBn: 'হাতে বোনা টান্ট শাড়ি', mall: 'Gariahat Saree Centre', area: 'Gariahat', category: 'Saree', price: 1899, originalPrice: 2800, discountPct: 32, tag: 'Handloom', palette: fire },
+  { id: 's3', name: 'Shakha-Pola Conch & Coral Set', nameBn: 'শাখা-পলা সেট', mall: 'Fancy Bazaar', area: 'Bara Bazaar', category: 'Jewellery', price: 899, originalPrice: 1450, discountPct: 38, tag: 'Traditional', palette: lamp },
+  { id: 's4', name: 'Gold-Plated Chandor Haar', nameBn: 'চাঁদোহার হার', mall: 'PC Chandra Jewellers', area: 'Siddharth Sarani', category: 'Jewellery', price: 4999, originalPrice: 7500, discountPct: 33, palette: marigold },
+  { id: 's5', name: "Girls' Frock Lehenga", nameBn: 'মেয়েদের ফ্রক লেহেনা', mall: 'South City', area: 'Mukundapur', category: 'Kids', price: 3499, originalPrice: 5500, discountPct: 36, tag: 'Bestseller', palette: dusk },
+  { id: 's6', name: 'Handwoven Dhuti-Kurta Set', nameBn: 'ধুতি-কুর্তা সেট', mall: 'City Centre', area: 'Salt Lake', category: 'Kurta', price: 2199, originalPrice: 3200, discountPct: 31, tag: 'Handloom', palette: clay },
+  { id: 's7', name: 'Mojari Ethnic Jutti (Pair)', nameBn: 'মোজারি জুতি', mall: 'Quest Mall', area: 'Ballygunge', category: 'Footwear', price: 1599, originalPrice: 2400, discountPct: 33, palette: brass },
+  { id: 's8', name: 'Brass Pujo Thali 7-Piece', nameBn: 'পিতলের পুজোর থালি', mall: 'Bangiya Sahaji Bazaar', area: 'Chandni Chowk', category: 'Puja Essentials', price: 1249, originalPrice: 1900, discountPct: 34, tag: 'Pujo Essential', palette: night },
+  { id: 's9', name: 'Hand-Painted Jute Tote', nameBn: 'হাতে আঁকা পাটের টোট ব্যাগ', mall: 'Lake Market', area: 'Ballygunge', category: 'Bags', price: 549, originalPrice: 899, discountPct: 39, tag: 'Trending', palette: silk },
+  { id: 's10', name: 'Kantha Handwork Quilt', nameBn: 'কাথা মনের কাঁথা', mall: 'Great East World', area: 'Rajarhat', category: 'Home Decor', price: 3850, originalPrice: 5200, discountPct: 26, tag: 'Handcrafted', palette: marigold },
 ]
 
 export const meetups: Meetup[] = [

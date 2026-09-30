@@ -36,6 +36,8 @@ export const STRINGS: Dict = {
   exploreSpotlight: { en: 'Explore Spotlight', bn: 'এক্সপ্লোর স্পটলাইট', hi: 'एक्सप्लोर स्पॉटलाइट' },
   nearbyRestaurants: { en: 'Nearby Restaurants', bn: 'কাছের রেস্তোরাঁ', hi: 'नज़दीकी रेस्तरां' },
   offers: { en: 'Offers & Discounts', bn: 'অফার ও ছাড়', hi: 'ऑफ़र और छूट' },
+  shopping: { en: 'Shopping', bn: 'শপিং', hi: 'शॉपिंग' },
+  shoppingSub: { en: 'Pujo sale picks from Kolkata malls', bn: 'কলকাতা মলের পুজোর সেল পছন্দ', hi: 'कोलकाता मॉल की पूजा सेल पसंद' },
   events: { en: 'Events & Local Experiences', bn: 'ইভেন্ট ও লোকাল অভিজ্ঞতা', hi: 'इवेंट और लोकल अनुभव' },
   continueLeft: { en: 'Continue where you left off', bn: 'যেখানে শেষ করেছিলেন', hi: 'जहाँ छोड़ा था वहीं से जारी रखें' },
   continueBtn: { en: 'Continue Exploring', bn: 'এক্সপ্লোরিং চালিয়ে যান', hi: 'एक्सप्लोरिंग जारी रखें' },

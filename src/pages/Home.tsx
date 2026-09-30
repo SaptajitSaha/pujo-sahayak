@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion'
 import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown } from 'lucide-react'
 import { Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { offers, pandals, restaurants, sponsored, events } from '../data/demo'
+import { offers, pandals, restaurants, shopping, sponsored, events } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
 import type { Place } from '../data/types'
@@ -156,6 +156,45 @@ export default function Home() {
                   <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{e.name}</h3>
                   <p className="mt-0.5 text-[11px] text-ink-soft">{e.date} • {e.time}</p>
                   <p className="truncate text-[11px] text-faint">{e.venue}</p>
+                </div>
+              </Card>
+            ))}
+          </Rail>
+        </section>
+      </Reveal>
+
+      {/* Shopping — best-selling Durga Puja sale picks from Kolkata malls.
+          Currently demo (`shopping` in data/demo.ts); production replaces it
+          with an aggregated feed from mall partners (online + in-store). */}
+      <Reveal>
+        <section className="mt-5">
+          <SectionHeader title={t('shopping')} />
+          <p className="-mt-1 mb-2 text-xs text-ink-soft">{t('shoppingSub')}</p>
+          <Rail>
+            {shopping.map((s) => (
+              <Card key={s.id} className="flex w-44 shrink-0 flex-col">
+                <Img palette={s.palette} alt={s.name} className="h-28 shrink-0">
+                  <span className="absolute left-2 top-2 rounded-full bg-gold-bright px-1.5 py-0.5 text-[10px] font-bold text-night">
+                    −{s.discountPct}%
+                  </span>
+                  {s.tag && (
+                    <span className="absolute right-2 top-2 rounded-full bg-night/70 px-1.5 py-0.5 text-[9px] font-medium text-gold-bright">
+                      {s.tag}
+                    </span>
+                  )}
+                </Img>
+                <div className="flex-1 p-2">
+                  <p className="text-[10px] uppercase tracking-wide text-faint">{s.mall}</p>
+                  <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{s.name}</h3>
+                  <p className="mt-1 flex items-baseline gap-1.5">
+                    <span className="text-sm font-semibold text-ink">
+                      ₹{s.price.toLocaleString('en-IN')}
+                    </span>
+                    <span className="text-[11px] text-faint line-through">
+                      ₹{s.originalPrice.toLocaleString('en-IN')}
+                    </span>
+                  </p>
+                  <p className="mt-0.5 truncate text-[10px] text-faint">{s.area}</p>
                 </div>
               </Card>
             ))}

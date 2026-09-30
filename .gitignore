@@ -44,5 +44,6 @@ assets/screens/raw/
 # Browser-subagent test artifacts — screenshots dropped at the repo root during
 # verification passes. Never references from code; keep them out of the tree.
 /screenshot-*.png
-/maya-test-*.png
+/maya-*.png
+/nav-*.png
 /.qoder-splash.png

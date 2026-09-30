@@ -1,6 +1,6 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
-import { Children, useEffect, useId, useRef, type ReactNode } from 'react'
+import { Children, useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import type { Palette } from '../data/types'
@@ -282,13 +282,87 @@ const NAV = [
   { to: '/meets', key: 'meets', icon: Users },
 ] as const
 
+/** Auto-hide-on-scroll hook used by the bottom nav.
+    Returns `true` while the nav should be tucked off-screen.
+    - Near the top (scrollY < 80) → always shown (users expect the bar on arrival).
+    - Downward delta > ~6px → hide. Upward delta > ~6px → show. The deadzone
+      filters sub-pixel jitter and momentum-end bounces so the nav doesn't
+      flicker at the ends of a fling.
+    - `enabled=false` freezes at `false` (shown) so the caller can pass
+      `!isMayaRoute` and reuse the same component on the chat page.
+    Hook stays mounted; internal state is mirrored in a ref so the scroll
+    listener only calls `setState` when the boolean actually flips. */
+function useScrollHideNav(enabled: boolean): boolean {
+  const [hidden, setHidden] = useState(false)
+  const hiddenRef = useRef(false)
+  const lastYRef = useRef(0)
+  const cooldownUntilRef = useRef(0)
+  const loc = useLocation()
+
+  useEffect(() => {
+    if (!enabled) {
+      if (hiddenRef.current) { hiddenRef.current = false; setHidden(false) }
+      return
+    }
+    lastYRef.current = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY
+      const dy = y - lastYRef.current
+      lastYRef.current = y
+      // Arrival cooldown: right after a route change, the browser dispatches a
+      // scroll event when it restores history scroll position on the newly
+      // mounted page. If we let that event flip `hidden`, the nav visibly
+      // flashes in and then out on every back/forward. Ignore scroll bursts
+      // for ~350ms after arrival; a real user gesture that soon is rare and
+      // even then only delays the hide by a frame.
+      if (performance.now() < cooldownUntilRef.current) return
+      let next = hiddenRef.current
+      if (y < 80) next = false
+      else if (Math.abs(dy) > 6) next = dy > 0
+      if (next !== hiddenRef.current) {
+        hiddenRef.current = next
+        setHidden(next)
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [enabled])
+
+  // BottomNav never unmounts across routes (it lives at the App level, outside
+  // the Suspense boundary), so state persists. On every pathname change: force
+  // the nav visible, prime lastY to the current scroll, and start the arrival
+  // cooldown above.
+  useEffect(() => {
+    if (hiddenRef.current) { hiddenRef.current = false; setHidden(false) }
+    lastYRef.current = window.scrollY
+    cooldownUntilRef.current = performance.now() + 350
+  }, [loc.pathname])
+
+  return hidden
+}
+
 export function BottomNav() {
   const t = useT()
+  const loc = useLocation()
+  // Full hide on the Maya thread so the fixed nav never collides with the
+  // chat composer when the conversation grows past the fold. The scroll-hide
+  // effect is disarmed here; state resets so the nav is shown on the next
+  // non-Maya route.
+  const onMaya = loc.pathname.startsWith('/maya')
+  const hidden = useScrollHideNav(!onMaya)
+  if (onMaya) return null
   return (
-    <nav
+    <motion.nav
+      initial={false}
+      // Framer writes the whole `transform` inline, which overrides Tailwind's
+      // `-translate-x-1/2` utility. So x stays here too, and the animation only
+      // toggles y. 200% of the nav's own height comfortably clears the pill +
+      // `0.75rem + env(safe-area-inset-bottom)` bottom inset on every device.
+      animate={{ x: '-50%', y: hidden ? '200%' : '0%' }}
+      transition={{ type: 'spring', stiffness: 380, damping: 34, mass: 0.7 }}
       aria-label="Primary"
       style={{ bottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
-      className="glass-strong fixed left-1/2 z-40 flex w-auto max-w-[94%] -translate-x-1/2 items-center gap-1 rounded-full px-2 py-1.5"
+      className="glass-strong fixed left-1/2 z-40 flex w-auto max-w-[94%] items-center gap-1 rounded-full px-2 py-1.5"
     >
       {NAV.map(({ to, key, icon: Icon }) => (
         <NavLink key={to} to={to} aria-label={t(key)} className="flex">
@@ -304,7 +378,7 @@ export function BottomNav() {
           )}
         </NavLink>
       ))}
-    </nav>
+    </motion.nav>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
@@ -29,6 +29,13 @@ export default function PandalDetail() {
   const addReview = useApp((s) => s.addReview)
   const [cardBusy, setCardBusy] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
+  // Focus the review sheet when it opens: the Escape handler lives on the
+  // overlay, so without this the key event never reaches it when the user
+  // opened the modal by clicking the "Rate this" chip (focus stays outside).
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (reviewOpen) dialogRef.current?.focus()
+  }, [reviewOpen])
   const [draftRating, setDraftRating] = useState(0)
   const [draftText, setDraftText] = useState('')
   const [toast, setToast] = useState<string | null>(null)
@@ -56,7 +63,10 @@ export default function PandalDetail() {
     addReview({
       placeId: place.id,
       rating: draftRating,
-      text: draftText.trim() || ' ',
+      // Empty text is legitimate (rating-only review) — the card render
+      // already guards with r.text.trim(), so persist the trimmed value as-is
+      // instead of a stray space placeholder.
+      text: draftText.trim(),
     })
     setReviewOpen(false)
     setDraftRating(0)
@@ -313,8 +323,10 @@ export default function PandalDetail() {
             role="presentation"
           >
             <motion.div
+              ref={dialogRef}
+              tabIndex={-1}
               initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-lg rounded-t-2xl bg-card p-4"
+              className="w-full max-w-lg rounded-t-2xl bg-card p-4 outline-none"
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"

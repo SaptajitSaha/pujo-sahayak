@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, Navigation, Plus, Share2, Sparkles, Trash2, X } from 'lucide-react'
 import { Button, Card, Chip, Img, Page } from '../components/ui'
+import { DayWeatherChip } from '../components/Weather'
 import { places, placeById, PLAN_DAY_DATES } from '../data/demo'
 import { PLAN_DAYS, useApp } from '../store'
 import { haversineKm } from '../lib/geo'
@@ -158,6 +159,9 @@ export default function Planner() {
           </Chip>
         ))}
       </div>
+
+      {/* Real day-of weather for the selected plan day (Open-Meteo, cached). */}
+      <DayWeatherChip day={day} className="mt-1.5" />
 
       {/* Timeline */}
       <div className="mt-4 space-y-1">

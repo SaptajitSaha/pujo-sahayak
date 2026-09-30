@@ -2,7 +2,9 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Calendar, Sparkles } from 'lucide-react'
 import { Card, Chip, Page, Reveal, SectionHeader } from '../components/ui'
-import { tithis } from '../data/demo'
+import { DayWeatherChip } from '../components/Weather'
+import { tithis, PLAN_DAY_DATES } from '../data/demo'
+import type { PlanDay } from '../data/types'
 import { useT } from '../i18n'
 
 /**
@@ -31,6 +33,16 @@ export default function Tithi() {
     '2026-10-08': 'dashami',
   }
   const todayKey = dateToPlanDay[iso]
+
+  // Weather belongs only on the six public planning days. Show the chip just
+  // when a tithi's own calendar date equals that plan-day's date — this excludes
+  // Pratipada (whose planDay is "prep for Shashthi" but which falls on Oct 2),
+  // avoiding a mismatched date and a duplicate fetch.
+  const localISO = (s: string) => {
+    const d = new Date(s)
+    const p = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  }
 
   const planDayFor = (pd?: string) => pd ?? 'ashtami'
 
@@ -70,6 +82,9 @@ export default function Tithi() {
                   <p className="mt-2 text-[13px] leading-snug text-ink-soft">{th.ritual}</p>
                   <p className="mt-1 text-[11px] text-faint">🕐 {th.window}</p>
                   <p className="mt-2 text-sm">{th.whatToDo}</p>
+                  {th.planDay && localISO(th.date) === PLAN_DAY_DATES[th.planDay as PlanDay] && (
+                    <DayWeatherChip day={th.planDay as PlanDay} className="mt-1.5" />
+                  )}
                   {th.planDay && (
                     <div className="mt-3 flex gap-2">
                       <Chip onClick={() => nav(`/planner?day=${planDayFor(th.planDay)}`)}>

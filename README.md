@@ -43,6 +43,12 @@ trilingual, and grounded in *real* Kolkata pandals and restaurants.
   not miss?", food recs and day-by-day planning.
 - **Trip planner & route maps** — build an itinerary across the days of Puja and
   see it on an interactive map.
+- **Day-of weather** — real Open-Meteo forecasts (no key, no tracking) on the
+  planner and the tithi timeline; cached for offline and clearly flagged when
+  stale — never a fabricated forecast.
+- **Pandal-hopping scorecard** — GPS-verified on-site check-ins build your
+  streak, badges and pandals-seen, all computed on your device. No location,
+  no check-in.
 - **Meetups** — create and join plans so no one wanders the crowds alone.
 - **Safety** — a dedicated hub with a missing-person flow and help-desk / medical
   camp info surfaced on every pandal card.

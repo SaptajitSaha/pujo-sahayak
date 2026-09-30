@@ -102,6 +102,7 @@ export const STRINGS: Dict = {
   tithi: { en: 'Puja Tithi Calendar', bn: 'পুজোর তিথি ক্যালেন্ডার', hi: 'पूजा तिथि कैलेंडर' },
   tithiSub: { en: 'Rituals from Mahalaya to Bijoya Dashami', bn: 'মহালয়া থেকে বিজয়া দশমী — প্রতিদিনের আচার', hi: 'महालय से विजया दशमी — हर दिन के विधि' },
   phrasebook: { en: 'Bengali for Pujo', bn: 'পুজোর বাংলা', hi: 'पूजा के लिए बंगाली' },
+  pujaTools: { en: 'Puja tools', bn: 'পুজোর সরঞ্জাম', hi: 'पूजा उपकरण' },
   phrasebookSub: { en: 'Quick phrases for pandals, food and transit', bn: 'প্যান্ডেল, খাবার ও যাতায়াতে কাজের কথা', hi: 'पंडाल, भोजन और परिवहन में काम आने वाले वाक्य' },
   artists: { en: 'Artists', bn: 'শিল্পী', hi: 'कलाकार' },
   artistDetail: { en: 'Meet the Artist', bn: 'শিল্পীর সাথে পরিচিত হোন', hi: 'कलाकार से मिलें' },

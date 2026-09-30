@@ -5,7 +5,7 @@ import { Search, ListFilter, Map as MapIcon, MapPin } from 'lucide-react'
 import { Chip, EASE, Img, Page } from '../components/ui'
 import { PlaceCard } from '../components/PlaceCard'
 import MapView from '../components/MapView'
-import { pandals } from '../data/demo'
+import { pandalsIn } from '../data/demo'
 import { useT } from '../i18n'
 import { useApp } from '../store'
 import type { CrowdLevel } from '../data/types'
@@ -13,7 +13,8 @@ import type { CrowdLevel } from '../data/types'
 type Dim = 'area' | 'distance' | 'theme' | 'crowd'
 const DIMS: Dim[] = ['area', 'distance', 'theme', 'crowd']
 
-const AREAS = [...new Set(pandals.map((x) => x.area))]
+// The AREA list is computed lazily against the selected city — see the
+// `areas` memo inside Explore. Themes and distances are city-agnostic.
 const THEMES = ['Traditional', 'Heritage', 'Artistic', 'Modern']
 const THEME_KEYWORDS: Record<string, string[]> = {
   Traditional: ['traditional', 'barowari', 'rustic'],
@@ -31,9 +32,15 @@ export default function Explore() {
   const [open, setOpen] = useState<Dim | null>(null)
   const [sel, setSel] = useState<Partial<Record<Dim, string>>>({ area: params.get('area') ?? undefined })
   const track = useApp((s) => s.track)
+  const selectedCity = useApp((s) => s.selectedCity)
+
+  // Pool scoped to the current city — the Area filter chips are derived from
+  // the same pool so a Howrah user never sees "South Kolkata" as a choice.
+  const pool = useMemo(() => pandalsIn(selectedCity), [selectedCity])
+  const areas = useMemo(() => [...new Set(pool.map((x) => x.area))], [pool])
 
   const filtered = useMemo(() => {
-    return pandals.filter((p) => {
+    return pool.filter((p) => {
       if (sel.area && p.area !== sel.area) return false
       if (sel.crowd && p.crowd !== (sel.crowd as CrowdLevel)) return false
       if (sel.distance) {
@@ -48,7 +55,7 @@ export default function Explore() {
       }
       return true
     })
-  }, [sel])
+  }, [pool, sel])
 
   const toggle = (dim: Dim, value?: string) => {
     setOpen((o) => (o === dim ? null : value === undefined ? dim : o))
@@ -58,7 +65,7 @@ export default function Explore() {
     }
   }
 
-  const subOptions: Record<Dim, string[]> = { area: AREAS, distance: DISTANCES, theme: THEMES, crowd: ['high', 'moderate', 'low'] }
+  const subOptions: Record<Dim, string[]> = { area: areas, distance: DISTANCES, theme: THEMES, crowd: ['high', 'moderate', 'low'] }
 
   return (
     <Page>

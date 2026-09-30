@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Search as SearchIcon, X } from 'lucide-react'
 import { Card, Chip, Page, Rail, SectionHeader } from '../components/ui'
 import { PlaceCard, RailCard, TileCard } from '../components/PlaceCard'
-import { events, pandals, places, restaurants } from '../data/demo'
+import { places, pandalsIn, restaurantsIn, eventsIn } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
 
@@ -15,23 +15,28 @@ export default function SearchPage() {
   const [q, setQ] = useState(params.get('q') ?? '')
   const [type, setType] = useState<'All' | 'Pandals' | 'Restaurants' | 'Events'>((params.get('type') as 'Pandals') ?? 'All')
   const track = useApp((s) => s.track)
+  const selectedCity = useApp((s) => s.selectedCity)
 
   const results = useMemo(() => {
     const key = q.trim().toLowerCase()
-    const pool = places
+    // City-scoped pools — a Delhi user searching "Bengal" doesn't get Kolkata
+    // results unless the string actually matches. Deep-link `placeById()` from
+    // a shared URL still resolves cross-city (see PandalDetail).
+    const pool = places.filter((p) => p.cityId === selectedCity)
+    const evPool = eventsIn(selectedCity)
     const byType =
       type === 'Pandals' ? pool.filter((p) => p.type === 'pandal')
       : type === 'Restaurants' ? pool.filter((p) => p.type === 'restaurant')
       : pool
-    if (!key) return { places: type === 'Events' ? [] : byType, events: type === 'Events' || type === 'All' ? events : [] }
+    if (!key) return { places: type === 'Events' ? [] : byType, events: type === 'Events' || type === 'All' ? evPool : [] }
     return {
       places: byType.filter((p) =>
         `${p.name} ${p.area} ${p.cuisine ?? ''} ${p.theme ?? ''} ${p.subtitle ?? ''}`.toLowerCase().includes(key)),
       events: type !== 'Pandals' && type !== 'Restaurants'
-        ? events.filter((e) => `${e.name} ${e.venue} ${e.category}`.toLowerCase().includes(key))
+        ? evPool.filter((e) => `${e.name} ${e.venue} ${e.category}`.toLowerCase().includes(key))
         : [],
     }
-  }, [q, type])
+  }, [q, type, selectedCity])
 
   const active = Boolean(q.trim()) || type !== 'All'
 
@@ -77,12 +82,12 @@ export default function SearchPage() {
         <>
           <section className="mt-5">
             <SectionHeader title={t('trending')} action={t('viewAll')} />
-            <Rail>{pandals.slice(0, 5).map((p) => <RailCard key={p.id} place={p} />)}</Rail>
+            <Rail>{pandalsIn(selectedCity).slice(0, 5).map((p) => <RailCard key={p.id} place={p} />)}</Rail>
           </section>
           <section className="mt-5">
             <SectionHeader title={t('popularNearby')} action={t('viewAll')} />
             <div className="flex flex-wrap gap-2">
-              {[...pandals, ...restaurants].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 6).map((p) => (
+              {[...pandalsIn(selectedCity), ...restaurantsIn(selectedCity)].sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 6).map((p) => (
                 <TileCard key={p.id} place={p} />
               ))}
             </div>

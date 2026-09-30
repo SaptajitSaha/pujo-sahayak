@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown } from 'lucide-react'
+import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, Calendar, BookOpen } from 'lucide-react'
 import { Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { offers, pandals, restaurants, shopping, sponsored, events, walks } from '../data/demo'
+import { offers, sponsored, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
 import type { Place } from '../data/types'
@@ -17,6 +17,26 @@ export default function Home() {
   const unreadCount = useApp((s) => s.notifications.filter((n) => !n.read).length)
   const sosActive = useApp((s) => s.sosActive)
   const setSosActive = useApp((s) => s.setSosActive)
+  const selectedCity = useApp((s) => s.selectedCity)
+
+  // City-aware datasets — every rail on Home scopes to the selected city.
+  const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
+  const cityRestaurants = useMemo(() => restaurantsIn(selectedCity), [selectedCity])
+  const cityEvents = useMemo(() => eventsIn(selectedCity), [selectedCity])
+
+  // Real-calendar-aware "Today" chip. Only lights up when the visitor's local
+  // date actually falls inside the 2026 Durga Puja window (Oct 3 – Oct 8).
+  // Outside the puja week the chip is hidden rather than showing a fake date.
+  const todayTithi = useMemo(() => {
+    const iso = new Date().toISOString().slice(0, 10)
+    const dateMap: Record<string, string> = {
+      '2026-10-03': 'panchami', '2026-10-04': 'shashthi', '2026-10-05': 'saptami',
+      '2026-10-06': 'ashtami', '2026-10-07': 'navami', '2026-10-08': 'dashami',
+    }
+    const planDay = dateMap[iso]
+    if (!planDay) return null
+    return tithis.find((th) => th.planDay === planDay) ?? null
+  }, [])
 
   return (
     <Page>
@@ -106,11 +126,36 @@ export default function Home() {
         <SearchIcon size={16} /> {t('searchPlaceholder')}
       </motion.button>
 
+      {/* Today chip — real-calendar-aware; only renders inside the actual 2026
+          puja window (Oct 3 – Oct 8). Never fakes a "today" outside those dates. */}
+      {todayTithi && (
+        <motion.button
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4, ease: EASE }}
+          onClick={() => nav('/tithi')}
+          className="mt-2 flex w-full items-center justify-between gap-2 rounded-card border border-vermilion/25 bg-vermilion-tint px-3 py-2 text-left"
+          aria-label={`${t('todayTithi')}: ${todayTithi.name}. Open tithi calendar.`}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-vermilion text-white">
+              <Flame size={14} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[10px] uppercase tracking-wide text-vermilion">{t('todayTithi')}</span>
+              <span className="block truncate text-sm font-semibold">{todayTithi.name} · <span className="bn">{todayTithi.nameBn}</span></span>
+              <span className="block truncate text-[11px] text-ink-soft">{todayTithi.window}</span>
+            </span>
+          </span>
+          <ChevronDown size={16} className="shrink-0 -rotate-90 text-vermilion" />
+        </motion.button>
+      )}
+
       {/* Explore Spotlight — animated coverflow carousel */}
       <Reveal>
         <section className="mt-5">
           <SectionHeader title={t('exploreSpotlight')} action={t('viewAll')} onAction={() => nav('/explore')} />
-          <SpotlightCarousel />
+          <SpotlightCarousel pool={cityPandals} />
         </section>
       </Reveal>
 
@@ -119,7 +164,7 @@ export default function Home() {
         <section className="mt-2">
           <SectionHeader title={t('nearbyRestaurants')} action={t('viewAll')} onAction={() => nav('/search?type=restaurant')} />
           <Rail>
-            {restaurants.slice(0, 4).map((r) => <RailCard key={r.id} place={r} />)}
+            {cityRestaurants.slice(0, 4).map((r) => <RailCard key={r.id} place={r} />)}
           </Rail>
         </section>
       </Reveal>
@@ -187,7 +232,7 @@ export default function Home() {
         <section className="mt-5">
           <SectionHeader title={t('events')} action={t('viewAll')} onAction={() => nav('/beyond-puja')} />
           <Rail>
-            {events.map((e) => (
+            {cityEvents.map((e) => (
               <Card key={e.id} className="flex w-56 shrink-0 flex-col">
                 <Img palette={e.palette} alt={e.name} className="h-20 shrink-0">
                   <span className="absolute right-2 top-2 rounded-full bg-night/70 px-2 py-0.5 text-[10px] text-on-image">
@@ -241,6 +286,36 @@ export default function Home() {
               </Card>
             ))}
           </Rail>
+        </section>
+      </Reveal>
+
+      {/* Puja tools — quick entries for the Tithi calendar and the Bengali
+          Phrasebook. Diaspora users (Delhi / Siliguri / Howrah) lean on these
+          the most. Sits above Curated walks because a user checking "what day
+          is it?" is in the planning stage, not the on-the-road stage. */}
+      <Reveal>
+        <section className="mt-5">
+          <SectionHeader title={t('pujaTools')} />
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => nav('/tithi')} className="text-left active:scale-[0.98]">
+              <Card className="flex h-full flex-col gap-2 p-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-vermilion-tint text-vermilion">
+                  <Calendar size={17} />
+                </span>
+                <span className="text-sm font-semibold">{t('tithi')}</span>
+                <span className="line-clamp-2 text-[11px] text-faint">{t('tithiSub')}</span>
+              </Card>
+            </button>
+            <button onClick={() => nav('/phrasebook')} className="text-left active:scale-[0.98]">
+              <Card className="flex h-full flex-col gap-2 p-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-gold/15 text-gold">
+                  <BookOpen size={17} />
+                </span>
+                <span className="text-sm font-semibold">{t('phrasebook')}</span>
+                <span className="line-clamp-2 text-[11px] text-faint">{t('phrasebookSub')}</span>
+              </Card>
+            </button>
+          </div>
         </section>
       </Reveal>
 
@@ -300,11 +375,11 @@ export default function Home() {
  * Auto-advances on an interval with a spring transition; tap a side card to
  * bring it forward, tap the centre card to open it. Freezes under reduced motion.
  */
-function SpotlightCarousel() {
+function SpotlightCarousel({ pool }: { pool: Place[] }) {
   const nav = useNavigate()
   const reduce = useApp((s) => s.reduceMotion)
   const rm = useReducedMotion()
-  const featured = pandals.slice(0, 6)
+  const featured = pool.slice(0, 6)
   const n = featured.length
   const [active, setActive] = useState(0)
   const [paused, setPaused] = useState(false)

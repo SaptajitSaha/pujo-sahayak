@@ -25,6 +25,8 @@ export default function Settings() {
   const setTrustedContacts = useApp((s) => s.setTrustedContacts)
   const selectedCity = useApp((s) => s.selectedCity)
   const setSelectedCity = useApp((s) => s.setSelectedCity)
+  const tithiDemoMode = useApp((s) => s.tithiDemoMode)
+  const setTithiDemoMode = useApp((s) => s.setTithiDemoMode)
 
   const [contactName, setContactName] = useState(trustedContacts[0]?.name ?? '')
   const [contactPhone, setContactPhone] = useState(trustedContacts[0]?.phone ?? '')
@@ -153,6 +155,21 @@ export default function Settings() {
           <label className="mt-3 flex items-center justify-between text-sm">
             <span className="text-ink-soft">Reduce motion</span>
             <input type="checkbox" checked={reduceMotion} onChange={(e) => setReduceMotion(e.target.checked)} className="h-5 w-5 accent-[#7c3aed]" />
+          </label>
+          <label className="mt-2 flex items-start justify-between gap-3 text-sm">
+            <span className="min-w-0">
+              <span className="block text-ink-soft">Show “Today: &lt;tithi&gt;” year-round</span>
+              <span className="mt-0.5 block text-[11px] leading-snug text-faint">
+                Off by default — the chip only lights up inside the real 2026 puja window (Oct 3–8). Turn on to preview the flow any day; the chip is tagged “demo” so nothing fakes live dates.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              checked={tithiDemoMode}
+              onChange={(e) => setTithiDemoMode(e.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-[#c8451f]"
+              aria-label="Year-round demo mode for the Home tithi chip"
+            />
           </label>
         </Card>
 

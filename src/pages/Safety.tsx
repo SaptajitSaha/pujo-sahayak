@@ -42,6 +42,19 @@ function SosButton({ onTrigger, reduced }: { onTrigger: () => void; reduced: boo
 
   useEffect(() => cancel, [])
 
+  // Keyboard parity with the pointer hold: Space/Enter behave the same as
+  // `pointerdown` (start the 3 s hold) and releasing the key is `pointerup`
+  // (cancel if under the threshold). Reduced-motion path already opens the
+  // confirm dialog on the initial keydown, so keyboard users only ever see
+  // the confirm step — same as tap users.
+  const onKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.repeat) return
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); begin() }
+  }
+  const onKeyUp = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); cancel() }
+  }
+
   return (
     <div className="relative">
       <button
@@ -49,8 +62,15 @@ function SosButton({ onTrigger, reduced }: { onTrigger: () => void; reduced: boo
         onPointerUp={cancel}
         onPointerLeave={cancel}
         onPointerCancel={cancel}
+        onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
         aria-label="Emergency SOS — press and hold for 3 seconds"
-        className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-red-600 to-rose-500 py-4 text-lg font-bold text-white shadow-lift transition-transform active:scale-[0.98]"
+        aria-describedby="sos-hold-help"
+        aria-valuenow={Math.round(progress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        role={progress > 0 ? 'progressbar' : 'button'}
+        className="relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-red-600 to-rose-500 py-4 text-lg font-bold text-white shadow-lift transition-transform active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         {progress > 0 && (
           <span
@@ -62,9 +82,15 @@ function SosButton({ onTrigger, reduced }: { onTrigger: () => void; reduced: boo
         <Siren size={20} className="relative z-10" />
         <span className="relative z-10">{reduced ? 'SOS — Tap to send' : 'SOS — Hold 3s to send'}</span>
       </button>
+      <p id="sos-hold-help" className="sr-only">
+        Hold to send. Releasing early cancels. Uses Web Share API to send your address and a map link to your trusted contact, then falls back to dialing 112.
+      </p>
       {confirming && (
         <motion.div
           initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirm emergency SOS"
           className="mt-2 rounded-card border border-white/20 bg-white/10 p-3 text-sm"
         >
           <p className="text-on-image">Send your location to trusted contact + open dialer?</p>

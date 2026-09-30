@@ -18,6 +18,7 @@ export default function Home() {
   const sosActive = useApp((s) => s.sosActive)
   const setSosActive = useApp((s) => s.setSosActive)
   const selectedCity = useApp((s) => s.selectedCity)
+  const tithiDemoMode = useApp((s) => s.tithiDemoMode)
 
   // City-aware datasets — every rail on Home scopes to the selected city.
   const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
@@ -26,7 +27,11 @@ export default function Home() {
 
   // Real-calendar-aware "Today" chip. Only lights up when the visitor's local
   // date actually falls inside the 2026 Durga Puja window (Oct 3 – Oct 8).
-  // Outside the puja week the chip is hidden rather than showing a fake date.
+  // Outside the puja week the chip hides rather than faking a date — unless
+  // the user flips on `tithiDemoMode` in Settings, in which case we pin
+  // Ashtami so the flow is still demo-able for reviewers + diaspora users
+  // pre-puja. Honesty: the chip shows a small "demo" tag when on the fake
+  // path so nothing pretends to be live calendar data.
   const todayTithi = useMemo(() => {
     const iso = new Date().toISOString().slice(0, 10)
     const dateMap: Record<string, string> = {
@@ -34,9 +39,10 @@ export default function Home() {
       '2026-10-06': 'ashtami', '2026-10-07': 'navami', '2026-10-08': 'dashami',
     }
     const planDay = dateMap[iso]
-    if (!planDay) return null
-    return tithis.find((th) => th.planDay === planDay) ?? null
-  }, [])
+    if (planDay) return { th: tithis.find((x) => x.planDay === planDay) ?? null, demo: false }
+    if (tithiDemoMode) return { th: tithis.find((x) => x.planDay === 'ashtami') ?? null, demo: true }
+    return { th: null as null | (typeof tithis)[number], demo: false }
+  }, [tithiDemoMode])
 
   return (
     <Page>
@@ -128,23 +134,28 @@ export default function Home() {
 
       {/* Today chip — real-calendar-aware; only renders inside the actual 2026
           puja window (Oct 3 – Oct 8). Never fakes a "today" outside those dates. */}
-      {todayTithi && (
+      {todayTithi.th && (
         <motion.button
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.4, ease: EASE }}
           onClick={() => nav('/tithi')}
           className="mt-2 flex w-full items-center justify-between gap-2 rounded-card border border-vermilion/25 bg-vermilion-tint px-3 py-2 text-left"
-          aria-label={`${t('todayTithi')}: ${todayTithi.name}. Open tithi calendar.`}
+          aria-label={`${t('todayTithi')}: ${todayTithi.th.name}. Open tithi calendar.`}
         >
           <span className="flex min-w-0 items-center gap-2">
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-vermilion text-white">
               <Flame size={14} />
             </span>
             <span className="min-w-0">
-              <span className="block text-[10px] uppercase tracking-wide text-vermilion">{t('todayTithi')}</span>
-              <span className="block truncate text-sm font-semibold">{todayTithi.name} · <span className="bn">{todayTithi.nameBn}</span></span>
-              <span className="block truncate text-[11px] text-ink-soft">{todayTithi.window}</span>
+              <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-vermilion">
+                {t('todayTithi')}
+                {todayTithi.demo && (
+                  <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[9px] normal-case tracking-normal text-ink-soft">demo</span>
+                )}
+              </span>
+              <span className="block truncate text-sm font-semibold">{todayTithi.th.name} · <span className="bn">{todayTithi.th.nameBn}</span></span>
+              <span className="block truncate text-[11px] text-ink-soft">{todayTithi.th.window}</span>
             </span>
           </span>
           <ChevronDown size={16} className="shrink-0 -rotate-90 text-vermilion" />

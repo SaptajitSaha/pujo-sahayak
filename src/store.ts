@@ -42,6 +42,11 @@ interface AppState {
   trustedContacts: TrustedContact[]
   selectedCity: City
   sosActive: boolean
+  /** Year-round demo mode for the Home "Today: <tithi>" chip. When on,
+      the chip renders as if today were Ashtami so reviewers and diaspora
+      users outside the 2026 puja window still see the flow. Default off —
+      honesty convention (doc §58). */
+  tithiDemoMode: boolean
 
   toggleSaved: (id: string) => void
   toggleVisited: (id: string) => void
@@ -68,6 +73,7 @@ interface AppState {
   setTrustedContacts: (c: TrustedContact[]) => void
   setSelectedCity: (c: City) => void
   setSosActive: (v: boolean) => void
+  setTithiDemoMode: (v: boolean) => void
 }
 
 const emptyPlanner: Record<PlanDay, PlanStop[]> = {
@@ -112,6 +118,7 @@ export const useApp = create<AppState>()(
       trustedContacts: [],
       selectedCity: 'kolkata',
       sosActive: false,
+      tithiDemoMode: false,
 
       toggleSaved: (id) =>
         set((s) => ({ saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
@@ -170,6 +177,7 @@ export const useApp = create<AppState>()(
       setTrustedContacts: (trustedContacts) => set({ trustedContacts }),
       setSelectedCity: (selectedCity) => set({ selectedCity }),
       setSosActive: (sosActive) => set({ sosActive }),
+      setTithiDemoMode: (tithiDemoMode) => set({ tithiDemoMode }),
     }),
     {
       name: 'pujo-sahayak',
@@ -189,6 +197,7 @@ export const useApp = create<AppState>()(
         if (!p.trustedContacts) p.trustedContacts = []
         if (!p.selectedCity) p.selectedCity = 'kolkata'
         if (p.sosActive === undefined) p.sosActive = false
+        if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
         return p as AppState
       },
     },

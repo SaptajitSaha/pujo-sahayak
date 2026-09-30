@@ -106,8 +106,9 @@ export default function Phrasebook() {
               <p className="italic text-[12px] text-ink-soft">{ph.transliteration}</p>
               <button
                 onClick={() => play(ph)}
-                aria-label={`Play pronunciation: ${ph.english}`}
-                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition ${
+                aria-label={playing === ph.id ? `Stop playback: ${ph.english}` : `Play pronunciation: ${ph.english}`}
+                aria-pressed={playing === ph.id}
+                className={`grid h-9 w-9 shrink-0 place-items-center rounded-full transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vermilion ${
                   playing === ph.id
                     ? 'bg-vermilion text-white animate-pulse'
                     : 'bg-vermilion-tint text-vermilion active:scale-95'

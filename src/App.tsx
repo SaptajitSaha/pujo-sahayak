@@ -35,6 +35,7 @@ const loaders = {
   ArtistDetail: () => import('./pages/ArtistDetail'),
   Tithi: () => import('./pages/Tithi'),
   Phrasebook: () => import('./pages/Phrasebook'),
+  ShareTarget: () => import('./pages/ShareTarget'),
 }
 
 const Explore = lazy(loaders.Explore)
@@ -60,6 +61,7 @@ const Walks = lazy(loaders.Walks)
 const ArtistDetail = lazy(loaders.ArtistDetail)
 const Tithi = lazy(loaders.Tithi)
 const Phrasebook = lazy(loaders.Phrasebook)
+const ShareTarget = lazy(loaders.ShareTarget)
 
 /** Fire every route's chunk download + parse in staggered waves. Called from
     main.tsx right after the app mounts so it runs during the inline CSS boot
@@ -185,6 +187,7 @@ function Shell() {
       <Route path="/artist/:id" element={<ArtistDetail />} />
       <Route path="/tithi" element={<Tithi />} />
       <Route path="/phrasebook" element={<Phrasebook />} />
+      <Route path="/share-target" element={<ShareTarget />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

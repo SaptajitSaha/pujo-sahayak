@@ -306,16 +306,31 @@ export default function PandalDetail() {
         </section>
 
         {reviewOpen && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-night/60" onClick={() => setReviewOpen(false)}>
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-night/60"
+            onClick={() => setReviewOpen(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setReviewOpen(false) }}
+            role="presentation"
+          >
             <motion.div
               initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
               className="w-full max-w-lg rounded-t-2xl bg-card p-4"
               onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="review-modal-title"
             >
-              <h3 className="text-base font-semibold">{t('rateThis')} — {place.name}</h3>
-              <div className="mt-3 flex justify-center gap-1">
+              <h3 id="review-modal-title" className="text-base font-semibold">{t('rateThis')} — {place.name}</h3>
+              <div className="mt-3 flex justify-center gap-1" role="radiogroup" aria-label="Star rating, 1 to 5">
                 {[1, 2, 3, 4, 5].map((n) => (
-                  <button key={n} aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`} onClick={() => setDraftRating(n)} className="p-1 text-2xl">
+                  <button
+                    key={n}
+                    role="radio"
+                    aria-checked={draftRating === n}
+                    aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`}
+                    onClick={() => setDraftRating(n)}
+                    className="p-1 text-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-vermilion rounded"
+                  >
                     <span className={n <= draftRating ? 'text-gold-bright' : 'text-ink/20'}>★</span>
                   </button>
                 ))}
@@ -325,6 +340,7 @@ export default function PandalDetail() {
                 onChange={(e) => setDraftText(e.target.value)}
                 placeholder="Optional: what stood out?"
                 rows={3}
+                aria-label="Optional review text"
                 className="mt-3 w-full rounded-card border border-ink/10 bg-ivory-deep p-3 text-sm outline-none focus:border-vermilion"
               />
               <div className="mt-3 flex gap-2">
@@ -337,7 +353,11 @@ export default function PandalDetail() {
         )}
 
         {toast && (
-          <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">
+          <div
+            className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4"
+            role="status"
+            aria-live="polite"
+          >
             <div className="glass-strong rounded-full px-4 py-2 text-xs font-medium">{toast}</div>
           </div>
         )}

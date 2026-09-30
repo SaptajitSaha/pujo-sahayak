@@ -40,3 +40,9 @@ assets/screens/raw/
 
 # Downloaded CI build output
 /apk
+
+# Browser-subagent test artifacts — screenshots dropped at the repo root during
+# verification passes. Never references from code; keep them out of the tree.
+/screenshot-*.png
+/maya-test-*.png
+/.qoder-splash.png

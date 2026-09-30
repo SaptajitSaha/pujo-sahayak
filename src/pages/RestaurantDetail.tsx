@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Bookmark, BookmarkCheck, Clock, MapPin, Phone, ShoppingBag } from 'lucide-react'
-import { Button, Card, Img, Page, Rail, SectionHeader, Stars } from '../components/ui'
+import { Button, Card, Img, Lightbox, Page, Rail, SectionHeader, Stars, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { placeById, restaurants } from '../data/demo'
 import { useApp } from '../store'
@@ -14,6 +14,8 @@ export default function RestaurantDetail() {
   const place = placeById(id)
   const saved = useApp((s) => s.saved)
   const toggleSaved = useApp((s) => s.toggleSaved)
+  // Dish detail lightbox — tapping a popular dish shows its full name + Bangla.
+  const [zoom, setZoom] = useState<LightboxItem | null>(null)
 
   const others = useMemo(
     () => restaurants.filter((r) => r.id !== id).sort((a, b) => a.distanceKm - b.distanceKm).slice(0, 4),
@@ -21,7 +23,17 @@ export default function RestaurantDetail() {
   )
 
   if (!place || place.type !== 'restaurant') {
-    return <Page><p className="pt-20 text-center text-sm text-faint">Restaurant not found.</p></Page>
+    return (
+      <Page>
+        <div className="flex flex-col items-center gap-3 pt-20 text-center">
+          <p className="text-sm text-faint">This restaurant page doesn't exist — the link may be old or mistyped.</p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => nav('/search?type=restaurant')}>Find restaurants</Button>
+            <Button size="sm" variant="outline" onClick={() => nav('/explore')}>Browse pandals</Button>
+          </div>
+        </div>
+      </Page>
+    )
   }
   const isSaved = saved.includes(place.id)
 
@@ -70,13 +82,15 @@ export default function RestaurantDetail() {
             <SectionHeader title="Popular Dishes" />
             <Rail>
               {place.popularDishes.map((d) => (
-                <Card key={d.id} className="w-32 shrink-0">
-                  <Img palette={d.palette} alt={d.name} className="h-20" />
-                  <div className="p-2">
-                    <p className="truncate text-xs font-semibold">{d.name}</p>
-                    {d.nameBn && <p className="bn truncate text-[11px] text-faint">{d.nameBn}</p>}
-                  </div>
-                </Card>
+                <button key={d.id} onClick={() => setZoom({ title: d.name, sub: d.nameBn ? `«${d.nameBn}»` : undefined, palette: d.palette })} className="shrink-0 text-left">
+                  <Card className="w-32 overflow-hidden transition-transform hover:scale-[1.02]">
+                    <Img palette={d.palette} alt={d.name} className="h-20" />
+                    <div className="p-2">
+                      <p className="truncate text-xs font-semibold">{d.name}</p>
+                      {d.nameBn && <p className="bn truncate text-[11px] text-faint">{d.nameBn}</p>}
+                    </div>
+                  </Card>
+                </button>
               ))}
             </Rail>
           </section>
@@ -102,6 +116,8 @@ export default function RestaurantDetail() {
           <Rail>{others.map((r) => <RailCard key={r.id} place={r} />)}</Rail>
         </section>
       </div>
+
+      <Lightbox item={zoom} onClose={() => setZoom(null)} />
     </Page>
   )
 }

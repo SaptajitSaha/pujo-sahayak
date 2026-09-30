@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { ChevronRight } from 'lucide-react'
 import { Card, Img, Page, Rail, SectionHeader } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { events, meetups, restaurants } from '../data/demo'
@@ -42,13 +43,16 @@ export default function BeyondPuja() {
           <SectionHeader title="Events & Activities" />
           <div className="space-y-2">
             {events.map((e) => (
-              <Card key={e.id} className="flex items-center gap-3 p-3">
-                <Img palette={e.palette} alt={e.name} className="h-12 w-12 rounded-lg" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold">{e.name}</p>
-                  <p className="text-xs text-faint">{e.date} • {e.time} • {e.venue}</p>
-                </div>
-              </Card>
+              <button key={e.id} onClick={() => nav(`/search?q=${encodeURIComponent(e.name)}`)} className="w-full text-left">
+                <Card className="flex items-center gap-3 p-3 transition-transform hover:scale-[1.01]">
+                  <Img palette={e.palette} alt={e.name} className="h-12 w-12 rounded-lg" />
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold">{e.name}</p>
+                    <p className="text-xs text-faint">{e.date} • {e.time} • {e.venue}</p>
+                  </div>
+                  <ChevronRight size={15} className="shrink-0 text-faint" />
+                </Card>
+              </button>
             ))}
           </div>
         </section>
@@ -57,13 +61,15 @@ export default function BeyondPuja() {
           <SectionHeader title="Meetups" action={t('meets')} onAction={() => nav('/meets')} />
           <Rail>
             {meetups.map((m) => (
-              <Card key={m.id} className="w-52 shrink-0">
-                <Img palette={m.palette} alt={m.title} className="h-20" />
-                <div className="p-2.5">
-                  <p className="truncate text-[13px] font-semibold">{m.title}</p>
-                  <p className="text-[11px] text-faint">{m.date} • {m.time}</p>
-                </div>
-              </Card>
+              <button key={m.id} onClick={() => nav('/meets')} className="text-left">
+                <Card className="w-52 shrink-0 transition-transform hover:scale-[1.02]">
+                  <Img palette={m.palette} alt={m.title} className="h-20" />
+                  <div className="p-2.5">
+                    <p className="truncate text-[13px] font-semibold">{m.title}</p>
+                    <p className="text-[11px] text-faint">{m.date} • {m.time}</p>
+                  </div>
+                </Card>
+              </button>
             ))}
           </Rail>
         </section>

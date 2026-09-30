@@ -12,9 +12,17 @@ export default function MayaScan() {
   const nav = useNavigate()
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<'starting' | 'live' | 'denied'>('starting')
   const [result, setResult] = useState<Place | null>(null)
   const [scanning, setScanning] = useState(false)
+  // Gallery mode: a picked photo replaces the camera preview and goes through
+  // the same (honestly-labelled) demo identification pipeline.
+  const [galleryUrl, setGalleryUrl] = useState<string | null>(null)
+  // Torch state for the Flash button — only devices with a real torch will
+  // actually light up; applyConstraints rejects elsewhere and we say so.
+  const [flashOn, setFlashOn] = useState(false)
+  const [flashMsg, setFlashMsg] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -30,7 +38,9 @@ export default function MayaScan() {
     return () => {
       cancelled = true
       streamRef.current?.getTracks().forEach((tr) => tr.stop())
+      if (galleryUrl) URL.revokeObjectURL(galleryUrl)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const capture = () => {
@@ -43,11 +53,36 @@ export default function MayaScan() {
     }, 1900)
   }
 
+  const onGalleryPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (galleryUrl) URL.revokeObjectURL(galleryUrl)
+    setGalleryUrl(URL.createObjectURL(file))
+    setResult(null)
+    // Run the same honest demo identification on the picked photo.
+    setScanning(true)
+    setTimeout(() => { setScanning(false); setResult(identifyDemo()) }, 1900)
+    e.target.value = ''
+  }
+
+  const toggleFlash = () => {
+    const track = streamRef.current?.getVideoTracks()[0]
+    const next = !flashOn
+    if (track) {
+      track.applyConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet]})
+        .then(() => { setFlashOn(next); setFlashMsg(null) })
+        .catch(() => setFlashMsg('No torch on this camera'))
+    } else {
+      setFlashMsg('Start the camera first')
+    }
+  }
+
   return (
     <div className="grain relative mx-auto flex h-dvh max-w-lg flex-col bg-night text-on-image">
-      {/* Camera layer */}
+      {/* Camera layer — a picked gallery photo covers the live feed while set */}
       <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />
-      {state !== 'live' && (
+      {galleryUrl && <img src={galleryUrl} alt="Photo to identify" className="absolute inset-0 h-full w-full object-cover" />}
+      {state !== 'live' && !galleryUrl && (
         <div className="absolute inset-0 bg-[radial-gradient(90%_60%_at_50%_40%,#2a1a10,#120c08)]" />
       )}
 
@@ -56,7 +91,7 @@ export default function MayaScan() {
         style={{ paddingTop: 'calc(1rem + env(safe-area-inset-top))' }}
         className="relative z-10 flex items-center justify-between px-4 pb-4"
       >
-        <button onClick={() => nav('/maya')} aria-label="Close scanner" className="rounded-full bg-night/60 p-2">
+        <button aria-label="Close scanner" onClick={() => nav('/maya')} className="rounded-full bg-night/60 p-2">
           <X size={18} />
         </button>
         <div className="flex items-center gap-2 rounded-full bg-night/60 px-3 py-1.5 text-sm">
@@ -89,8 +124,14 @@ export default function MayaScan() {
         </p>
       )}
       <p className="relative z-10 mt-10 text-center text-sm text-on-image/80">
-        {state === 'starting' ? 'Starting camera…' : 'Point your camera at a pandal'}
+        {galleryUrl ? 'Photo selected — press capture to identify' : state === 'starting' ? 'Starting camera…' : 'Point your camera at a pandal'}
       </p>
+      {galleryUrl && (
+        <button onClick={() => { setGalleryUrl(null); setResult(null) }} className="relative z-10 mx-auto mt-1.5 flex items-center gap-1 rounded-full bg-night/60 px-3 py-1 text-[11px] text-on-image/80">
+          <X size={11} /> Back to camera
+        </button>
+      )}
+      {flashMsg && <p className="relative z-10 mt-1.5 text-center text-[11px] text-gold-bright">{flashMsg}</p>}
 
       {/* Result card */}
       {result && (
@@ -109,7 +150,7 @@ export default function MayaScan() {
 
       {/* Controls */}
       <div className="relative z-10 mt-auto flex items-center justify-around p-8 pb-[max(2rem,env(safe-area-inset-bottom))]">
-        <button className="flex flex-col items-center gap-1 text-[11px] text-on-image/80">
+        <button onClick={() => fileRef.current?.click()} className="flex flex-col items-center gap-1 text-[11px] text-on-image/80">
           <span className="rounded-full bg-night/60 p-3"><ImageUp size={18} /></span> Gallery
         </button>
         <button
@@ -119,10 +160,11 @@ export default function MayaScan() {
         >
           <span className="h-12 w-12 rounded-full bg-on-image" />
         </button>
-        <button className="flex flex-col items-center gap-1 text-[11px] text-on-image/80">
-          <span className="rounded-full bg-night/60 p-3"><Flashlight size={18} /></span> Flash
+        <button onClick={toggleFlash} aria-pressed={flashOn} className="flex flex-col items-center gap-1 text-[11px] text-on-image/80">
+          <span className={`rounded-full p-3 ${flashOn ? 'bg-gold text-night' : 'bg-night/60'}`}><Flashlight size={18} /></span> Flash
         </button>
       </div>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onGalleryPick} />
     </div>
   )
 }

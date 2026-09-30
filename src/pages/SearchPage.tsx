@@ -13,7 +13,15 @@ export default function SearchPage() {
   const t = useT()
   const [params] = useSearchParams()
   const [q, setQ] = useState(params.get('q') ?? '')
-  const [type, setType] = useState<'All' | 'Pandals' | 'Restaurants' | 'Events'>((params.get('type') as 'Pandals') ?? 'All')
+  // Deep links arrive as lowercase slugs (?type=restaurant|pandals|events…);
+  // normalize so every entry point lands on the right pill.
+  const [type, setType] = useState<'All' | 'Pandals' | 'Restaurants' | 'Events'>(() => {
+    const raw = (params.get('type') ?? '').toLowerCase().replace(/s$/, '')
+    if (raw === 'restaurant') return 'Restaurants'
+    if (raw === 'pandal') return 'Pandals'
+    if (raw === 'event') return 'Events'
+    return 'All'
+  })
   const track = useApp((s) => s.track)
   const selectedCity = useApp((s) => s.selectedCity)
 

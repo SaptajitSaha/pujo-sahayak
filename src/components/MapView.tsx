@@ -39,15 +39,17 @@ export default function MapView({
     m.eachLayer((l) => { if (!(l as L.TileLayer).getTileUrl) m.removeLayer(l) })
     const bounds: [number, number][] = points.map((pt) => [pt.lat, pt.lng])
     points.forEach((pt, i) => {
-      L.marker([pt.lat, pt.lng], {
-        icon: route
-          ? L.divIcon({
-              className: '',
-              html: `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff2d95,#8e5cff,#0a84ff);color:#fff;display:flex;align-items:center;justify-content:center;font:600 12px Inter;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${i + 1}</div>`,
-              iconSize: [26, 26], iconAnchor: [13, 13],
-            })
-          : undefined,
-      })
+      // Only set `icon` for route mode. Passing `icon: undefined` explicitly
+      // overwrites Leaflet's default marker icon in Marker.options and makes
+      // options.icon.createIcon() throw — the Explore Map view crash.
+      const opts: L.MarkerOptions = { }
+      if (route)
+        opts.icon = L.divIcon({
+          className: '',
+          html: `<div style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#ff2d95,#8e5cff,#0a84ff);color:#fff;display:flex;align-items:center;justify-content:center;font:600 12px Inter;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)">${i + 1}</div>`,
+          iconSize: [26, 26], iconAnchor: [13, 13],
+        })
+      L.marker([pt.lat, pt.lng], opts)
         .bindTooltip(pt.label)
         .addTo(m)
     })

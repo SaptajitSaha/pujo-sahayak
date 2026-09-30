@@ -162,23 +162,30 @@ export default function Home() {
         </motion.button>
       )}
 
-      {/* Explore Spotlight — animated coverflow carousel */}
-      <Reveal>
-        <section className="mt-5">
-          <SectionHeader title={t('exploreSpotlight')} action={t('viewAll')} onAction={() => nav('/explore')} />
-          <SpotlightCarousel pool={cityPandals} />
-        </section>
-      </Reveal>
+      {/* Explore Spotlight — animated coverflow carousel (city-scoped,
+          hidden when the selected city has no seeded pandals) */}
+      {cityPandals.length > 0 && (
+        <Reveal>
+          <section className="mt-5">
+            <SectionHeader title={t('exploreSpotlight')} action={t('viewAll')} onAction={() => nav('/explore')} />
+            <SpotlightCarousel pool={cityPandals} />
+          </section>
+        </Reveal>
+      )}
 
-      {/* Nearby Restaurants */}
-      <Reveal>
-        <section className="mt-2">
-          <SectionHeader title={t('nearbyRestaurants')} action={t('viewAll')} onAction={() => nav('/search?type=restaurant')} />
-          <Rail>
-            {cityRestaurants.slice(0, 4).map((r) => <RailCard key={r.id} place={r} />)}
-          </Rail>
-        </section>
-      </Reveal>
+      {/* Nearby Restaurants — city-scoped; hidden when the selected city has
+          no seeded restaurants (e.g. multi-city demo cities) so the rail
+          never renders as an empty header + blank strip. */}
+      {cityRestaurants.length > 0 && (
+        <Reveal>
+          <section className="mt-2">
+            <SectionHeader title={t('nearbyRestaurants')} action={t('viewAll')} onAction={() => nav('/search?type=restaurant')} />
+            <Rail>
+              {cityRestaurants.slice(0, 4).map((r) => <RailCard key={r.id} place={r} />)}
+            </Rail>
+          </section>
+        </Reveal>
+      )}
 
       {/* Sponsored — an editorial card planted mid-feed, no label (native by design) */}
       <Reveal>
@@ -238,12 +245,14 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Events / local experiences — the off-season bridge (doc §36) */}
-      <Reveal>
-        <section className="mt-5">
-          <SectionHeader title={t('events')} action={t('viewAll')} onAction={() => nav('/beyond-puja')} />
-          <Rail>
-            {cityEvents.map((e) => (
+      {/* Events / local experiences — the off-season bridge (doc §36).
+          City-scoped, same empty-rail guard as restaurants above. */}
+      {cityEvents.length > 0 && (
+        <Reveal>
+          <section className="mt-5">
+            <SectionHeader title={t('events')} action={t('viewAll')} onAction={() => nav('/beyond-puja')} />
+            <Rail>
+              {cityEvents.map((e) => (
               <Card key={e.id} className="flex w-56 shrink-0 flex-col">
                 <Img palette={e.palette} alt={e.name} className="h-20 shrink-0">
                   <span className="absolute right-2 top-2 rounded-full bg-night/70 px-2 py-0.5 text-[10px] text-on-image">
@@ -259,7 +268,8 @@ export default function Home() {
             ))}
           </Rail>
         </section>
-      </Reveal>
+        </Reveal>
+      )}
 
       {/* Shopping — best-selling Durga Puja sale picks from Kolkata malls.
           Currently demo (`shopping` in data/demo.ts); production replaces it

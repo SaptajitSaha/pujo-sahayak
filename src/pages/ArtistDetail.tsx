@@ -39,7 +39,10 @@ export default function ArtistDetail() {
   if (!artist) {
     return (
       <Page>
-        <p className="pt-20 text-center text-sm text-faint">Artist not found.</p>
+        <div className="flex flex-col items-center gap-3 pt-20 text-center">
+          <p className="text-sm text-faint">This artist isn't in the directory yet.</p>
+          <Button size="sm" onClick={() => nav('/explore')}>{t('viewAll')} pandals</Button>
+        </div>
       </Page>
     )
   }

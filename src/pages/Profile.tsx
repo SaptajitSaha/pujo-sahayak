@@ -34,17 +34,20 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Stats — from real local activity only */}
+      {/* Stats — from real local activity only; each tile deep-links to the
+          screen that shows the underlying items. */}
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         {[
-          { n: visited.length, label: 'Visits', icon: CalendarCheck },
-          { n: saved.length, label: 'Saved', icon: Bookmark },
-          { n: joined.length, label: 'Meets', icon: Users },
-        ].map(({ n, label, icon: Icon }) => (
-          <Card key={label} className="p-3">
-            <p className="text-xl font-semibold">{n}</p>
-            <p className="flex items-center justify-center gap-1 text-[11px] text-faint"><Icon size={11} /> {label}</p>
-          </Card>
+          { n: visited.length, label: 'Visits', icon: CalendarCheck, to: '/favorites' },
+          { n: saved.length, label: 'Saved', icon: Bookmark, to: '/favorites' },
+          { n: joined.length, label: 'Meets', icon: Users, to: '/meets' },
+        ].map(({ n, label, icon: Icon, to }) => (
+          <button key={label} onClick={() => nav(to)} aria-label={`${n} ${label} — open details`} className="text-center">
+            <Card className="p-3 transition-transform hover:scale-[1.03]">
+              <p className="text-xl font-semibold">{n}</p>
+              <p className="flex items-center justify-center gap-1 text-[11px] text-faint"><Icon size={11} /> {label}</p>
+            </Card>
+          </button>
         ))}
       </div>
 

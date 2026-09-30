@@ -1,8 +1,9 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
 import { Children, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun } from 'lucide-react'
+import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun, X } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import type { Palette } from '../data/types'
 import { useApp } from '../store'
 import { useT } from '../i18n'
@@ -151,6 +152,51 @@ export function Img({
       )}
       {children}
     </div>
+  )
+}
+
+/* Full-screen photo/edition/dish viewer — the app's shared lightbox.
+   Opens with backdrop-click, Escape, or the X button; takes focus on open so
+   Escape always bubbles to the handler (same pattern as the review sheet). */
+export interface LightboxItem { title: string; sub?: string; palette: Palette }
+export function Lightbox({ item, onClose }: { item: LightboxItem | null; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => { if (item) ref.current?.focus() }, [item])
+  // Portaled to <body>: page-level framer-motion wrappers carry transforms,
+  // and a transformed ancestor captures position:fixed — the backdrop would
+  // size to the document instead of the viewport.
+  return createPortal(
+    <AnimatePresence>
+      {item && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-night/85 p-6"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={onClose}
+          onKeyDown={(e) => { if (e.key === 'Escape') onClose() }}
+          role="presentation"
+        >
+          <motion.div
+            ref={ref} tabIndex={-1} className="w-full max-w-sm outline-none"
+            initial={{ scale: 0.92, y: 16 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0 }}
+            transition={{ duration: 0.28, ease: EASE }}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog" aria-modal="true" aria-label={item.title}
+          >
+            <Img palette={item.palette} alt={item.title} src={item.palette.img} className="aspect-[4/3] rounded-card" />
+            <div className="mt-3 flex items-start justify-between gap-3 text-on-image">
+              <div>
+                <p className="text-sm font-semibold">{item.title}</p>
+                {item.sub && <p className="mt-0.5 text-xs text-on-image/70">{item.sub}</p>}
+              </div>
+              <button aria-label="Close" onClick={onClose} className="rounded-full bg-white/10 p-2">
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
+    document.body,
   )
 }
 

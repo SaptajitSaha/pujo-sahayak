@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
   Bookmark, BookmarkCheck, CalendarCheck, Check, ChevronRight, Camera,
   MapPin, Route as RouteIcon, Share2, ShieldCheck, Sparkles, TrainFront, Truck,
 } from 'lucide-react'
-import { Button, Card, EASE, Img, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip } from '../components/ui'
+import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
@@ -39,6 +40,13 @@ export default function PandalDetail() {
   const [draftRating, setDraftRating] = useState(0)
   const [draftText, setDraftText] = useState('')
   const [toast, setToast] = useState<string | null>(null)
+  // Shared lightbox — top-click photos and past-edition themes open here.
+  const [zoom, setZoom] = useState<LightboxItem | null>(null)
+
+  // Opens an external walking/driving route for a named spot (parking ground,
+  // metro station). Plain Maps search URL — no key, no fake integration.
+  const openDirections = (name: string, area: string) =>
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${area} Kolkata`)}`, '_blank', 'noopener,noreferrer')
 
   const onShareCard = async () => {
     if (!place) return
@@ -132,7 +140,13 @@ export default function PandalDetail() {
   if (!place || place.type !== 'pandal') {
     return (
       <Page>
-        <p className="pt-20 text-center text-sm text-faint">Pandal not found.</p>
+        <div className="flex flex-col items-center gap-3 pt-20 text-center">
+          <p className="text-sm text-faint">This pandal page doesn't exist — the link may be old or mistyped.</p>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => nav('/explore')}>Browse pandals</Button>
+            <Button size="sm" variant="outline" onClick={() => nav('/search')}>Search</Button>
+          </div>
+        </div>
       </Page>
     )
   }
@@ -273,13 +287,15 @@ export default function PandalDetail() {
             <SectionHeader title={t('pastEditions')} />
             <Rail>
               {place.pastEditions.map((e) => (
-                <Card key={e.year} className="w-32 shrink-0">
-                  <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" />
-                  <div className="p-2">
-                    <p className="text-xs font-semibold">{e.year}</p>
-                    <p className="text-[11px] text-ink-soft">{e.theme}</p>
-                  </div>
-                </Card>
+                <button key={e.year} onClick={() => setZoom({ title: `${e.year} — ${e.theme}`, sub: `Past edition of ${place.name}`, palette: e.palette })} className="w-32 shrink-0 text-left">
+                  <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
+                    <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" />
+                    <div className="p-2">
+                      <p className="text-xs font-semibold">{e.year}</p>
+                      <p className="text-[11px] text-ink-soft">{e.theme}</p>
+                    </div>
+                  </Card>
+                </button>
               ))}
             </Rail>
           </section>
@@ -315,7 +331,7 @@ export default function PandalDetail() {
           </div>
         </section>
 
-        {reviewOpen && (
+        {reviewOpen && createPortal(
           <div
             className="fixed inset-0 z-50 flex items-end justify-center bg-night/60"
             onClick={() => setReviewOpen(false)}
@@ -361,7 +377,8 @@ export default function PandalDetail() {
               </div>
               <p className="mt-2 text-[10px] text-faint">Reviews stay on this device in the demo build — no account, no upload.</p>
             </motion.div>
-          </div>
+          </div>,
+          document.body,
         )}
 
         {toast && (
@@ -374,18 +391,22 @@ export default function PandalDetail() {
           </div>
         )}
 
+        <Lightbox item={zoom} onClose={() => setZoom(null)} />
+
         {/* Top clicks + upload */}
         <section className="mt-5">
           <SectionHeader title={t('topClicks')} />
           <div className="grid grid-cols-3 gap-2">
             {(place.topClicks ?? []).map((ph) => (
-              <Card key={ph.id}>
-                <Img palette={ph.palette} alt={ph.title} className="h-20" />
-                <div className="p-1.5">
-                  <p className="truncate text-[10px] font-medium">{ph.title}</p>
-                  <p className="text-[10px] text-faint">♥ {ph.likes}</p>
-                </div>
-              </Card>
+              <button key={ph.id} onClick={() => setZoom({ title: ph.title, sub: `📷 ${ph.author} • ♥ ${ph.likes}`, palette: ph.palette })} className="text-left">
+                <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
+                  <Img palette={ph.palette} alt={ph.title} className="h-20" />
+                  <div className="p-1.5">
+                    <p className="truncate text-[10px] font-medium">{ph.title}</p>
+                    <p className="text-[10px] text-faint">♥ {ph.likes}</p>
+                  </div>
+                </Card>
+              </button>
             ))}
             <button
               onClick={() => fileRef.current?.click()}
@@ -424,6 +445,9 @@ export default function PandalDetail() {
                   </span>
                   <span className="shrink-0 text-[11px] font-medium text-ink">₹{p.ratePerHour}/h</span>
                   {hinted && <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">Serves this pandal</span>}
+                  <button onClick={() => openDirections(p.name, p.area)} aria-label={`Directions to ${p.name}`} className="shrink-0 rounded-full border border-vermilion/40 p-1.5 text-vermilion">
+                    <MapPin size={13} />
+                  </button>
                 </Card>
               ))}
             </div>
@@ -443,11 +467,14 @@ export default function PandalDetail() {
                     <p className="text-sm font-semibold">{m.station}</p>
                     <span className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">{m.line}</span>
                   </div>
-                  <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-faint">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-faint">
                     <span>First {m.firstTrain}</span>
                     <span>Last {m.lastTrain}</span>
                     <span>Every {m.frequencyMin} min</span>
                     {hinted && <span className="font-medium text-emerald-700">Nearest to this pandal</span>}
+                    <button onClick={() => openDirections(m.station, 'Metro')} aria-label={`Directions to ${m.station} station`} className="ml-auto flex items-center gap-1 rounded-full border border-vermilion/40 px-2 py-0.5 text-[10px] font-medium text-vermilion">
+                      <MapPin size={11} /> Directions
+                    </button>
                   </div>
                 </Card>
               ))}

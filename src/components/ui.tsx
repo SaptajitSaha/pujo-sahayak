@@ -267,6 +267,18 @@ export function SectionHeader({ title, action, onAction }: { title: string; acti
   )
 }
 
+/** Inline error + retry for a failed async query. Small, self-contained — used
+    by every Supabase-backed section so a network blip never strands the UI in a
+    perpetual skeleton. */
+export function QueryError({ onRetry, message = 'Couldn’t load this right now.' }: { onRetry: () => void; message?: string }) {
+  return (
+    <div className="mt-2 flex flex-col items-center gap-2 rounded-card border border-ink/10 bg-card px-4 py-5 text-center">
+      <p className="text-sm text-ink-soft">{message}</p>
+      <Button variant="outline" size="sm" onClick={onRetry}>Try again</Button>
+    </div>
+  )
+}
+
 /** Horizontal scroll rail — cards spring in on a stagger as the rail mounts.
     Uses `animate` (not `whileInView`) on purpose: `whileInView` observes the
     browser window viewport, so cards off-screen to the right of a horizontal

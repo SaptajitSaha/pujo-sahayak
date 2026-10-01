@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
+import { PandalPulse } from '../components/PandalPulse'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
 import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
@@ -285,6 +286,9 @@ export default function PandalDetail() {
             <p role="status" aria-live="polite" className="mt-1 text-[11px] text-faint">{checkInMsg}</p>
           )}
         </div>
+
+        {/* Pandal Pulse — six at-a-glance status tiles, derived/modelled on-device. */}
+        <PandalPulse place={place} />
 
         {/* Info tiles */}
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">

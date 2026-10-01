@@ -44,9 +44,18 @@ export default function Settings() {
     // Only digits, +, spaces, dashes count as valid — reject anything else so we
     // never persist obvious typos like "call me later" into the phone field.
     if (!/^[+\d][\d\s-]{6,}$/.test(phone)) { note('Phone looks wrong — use digits, +, spaces or dashes.'); return }
-    setTrustedContacts([{ id: 'tc-' + Date.now(), name, phone }])
-    note('Trusted contact saved. Shown in SOS.')
+    if (featureFlags.ENABLE_SAFETY_CIRCLE) {
+      // Circle of up to 5 — additive, no live tracking; SOS + one-tap share reach all.
+      if (trustedContacts.length >= 5) { note(t('circleFull')); return }
+      setTrustedContacts([...trustedContacts, { id: 'tc-' + Date.now(), name, phone }])
+      setContactName(''); setContactPhone('')
+      note(`${name} added to your circle.`)
+    } else {
+      setTrustedContacts([{ id: 'tc-' + Date.now(), name, phone }])
+      note('Trusted contact saved. Shown in SOS.')
+    }
   }
+  const removeContact = (id: string) => setTrustedContacts(trustedContacts.filter((c) => c.id !== id))
   const clearContact = () => { setTrustedContacts([]); setContactName(''); setContactPhone(''); note('Trusted contact removed.') }
 
   const Row = ({ icon: Icon, label, value, onClick }: { icon: typeof User; label: string; value?: string; onClick?: () => void }) => (
@@ -90,14 +99,17 @@ export default function Settings() {
           </p>
         </Card>
 
-        {/* Trusted contact — SOS long-press shares your location with this
-            number via the OS share sheet. Persisted locally; multi-contact
-            support is a backend concern. */}
+        {/* Safety Circle (up to 5) or single Trusted Contact — SOS shares your
+            location with everyone here via the OS share sheet. Local only, no
+            live tracking: nothing leaves the device unless a tap opens the sheet. */}
         <Card className="p-3.5">
           <div className="flex items-center gap-3">
             <span className="rounded-full bg-ivory-deep p-2 text-ink-soft"><Phone size={15} /></span>
-            <span className="flex-1 text-sm font-medium">{t('trustedContact')}</span>
+            <span className="flex-1 text-sm font-medium">{featureFlags.ENABLE_SAFETY_CIRCLE ? t('safetyCircle') : t('trustedContact')}</span>
           </div>
+          {featureFlags.ENABLE_SAFETY_CIRCLE && (
+            <p className="mt-1.5 text-[11px] leading-relaxed text-faint">{t('safetyCircleSub')}</p>
+          )}
           <div className="mt-2.5 space-y-2">
             <input
               type="text"
@@ -116,15 +128,30 @@ export default function Settings() {
             />
             <div className="flex gap-2">
               <button onClick={saveContact} className="flex-1 rounded-full grad-brand py-2 text-sm font-semibold text-white">
-                {trustedContacts.length ? 'Update' : 'Save'}
+                {featureFlags.ENABLE_SAFETY_CIRCLE ? t('circleAdd') : (trustedContacts.length ? 'Update' : 'Save')}
               </button>
-              {trustedContacts.length > 0 && (
+              {trustedContacts.length > 0 && !featureFlags.ENABLE_SAFETY_CIRCLE && (
                 <button onClick={clearContact} className="rounded-full border border-ink/15 px-4 py-2 text-sm text-ink-soft">
                   Remove
                 </button>
               )}
             </div>
-            {trustedContacts[0] && (
+            {featureFlags.ENABLE_SAFETY_CIRCLE && (
+              trustedContacts.length ? (
+                <ul className="mt-1 space-y-1">
+                  {trustedContacts.map((c) => (
+                    <li key={c.id} className="flex items-center gap-2 rounded-full bg-ivory-deep px-3 py-1.5 text-xs">
+                      <span className="flex-1 truncate font-medium text-ink">{c.name}</span>
+                      <span className="text-faint">{c.phone}</span>
+                      <button aria-label={`Remove ${c.name}`} onClick={() => removeContact(c.id)} className="text-faint hover:text-vermilion">✕</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-[10px] text-faint">{t('circleEmpty')}</p>
+              )
+            )}
+            {!featureFlags.ENABLE_SAFETY_CIRCLE && trustedContacts[0] && (
               <p className="text-[10px] text-faint">Current: {trustedContacts[0].name} · {trustedContacts[0].phone}</p>
             )}
           </div>

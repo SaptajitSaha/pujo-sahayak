@@ -146,6 +146,19 @@ export const STRINGS: Dict = {
   pulseVisitor: { en: 'Visitor estimate', bn: 'দর্শকের মতামত', hi: 'आगंतु अनुमान' },
   pulseModelled: { en: 'Modelled', bn: 'আনুমানিক', hi: 'अनुमानित' },
   done: { en: 'Done', bn: 'হল', hi: 'पूर्ण' },
+
+  // ── Second Product Extension · Phase 2 (safety circle + meeting point) ──
+  safetyCircle: { en: 'Safety Circle', bn: 'সেটির্কল', hi: 'सर्कल सुरक्षा' },
+  safetyCircleSub: { en: 'Up to 5 people you choose. SOS and a one-tap location share go to everyone here — no live tracking, nothing shared unless you tap.', bn: 'আপনার বেছে নেওয়া ৫ জন পর্যন্ত। SOS ও এক-ট্যাপ লোকেশন শেয়ার সবার কাছে যায় — কোনো লাইভ ট্র্যাকিং নেই, ট্যাপ না করলে কিছুই শেয়ার হয় না।', hi: 'आपकी चुनी हुई 5 तक व्यक्तियाँ। SOS और एक-टैप लोकेशन शेयर सबको जाता है — कोई लाइव ट्रैकिंग नहीं, टैप न करें तो कुछ साझा नहीं।' },
+  circleAdd: { en: 'Add to circle', bn: 'সার্কেলে যোগ করুন', hi: 'सर्कल में जोड़ें' },
+  circleFull: { en: 'Circle is full (5 max)', bn: 'সার্কেল ভরতি (সর্বোচ্চ ৫)', hi: 'सर्कल भरा है (अधिकतम 5)' },
+  circleEmpty: { en: 'No one added yet.', bn: 'এখনও কাউকে যোগ করা হয়নি।', hi: 'अभी कोई नहीं जोड़ा गया।' },
+  shareLocationNow: { en: 'Share my location now', bn: 'এখনই আমার অবস্থান শেয়ার করুন', hi: 'अभी मेरा लोकेशन साझा करें' },
+  sharedWithCircle: { en: 'Opened your share sheet for the circle', bn: 'সার্কেলের জন্য শেয়ার শीট খোলা হয়েছে', hi: 'सर्कल के लिए शेयर शीट खुली' },
+  meetingPointTitle: { en: 'Suggested meeting point', bn: 'প্রস্তাবিত মিলন বিন্দু', hi: 'सुझाय गया मिलन स्थल' },
+  meetingPointSub: { en: 'A real, easy-to-find public spot near the middle of where you each are — a suggestion, never auto-chosen.', bn: 'আপনাদের প্রত্যেকের অবস্থানের মাঝামাঝি একটি আসল, সহজে-খোঁজা সাধারণ জায়গা — শুধু প্রস্তাব, কখনও স্বয়ংক্রিয় নয়।', hi: 'आपSabके स्थान के बीच एक वास्तविक, आसानी से मिलने वाली सार्वजनिक जगह — केवल सुझाव, अपने आप नहीं चुना जाता।' },
+  suggestSpot: { en: 'Suggest a spot', bn: 'একটি জায়গা প্রস্তাব করুন', hi: 'एक जगह सुझाएँ' },
+  walkApprox: { en: '~ straight-line', bn: '~ সরাসরি', hi: '~ सीधी-रेखा' },
 }
 
 export function useT() {

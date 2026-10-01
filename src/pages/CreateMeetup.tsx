@@ -1,12 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { MapPin } from 'lucide-react'
 import { Button, Card, Chip, Page } from '../components/ui'
-import { interests } from '../data/demo'
+import { interests, placeById, safetyPoints, DEMO_USER } from '../data/demo'
+import { useApp } from '../store'
+import { suggestMeetingPoint } from '../lib/meetingPoint'
 import { useT } from '../i18n'
 
 export default function CreateMeetup() {
   const t = useT()
   const nav = useNavigate()
+  const flags = useApp((s) => s.featureFlags)
+  const saved = useApp((s) => s.saved)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -17,6 +22,15 @@ export default function CreateMeetup() {
   const [restricted, setRestricted] = useState(false)
 
   const valid = title.trim() && date && time && location.trim()
+
+  // "Suggest a spot": a real, staffed safety point near the middle of the places
+  // you've saved (your likely areas). Fills the location box as a starting point —
+  // you can still edit it. Never invents a place: only names a known safety point.
+  const suggestSpot = () => {
+    const origins = [DEMO_USER, ...saved.map((id) => placeById(id)).filter(Boolean).map((p) => ({ lat: p!.lat, lng: p!.lng }))]
+    const s = suggestMeetingPoint(origins, safetyPoints.map((sp) => ({ id: sp.id, name: sp.name, detail: sp.detail, lat: sp.lat, lng: sp.lng })))
+    if (s) setLocation(`Meet near ${s.spot.name}${s.spot.detail ? `, ${s.spot.detail}` : ''}`)
+  }
 
   return (
     <Page>
@@ -40,6 +54,11 @@ export default function CreateMeetup() {
         <Field label="Location">
           <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Meet near Gariahat metro exit 2"
             className="w-full rounded-lg border border-ink/10 bg-ivory px-3 py-2.5 text-sm outline-none focus:border-vermilion/50" />
+          {flags.ENABLE_SMART_MEETING && (
+            <button type="button" onClick={suggestSpot} className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-vermilion">
+              <MapPin size={12} /> {t('suggestSpot')}
+            </button>
+          )}
         </Field>
         <Field label="Description">
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} maxLength={300}

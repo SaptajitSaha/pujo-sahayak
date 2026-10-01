@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { MapPin, Plus, Share2, Users, X } from 'lucide-react'
 import { Button, Card, Chip, Img, Page } from '../components/ui'
-import { meetups, placeById } from '../data/demo'
+import { meetups, placeById, safetyPoints } from '../data/demo'
 import { useApp } from '../store'
 import { haversineKm } from '../lib/geo'
+import { suggestMeetingPoint } from '../lib/meetingPoint'
 import { useT } from '../i18n'
 import { DEMO_USER } from '../data/demo'
 import type { Meetup } from '../data/types'
@@ -22,6 +23,7 @@ export default function Meets() {
   const joined = useApp((s) => s.joinedMeetups)
   const toggleMeetup = useApp((s) => s.toggleMeetup)
   const saved = useApp((s) => s.saved)
+  const flags = useApp((s) => s.featureFlags)
 
   const list = useMemo(() => {
     if (filter === 'nearby') {
@@ -135,6 +137,32 @@ export default function Meets() {
                 {openMeet.host && <span className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">Hosted by {openMeet.host}</span>}
               </div>
               <p className="mt-2 flex items-center gap-1 text-xs text-faint"><Users size={12} /> {openMeet.attendees} going · max {openMeet.maxParticipants}{openMeet.visibility === 'restricted' ? ' · restricted' : ''}</p>
+              {flags.ENABLE_SMART_MEETING && (() => {
+                // Honest, on-device suggestion: the real, staffed safety spot nearest
+                // the middle of your area and the meetup's stated location. Never
+                // auto-chosen, never invented — it only ever names a known place.
+                const s = suggestMeetingPoint(
+                  [{ lat: DEMO_USER.lat, lng: DEMO_USER.lng }, { lat: openMeet.lat, lng: openMeet.lng }],
+                  safetyPoints.map((sp) => ({ id: sp.id, name: sp.name, detail: sp.detail, lat: sp.lat, lng: sp.lng })),
+                )
+                if (!s) return null
+                return (
+                  <div className="mt-3 rounded-card border border-ink/10 bg-ivory-deep p-3">
+                    <p className="text-xs font-semibold text-ink">{t('meetingPointTitle')}</p>
+                    <p className="mt-1 text-sm font-medium text-ink">{s.spot.name}</p>
+                    {s.spot.detail && <p className="text-[11px] text-faint">{s.spot.detail}</p>}
+                    <p className="mt-1 text-[11px] text-faint">
+                      {t('walkApprox')} {s.distancesKm[0].toFixed(1)} km from you
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${s.spot.lat},${s.spot.lng}`, '_blank', 'noopener,noreferrer')}>
+                        <MapPin size={13} /> Directions
+                      </Button>
+                    </div>
+                    <p className="mt-1.5 text-[10px] leading-relaxed text-faint">{t('meetingPointSub')}</p>
+                  </div>
+                )
+              })()}
               <div className="mt-3 flex gap-2">
                 <Button size="sm" variant={isJoined ? 'dark' : 'primary'} className="flex-1" disabled={!isJoined && full} onClick={() => toggleMeetup(openMeet.id)}>
                   {isJoined ? t('joined') : full ? 'Full' : t('join')}

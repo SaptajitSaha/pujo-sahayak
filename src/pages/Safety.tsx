@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReducedMotion, motion } from 'framer-motion'
-import { AlertTriangle, Cross, Flame, PhoneCall, Search, ShieldQuestion, Users, Siren, Megaphone } from 'lucide-react'
+import { AlertTriangle, Cross, Flame, PhoneCall, Search, ShieldQuestion, Users, Siren, Megaphone, Share2 } from 'lucide-react'
 import { Card, Page } from '../components/ui'
 import { safetyPoints } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
+import { getCurrentLocation } from '../lib/geo'
 import { useAuthorityAlerts, isStale } from '../services/authority'
 import { relativeTime } from '../services/liveNotes'
 import type { AuthorityAlert } from '../data/types'
@@ -155,17 +156,19 @@ export default function Safety() {
   const currentAddress = useApp((s) => s.currentAddress)
   const setSosActive = useApp((s) => s.setSosActive)
   const [lostNote, setLostNote] = useState<string | null>(null)
+  const [circleNote, setCircleNote] = useState<string | null>(null)
 
   const triggerSos = () => {
     // 1. Set the "active" flag so Home shows the "I'm safe" dismiss banner
     //    until the user clears it (survives reload via Zustand persist).
     setSosActive(true)
     // 2. Compose a share message with the last known address + a maps deep link.
-    const contact = trustedContacts[0]
+    //    Names the whole circle so everyone on the share sheet knows who it's for.
     const mapsLink = 'https://maps.google.com/?q=' + encodeURIComponent(currentAddress || 'Kolkata')
+    const circle = trustedContacts.map((c) => `${c.name} (${c.phone})`).join(', ')
     const body =
       `SOS from Pujo Sahayak. I need help at ${currentAddress || 'my current location'}.` +
-      (contact ? ` (Trusted contact: ${contact.name} — ${contact.phone})` : '') +
+      (circle ? ` Circle: ${circle}.` : '') +
       ` Map: ${mapsLink}`
     // 3. Try Web Share (native share sheet on Android) — fall back to tel:112.
     if (navigator.share) {
@@ -176,6 +179,21 @@ export default function Safety() {
     } else {
       window.location.href = 'tel:112'
     }
+  }
+
+  // One-tap, explicit location share to the circle — NOT live tracking. Grabs a
+  // single current fix, opens the OS share sheet pre-filled with a maps link and
+  // the circle's names. Nothing is sent until the user picks an app there.
+  const shareLocationNow = () => {
+    if (!navigator.share) { setCircleNote('This device has no share sheet — call your circle instead.'); return }
+    getCurrentLocation().then((loc) => {
+      const mapsLink = `https://maps.google.com/?q=${loc.lat.toFixed(5)},${loc.lng.toFixed(5)}`
+      const circle = trustedContacts.map((c) => c.name).join(', ')
+      navigator.share({
+        title: 'My location — Pujo Sahayak',
+        text: `Sharing my current location with${circle ? ` ${circle}` : ' you'}. ${mapsLink}`,
+      }).then(() => setCircleNote(t('sharedWithCircle'))).catch(() => setCircleNote('Share cancelled.'))
+    }).catch(() => setCircleNote('Could not get your location. Open the map link and share manually.'))
   }
 
   return (
@@ -206,6 +224,42 @@ export default function Safety() {
       >
         <PhoneCall size={18} /> {t('call112')}
       </a>
+
+      {/* Safety Circle (flag-gated) — everyone SOS reaches, plus a one-tap,
+          explicit location share. No live tracking: nothing leaves unless the
+          user opens the share sheet and picks an app. */}
+      {flags.ENABLE_SAFETY_CIRCLE && (
+        <section className="mt-6">
+          <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-gold-bright">
+            <Users size={14} /> {t('safetyCircle')}
+          </h2>
+          <Card className="!bg-white/5 !text-on-image p-3.5">
+            {trustedContacts.length ? (
+              <ul className="space-y-1.5">
+                {trustedContacts.map((c) => (
+                  <li key={c.id} className="flex items-center gap-2 text-sm">
+                    <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-[11px] font-semibold">{c.name.slice(0, 1)}</span>
+                    <span className="flex-1 truncate text-on-image">{c.name}</span>
+                    <a href={`tel:${c.phone}`} className="text-xs text-gold-bright">{c.phone}</a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-on-image/60">{t('circleEmpty')} Add people in Settings → Safety Circle.</p>
+            )}
+            <button
+              onClick={shareLocationNow}
+              className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/25 bg-white/10 py-2.5 text-sm font-semibold text-on-image active:scale-[0.98]"
+            >
+              <Share2 size={15} /> {t('shareLocationNow')}
+            </button>
+            {circleNote && (
+              <p role="status" className="mt-2 text-center text-[11px] text-on-image/70">{circleNote}</p>
+            )}
+            <p className="mt-2 text-[10px] leading-relaxed text-on-image/40">{t('safetyCircleSub')}</p>
+          </Card>
+        </section>
+      )}
 
       {/* Live official alerts from active authority providers (flag-gated) */}
       {flags.ENABLE_AUTHORITY_INTEGRATION && <OfficialAlerts />}

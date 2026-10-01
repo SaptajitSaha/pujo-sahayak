@@ -1,12 +1,13 @@
 // ─── Kolkata Metro · map layout ──────────────────────────────────────────────
-// Pure, deterministic projection of the vendored network (data/metroNetwork.ts)
+// Pure, deterministic layout of the schematic network (data/metroNetwork.ts)
 // into SVG coordinates. No React, no DOM — the MetroNetworkMap component only
 // draws what this returns, so the geometry is fully unit-tested (metroMap.test).
 //
-// Projection: equirectangular with a cos(mid-latitude) correction on longitude,
-// so east–west distances shrink realistically like the ground; screen y grows
-// southward (north is up). The whole network is then aspect-fit into the
-// requested canvas with padding — the map never distorts or overflows.
+// The stations already carry author-chosen schematic x/y (north up, east right)
+// that reproduce the SHAPE of the official diagram. This module does no
+// geographic projection — it simply aspect-fits that schematic bounding box into
+// the requested canvas with padding, so the map never distorts or overflows and
+// the hand-authored shape is preserved exactly.
 
 import type { MetroNetLine, MetroNetStation } from '../data/metroNetwork'
 
@@ -16,13 +17,13 @@ export interface MetroNetworkInput {
 }
 
 /** The diagram's internal coordinate space, shared by the renderer and the
- *  tests so they can never drift. Portrait on purpose: the Kolkata network
- *  spans ~1.7× more latitude than (corrected) longitude, and the full official
- *  map labels all ~90 stations. The generous box is what lets every name — plus
- *  its halo — sit clear of its neighbours (see metroLabels.test collision check);
- *  the card scales this down to a thumbnail and the full-screen viewer shows it
- *  1:1, so these units are layout space, not on-screen pixels. */
-export const METRO_MAP_CANVAS = { width: 1160, height: 1950 }
+ *  tests so they can never drift. Sized to the schematic's own bounding box
+ *  (portrait, ~0.77 aspect) with enough room that all ~90 labels — plus the
+ *  halo painted around each — sit clear of their neighbours (see
+ *  metroLabels.test collision check). The card scales this down to a thumbnail
+ *  and the full-screen viewer shows it larger, so these units are layout space,
+ *  not on-screen pixels. */
+export const METRO_MAP_CANVAS = { width: 1240, height: 1600 }
 
 export interface LayoutPoint {
   id: string
@@ -74,8 +75,9 @@ export function polylineLength(points: ReadonlyArray<{ x: number; y: number }>):
 }
 
 /**
- * Project the network into a `width × height` viewBox (0 0 width height).
- * `padding` keeps station dots and labels off the very edge.
+ * Fit the schematic network into a `width × height` viewBox (0 0 width height).
+ * `padding` keeps station dots and labels off the very edge. Positions are the
+ * author's schematic x/y — only scaled and centred, never re-projected.
  */
 export function projectNetwork(
   input: MetroNetworkInput,
@@ -84,16 +86,10 @@ export function projectNetwork(
 ): LayoutMap {
   const { width, height } = canvas
 
-  // cos(mid-lat) longitude squeeze — the network spans ~0.35° of latitude,
-  // so a single mid-latitude factor is plenty accurate for a schematic.
-  const lats = input.stations.map((s) => s.lat)
-  const midLat = (Math.min(...lats) + Math.max(...lats)) / 2
-  const kx = Math.cos((midLat * Math.PI) / 180)
-
-  // Raw projected space: x = lng·kx (east→right), y = −lat (north→up).
-  const raw = input.stations.map((s) => ({ id: s.id, x: s.lng * kx, y: -s.lat }))
-  const xs = raw.map((p) => p.x)
-  const ys = raw.map((p) => p.y)
+  // Raw schematic space is used as-is (larger y = south, so screen y already
+  // grows downward). Just take the bounding box to fit.
+  const xs = input.stations.map((s) => s.x)
+  const ys = input.stations.map((s) => s.y)
   const minX = Math.min(...xs), maxX = Math.max(...xs)
   const minY = Math.min(...ys), maxY = Math.max(...ys)
 
@@ -106,10 +102,10 @@ export function projectNetwork(
   const offY = (height - spanY * scale) / 2
 
   const pos = new Map<string, { x: number; y: number }>()
-  for (const p of raw) {
-    pos.set(p.id, {
-      x: round(offX + (p.x - minX) * scale),
-      y: round(offY + (p.y - minY) * scale),
+  for (const s of input.stations) {
+    pos.set(s.id, {
+      x: round(offX + (s.x - minX) * scale),
+      y: round(offY + (s.y - minY) * scale),
     })
   }
 

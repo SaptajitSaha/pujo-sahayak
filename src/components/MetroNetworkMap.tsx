@@ -6,8 +6,9 @@
 // This is the map PANEL shown on its own subpage (/transport/metro/map); the
 // Metro guide links to that page rather than embedding the diagram inline.
 //
-// Geometry is REAL core + transcribed extensions (data/metroNetwork.ts) and the
-// projection is pure/tested (lib/metroMap.ts). This component only draws.
+// Geometry is a hand-authored SCHEMATIC laid out to match the shape of the
+// official network map (data/metroNetwork.ts); the fit is pure/tested
+// (lib/metroMap.ts). This component only draws.
 //
 // Motion doctrine (see perf notes in index.css): ONE-SHOT only — everything
 // animates in exactly once via transform/opacity/stroke-dashoffset (all
@@ -142,8 +143,8 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
         <Info size={12} className="mt-0.5 shrink-0" aria-hidden />
         <span>
           {bn
-            ? 'স্টেশনের বাস্তব অবস্থান থেকে এঁকে ডায়াগ্রাম-মান মানচিত্র — আনুষ্ঠানিক কলকাতা মেট্রো মানচিত্রের সঙ্গে মিলিয়ে নিন। '
-            : 'Schematic rendering of real station positions — verify with the official Kolkata Metro network map. '}
+            ? 'আনুষ্ঠানিক কলকাতা মেট্রো মানচিত্রের আকারে আঁকা ডায়াগ্রাম — দূরত্ব সঠিক নয়, অফিসাল মানচিত্রের সঙ্গে মিলিয়ে নিন। '
+            : 'A stylised schematic after the official Kolkata Metro network map — not to scale; verify with the official map. '}
           {' '}{METRO_NET_ATTRIBUTION}.
         </span>
       </p>

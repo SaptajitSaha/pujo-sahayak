@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { polylineLength, projectNetwork, METRO_MAP_CANVAS } from './metroMap'
 import { metroNetLines, metroNetStations } from '../data/metroNetwork'
 
-// The full vendored network (all 6 official lines) projected once for the whole
+// The full schematic network (all 6 official lines) laid out once for the whole
 // suite — every test asserts on this same deterministic layout. Counts are read
 // from the data so the suite stays honest as the network grows.
 const map = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, METRO_MAP_CANVAS)
@@ -28,10 +28,11 @@ describe('projectNetwork', () => {
     }
   })
 
-  it('projects north above south (screen y grows downward)', () => {
-    // Dakshineshwar (22.654°N) is north of Kavi Subhash (22.472°N).
+  it('keeps the schematic orientation (north up, east right)', () => {
+    // The author's schematic is north-up: Dakshineshwar (north spur) sits above
+    // Kavi Subhash (southern end) on screen; Salt Lake Sector V (east) sits to
+    // the right of Howrah Maidan (west, across the river).
     expect(station('dakshineshwar').y).toBeLessThan(station('kavi-subhash').y)
-    // Salt Lake Sector V (88.429°E) is east of Howrah Maidan (88.334°E).
     expect(station('salt-lake-sector-v').x).toBeGreaterThan(station('howrah-maidan').x)
   })
 

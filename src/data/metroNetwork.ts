@@ -1,148 +1,148 @@
-// ─── Kolkata Metro network geometry (transcribed from the official map) ──────
-// The full network — operational + sanctioned — as a spatial graph, used only by
-// the animated network map on the Metro guide.
+// ─── Kolkata Metro network — SCHEMATIC layout (matches the official map) ─────
+// The full network — operational + sanctioned — as a stylised diagram, used only
+// by the animated network map on the Metro guide's subpage.
 //
-// PROVENANCE (two tiers, kept honest):
-//  • OPERATIONAL CORE (Blue Line 1, Green Line 3, Purple Line 2, Orange Line 4
-//    stations, plus Noapara/Jessore Road): real coordinates extracted from
-//    OpenStreetMap (Kolkata subway route relations + station nodes). © OpenStreetMap
-//    contributors, ODbL (data.openstreetmap.org). Fetched at build time and vendored
-//    here so the map renders fully OFFLINE inside the APK — never calls Overpass at runtime.
-//  • NEWER / EXTENDED LINES (Pink Barrackpore line, Yellow airport line to Barasat,
-//    Green east to Keshutpur, Orange New Town loop, Purple branches): transcribed by
-//    hand from the official Kolkata Metro network map. Their topology (which stations,
-//    in what order, which interchanges) follows the official map; their coordinates are
-//    APPROXIMATE (schematic), not surveyed. Under-construction stations may not be open.
+// THIS IS A SCHEMATIC, NOT A GEOGRAPHIC MAP. Each station carries an author-chosen
+// (x, y) in an abstract, north-up / east-right grid, laid out by hand to reproduce
+// the SHAPE of the official Kolkata Metro network map: the Blue line as a tall
+// spine with a south-east diagonal, the Pink line running vertically up the west,
+// the Green line crossing east–west, the Purple line down the south-west, the
+// Orange line up the east and looping through New Town, and the Yellow airport
+// line arcing out to Barasat in the north-east. Distances are NOT to scale and
+// positions are NOT real coordinates — the topology (which stations, in what
+// order, which interchanges) is what is faithful, transcribed from the official
+// map and the OpenStreetMap station set (© OpenStreetMap contributors, ODbL).
 //
-// HONESTY: this is a *schematic* reference diagram, not satellite-accurate track
-// geometry. Stations shared between lines merge to one interchange node. The page
-// captions it and asks riders to verify with the official Kolkata Metro map. No live
-// service status is implied.
+// HONESTY: the page captions this as a schematic and asks riders to verify with
+// the official Kolkata Metro map. Under-construction stations may not be open.
+// No live service status is implied.
 
-/** A physical station. Shared stations (e.g. Esplanade) appear ONCE; multiple
-    lines list the same id, which the layout reads as an interchange. */
-export interface MetroNetStation { id: string; name: string; lat: number; lng: number }
+/** A station on the schematic. `x`/`y` are diagram-grid units (larger y = south).
+    Shared stations (e.g. Esplanade) appear ONCE; multiple lines list the same id,
+    which the layout reads as an interchange. */
+export interface MetroNetStation { id: string; name: string; x: number; y: number }
 
 /** One metro line (or branch): ordered station ids (travel order, one direction).
     Branches of the same coloured line are separate entries sharing a `color`. */
 export interface MetroNetLine { id: string; name: string; short: string; color: string; stationIds: string[] }
 
 export const metroNetStations: MetroNetStation[] = [
-  // ── Blue Line (Line 1) — Kavi Subhash ↔ Dakshineshwar (north–south spine) — REAL OSM ──
-  { id: 'kavi-subhash', name: 'Kavi Subhash', lat: 22.47160, lng: 88.39813 }, // shared with Orange
-  { id: 'shahid-khudiram', name: 'Shahid Khudiram', lat: 22.46585, lng: 88.39124 },
-  { id: 'kavi-nazrul', name: 'Kavi Nazrul', lat: 22.46406, lng: 88.38004 },
-  { id: 'gitanjali', name: 'Gitanjali', lat: 22.46936, lng: 88.37001 },
-  { id: 'masterda-surya-sen', name: 'Masterda Surya Sen', lat: 22.47341, lng: 88.36083 },
-  { id: 'netaji', name: 'Netaji', lat: 22.48127, lng: 88.34560 },
-  { id: 'mahanayak-uttam-kumar', name: 'Mahanayak Uttam Kumar', lat: 22.49529, lng: 88.34498 },
-  { id: 'rabindra-sarobar', name: 'Rabindra Sarobar', lat: 22.50761, lng: 88.34543 },
-  { id: 'kalighat', name: 'Kalighat', lat: 22.51713, lng: 88.34578 },
-  { id: 'jatin-das-park', name: 'Jatin Das Park', lat: 22.52425, lng: 88.34643 },
-  { id: 'netaji-bhavan', name: 'Netaji Bhavan', lat: 22.53344, lng: 88.34592 },
-  { id: 'rabindra-sadan', name: 'Rabindra Sadan', lat: 22.54179, lng: 88.34723 },
-  { id: 'maidan', name: 'Maidan', lat: 22.54971, lng: 88.34875 },
-  { id: 'park-street', name: 'Park Street', lat: 22.55528, lng: 88.35004 },
-  { id: 'esplanade', name: 'Esplanade', lat: 22.56392, lng: 88.35069 }, // shared with Green
-  { id: 'chandni-chowk', name: 'Chandni Chowk', lat: 22.56710, lng: 88.35431 },
-  { id: 'central', name: 'Central', lat: 22.57265, lng: 88.35875 },
-  { id: 'mahatma-gandhi-road', name: 'Mahatma Gandhi Road', lat: 22.58112, lng: 88.36134 },
-  { id: 'girish-park', name: 'Girish Park', lat: 22.58736, lng: 88.36296 },
-  { id: 'shobhabazar-sutanuti', name: 'Shobhabazar Sutanuti', lat: 22.59608, lng: 88.36510 },
-  { id: 'shyambazar', name: 'Shyambazar', lat: 22.60149, lng: 88.37261 },
-  { id: 'belgachia', name: 'Belgachia', lat: 22.60611, lng: 88.38660 },
-  { id: 'dum-dum', name: 'Dum Dum', lat: 22.62134, lng: 88.39278 },
-  { id: 'noapara', name: 'Noapara', lat: 22.63996, lng: 88.39414 }, // shared with Pink + Yellow
-  { id: 'baranagar', name: 'Baranagar', lat: 22.65307, lng: 88.38067 },
-  { id: 'dakshineshwar', name: 'Dakshineshwar', lat: 22.65402, lng: 88.36376 },
+  // ── Blue Line (Line 1) — the tall central spine: south-east diagonal up to
+  //    Noapara, then a short north-west spur to Dakshineshwar ──
+  { id: 'kavi-subhash', name: 'Kavi Subhash', x: 470, y: 785 }, // interchange with Orange
+  { id: 'shahid-khudiram', name: 'Shahid Khudiram', x: 445, y: 808 },
+  { id: 'kavi-nazrul', name: 'Kavi Nazrul', x: 410, y: 795 },
+  { id: 'gitanjali', name: 'Gitanjali', x: 378, y: 780 },
+  { id: 'masterda-surya-sen', name: 'Masterda Surya Sen', x: 345, y: 762 },
+  { id: 'netaji', name: 'Netaji', x: 315, y: 742 },
+  { id: 'mahanayak-uttam-kumar', name: 'Mahanayak Uttam Kumar', x: 292, y: 718 },
+  { id: 'rabindra-sarobar', name: 'Rabindra Sarobar', x: 280, y: 690 },
+  { id: 'kalighat', name: 'Kalighat', x: 274, y: 662 },
+  { id: 'jatin-das-park', name: 'Jatin Das Park', x: 270, y: 634 },
+  { id: 'netaji-bhavan', name: 'Netaji Bhavan', x: 266, y: 606 },
+  { id: 'rabindra-sadan', name: 'Rabindra Sadan', x: 262, y: 578 },
+  { id: 'maidan', name: 'Maidan', x: 258, y: 552 },
+  { id: 'park-street', name: 'Park Street', x: 254, y: 536 },
+  { id: 'esplanade', name: 'Esplanade', x: 250, y: 522 }, // interchange with Green
+  { id: 'chandni-chowk', name: 'Chandni Chowk', x: 252, y: 502 },
+  { id: 'central', name: 'Central', x: 258, y: 484 },
+  { id: 'mahatma-gandhi-road', name: 'Mahatma Gandhi Road', x: 268, y: 466 },
+  { id: 'girish-park', name: 'Girish Park', x: 282, y: 450 },
+  { id: 'shobhabazar-sutanuti', name: 'Shobhabazar Sutanuti', x: 298, y: 432 },
+  { id: 'shyambazar', name: 'Shyambazar', x: 312, y: 410 },
+  { id: 'belgachia', name: 'Belgachia', x: 322, y: 385 },
+  { id: 'dum-dum', name: 'Dum Dum', x: 328, y: 355 },
+  { id: 'noapara', name: 'Noapara', x: 330, y: 300 }, // interchange with Pink + Yellow
+  { id: 'baranagar', name: 'Baranagar', x: 295, y: 278 },
+  { id: 'dakshineshwar', name: 'Dakshineshwar', x: 250, y: 262 },
 
-  // ── Pink Line — Barrackpore ↔ Noapara (B.T. Road corridor) — transcribed, approx coords ──
-  { id: 'barrackpore', name: 'Barrackpore', lat: 22.77000, lng: 88.38000 },
-  { id: 'talpukur', name: 'Talpukur', lat: 22.75700, lng: 88.37900 },
-  { id: 'titagarh', name: 'Titagarh', lat: 22.74500, lng: 88.37900 },
-  { id: 'tata-gate', name: 'Tata Gate', lat: 22.73300, lng: 88.38000 },
-  { id: 'khardaha', name: 'Khardaha', lat: 22.72200, lng: 88.38100 },
-  { id: 'subhash-nagar', name: 'Subhash Nagar', lat: 22.71000, lng: 88.38200 },
-  { id: 'panihati', name: 'Panihati', lat: 22.69800, lng: 88.38300 },
-  { id: 'sodepur', name: 'Sodepur', lat: 22.68500, lng: 88.38400 },
-  { id: 'agarapara', name: 'Agarapara', lat: 22.67200, lng: 88.38600 },
-  { id: 'kamarkhati', name: 'Kamarkhati', lat: 22.66200, lng: 88.38800 },
+  // ── Pink Line — Barrackpore ↔ Noapara, a straight vertical column up the west ──
+  { id: 'barrackpore', name: 'Barrackpore', x: 200, y: 40 },
+  { id: 'talpukur', name: 'Talpukur', x: 200, y: 75 },
+  { id: 'titagarh', name: 'Titagarh', x: 200, y: 110 },
+  { id: 'tata-gate', name: 'Tata Gate', x: 200, y: 145 },
+  { id: 'khardaha', name: 'Khardaha', x: 200, y: 180 },
+  { id: 'subhash-nagar', name: 'Subhash Nagar', x: 200, y: 215 },
+  { id: 'panihati', name: 'Panihati', x: 200, y: 250 },
+  { id: 'sodepur', name: 'Sodepur', x: 200, y: 285 },
+  { id: 'agarapara', name: 'Agarapara', x: 202, y: 320 },
+  { id: 'kamarkhati', name: 'Kamarkhati', x: 208, y: 352 },
   // (noapara shared with Blue)
 
-  // ── Yellow Line (Line 6, Airport) — Noapara ↔ Barasat — transcribed, approx coords ──
+  // ── Yellow Line (Airport) — Noapara east then arcing north to Barasat ──
   // (noapara shared with Blue)
-  { id: 'dum-dum-road', name: 'Dum Dum Road', lat: 22.63700, lng: 88.41200 },
-  { id: 'jessore-road', name: 'Jessore Road', lat: 22.63924, lng: 88.42979 },
-  { id: 'biman-bandar', name: 'Biman Bandar', lat: 22.65300, lng: 88.44700 }, // shared with Orange
-  { id: 'birati', name: 'Birati', lat: 22.66800, lng: 88.45200 },
-  { id: 'madhyamgram', name: 'Madhyamgram', lat: 22.68000, lng: 88.46200 },
-  { id: 'new-barrackpore', name: 'New Barrackpore', lat: 22.69200, lng: 88.47200 },
-  { id: 'michael-nagar', name: 'Michael Nagar', lat: 22.70200, lng: 88.48500 },
-  { id: 'hridaypur', name: 'Hridaypur', lat: 22.70800, lng: 88.49800 },
-  { id: 'barasat', name: 'Barasat', lat: 22.71700, lng: 88.51000 },
+  { id: 'dum-dum-road', name: 'Dum Dum Road', x: 372, y: 285 },
+  { id: 'jessore-road', name: 'Jessore Road', x: 415, y: 275 },
+  { id: 'biman-bandar', name: 'Biman Bandar', x: 470, y: 285 }, // interchange with Orange
+  { id: 'birati', name: 'Birati', x: 492, y: 250 },
+  { id: 'madhyamgram', name: 'Madhyamgram', x: 508, y: 215 },
+  { id: 'new-barrackpore', name: 'New Barrackpore', x: 528, y: 182 },
+  { id: 'michael-nagar', name: 'Michael Nagar', x: 555, y: 158 },
+  { id: 'hridaypur', name: 'Hridaypur', x: 585, y: 138 },
+  { id: 'barasat', name: 'Barasat', x: 612, y: 120 },
 
-  // ── Green Line (Line 3 / East–West) — Howrah Maidan ↔ Raghunathpur — core REAL, east arm approx ──
-  { id: 'howrah-maidan', name: 'Howrah Maidan', lat: 22.58378, lng: 88.33400 },
-  { id: 'howrah', name: 'Howrah', lat: 22.58337, lng: 88.34016 },
-  { id: 'mahakaran', name: 'Mahakaran', lat: 22.57205, lng: 88.35055 },
+  // ── Green Line (Line 3 / East–West) — Howrah Maidan across to Esplanade, then
+  //    east through Salt Lake and up to Raghunathpur ──
+  { id: 'howrah-maidan', name: 'Howrah Maidan', x: 55, y: 505 },
+  { id: 'howrah', name: 'Howrah', x: 98, y: 505 },
+  { id: 'mahakaran', name: 'Mahakaran', x: 155, y: 512 },
   // (esplanade shared with Blue)
-  { id: 'sealdah', name: 'Sealdah', lat: 22.56647, lng: 88.37005 },
-  { id: 'phoolbagan', name: 'Phoolbagan', lat: 22.57209, lng: 88.39026 },
-  { id: 'salt-lake-stadium', name: 'Salt Lake Stadium', lat: 22.57297, lng: 88.40308 },
-  { id: 'bengal-chemical', name: 'Bengal Chemical', lat: 22.57997, lng: 88.40134 },
-  { id: 'city-centre', name: 'City Centre', lat: 22.58699, lng: 88.40792 },
-  { id: 'central-park', name: 'Central Park', lat: 22.59040, lng: 88.41564 },
-  { id: 'karunamoyee', name: 'Karunamoyee', lat: 22.58629, lng: 88.42157 },
-  { id: 'nicco-park', name: 'Nicco Park', lat: 22.58500, lng: 88.42400 },
-  { id: 'salt-lake-sector-v', name: 'Salt Lake Sector V', lat: 22.58094, lng: 88.42902 }, // shared with Orange
-  { id: 'baguiati', name: 'Baguiati', lat: 22.58800, lng: 88.42100 },
-  { id: 'keshutpur', name: 'Keshutpur', lat: 22.59600, lng: 88.42700 },
-  { id: 'dum-park', name: 'Dum Park', lat: 22.60100, lng: 88.41600 },
-  { id: 'raghunathpur', name: 'Raghunathpur', lat: 22.60700, lng: 88.40800 },
+  { id: 'sealdah', name: 'Sealdah', x: 300, y: 528 },
+  { id: 'phoolbagan', name: 'Phoolbagan', x: 348, y: 520 },
+  { id: 'salt-lake-stadium', name: 'Salt Lake Stadium', x: 392, y: 505 },
+  { id: 'bengal-chemical', name: 'Bengal Chemical', x: 428, y: 482 },
+  { id: 'city-centre', name: 'City Centre', x: 452, y: 456 },
+  { id: 'central-park', name: 'Central Park', x: 470, y: 430 },
+  { id: 'karunamoyee', name: 'Karunamoyee', x: 495, y: 452 },
+  { id: 'nicco-park', name: 'Nicco Park', x: 512, y: 478 },
+  { id: 'salt-lake-sector-v', name: 'Salt Lake Sector V', x: 520, y: 505 }, // interchange with Orange
+  { id: 'baguiati', name: 'Baguiati', x: 500, y: 410 },
+  { id: 'keshutpur', name: 'Keshutpur', x: 470, y: 398 },
+  { id: 'dum-park', name: 'Dum Park', x: 440, y: 392 },
+  { id: 'raghunathpur', name: 'Raghunathpur', x: 412, y: 388 },
 
-  // ── Orange Line (Line 2/4) — Kavi Subhash ↔ Biman Bandar (east–New Town loop) — core REAL, east arm approx ──
+  // ── Orange Line (Line 2/4) — Kavi Subhash up the east, then the New Town loop
+  //    on the right, closing at Biman Bandar ──
   // (kavi-subhash shared with Blue)
-  { id: 'satyajit-roy', name: 'Satyajit Roy', lat: 22.48466, lng: 88.39268 },
-  { id: 'jyotirindra-nandi', name: 'Jyotirindra Nandi', lat: 22.49561, lng: 88.39848 },
-  { id: 'kavi-sukanta', name: 'Kavi Sukanta', lat: 22.50530, lng: 88.40103 },
-  { id: 'hemanta-mukhopadhyay', name: 'Hemanta Mukhopadhyay', lat: 22.51486, lng: 88.40146 },
-  { id: 'vip-bazar', name: 'VIP Bazar', lat: 22.52470, lng: 88.39627 },
-  { id: 'ritwik-ghatak', name: 'Ritwik Ghatak', lat: 22.53299, lng: 88.39646 },
-  { id: 'barun-sengupta', name: 'Barun Sengupta', lat: 22.54380, lng: 88.39930 },
-  { id: 'beleghata', name: 'Beleghata', lat: 22.55068, lng: 88.40401 },
-  { id: 'gour-kishor-ghosh', name: 'Gour Kishor Ghosh', lat: 22.57000, lng: 88.41200 },
+  { id: 'satyajit-roy', name: 'Satyajit Roy', x: 452, y: 750 },
+  { id: 'jyotirindra-nandi', name: 'Jyotirindra Nandi', x: 438, y: 715 },
+  { id: 'kavi-sukanta', name: 'Kavi Sukanta', x: 430, y: 680 },
+  { id: 'hemanta-mukhopadhyay', name: 'Hemanta Mukhopadhyay', x: 428, y: 645 },
+  { id: 'vip-bazar', name: 'VIP Bazar', x: 432, y: 612 },
+  { id: 'ritwik-ghatak', name: 'Ritwik Ghatak', x: 440, y: 580 },
+  { id: 'barun-sengupta', name: 'Barun Sengupta', x: 448, y: 550 },
+  { id: 'beleghata', name: 'Beleghata', x: 452, y: 528 },
+  { id: 'gour-kishor-ghosh', name: 'Gour Kishor Ghosh', x: 470, y: 516 },
   // (salt-lake-sector-v shared with Green)
-  { id: 'technopolis', name: 'Technopolis', lat: 22.57500, lng: 88.43800 },
-  { id: 'bidhan-nagar', name: 'Bidhan Nagar', lat: 22.57800, lng: 88.44500 },
-  { id: 'sub-cbd-1', name: 'Sub CBD 1', lat: 22.57000, lng: 88.45500 },
-  { id: 'cbd-1', name: 'CBD 1', lat: 22.58200, lng: 88.46200 },
-  { id: 'kalakshetra', name: 'Kalakshetra', lat: 22.59000, lng: 88.46800 },
-  { id: 'new-town', name: 'New Town', lat: 22.59800, lng: 88.47500 },
-  { id: 'convention-centre', name: 'Convention Centre', lat: 22.58800, lng: 88.48200 },
-  { id: 'sub-cbd-2', name: 'Sub CBD 2', lat: 22.57800, lng: 88.47800 },
-  { id: 'titumir', name: 'Titumir', lat: 22.60000, lng: 88.45500 },
+  { id: 'technopolis', name: 'Technopolis', x: 556, y: 505 },
+  { id: 'bidhan-nagar', name: 'Bidhan Nagar', x: 590, y: 500 },
+  { id: 'sub-cbd-1', name: 'Sub CBD 1', x: 622, y: 490 },
+  { id: 'cbd-1', name: 'CBD 1', x: 650, y: 472 },
+  { id: 'kalakshetra', name: 'Kalakshetra', x: 668, y: 445 },
+  { id: 'new-town', name: 'New Town', x: 676, y: 415 },
+  { id: 'convention-centre', name: 'Convention Centre', x: 666, y: 385 },
+  { id: 'sub-cbd-2', name: 'Sub CBD 2', x: 640, y: 360 },
+  { id: 'titumir', name: 'Titumir', x: 600, y: 342 },
   // (biman-bandar shared with Yellow)
 
-  // ── Purple Line (Line 2) — Victoria ↔ Joka — REAL core, north/south branches transcribed ──
-  { id: 'victoria', name: 'Victoria', lat: 22.56000, lng: 88.33600 }, // name uncertain on official map
-  { id: 'kidderpore', name: 'Kidderpore', lat: 22.54800, lng: 88.33200 },
-  { id: 'mominpur', name: 'Mominpur', lat: 22.54000, lng: 88.32800 },
-  { id: 'majerhat', name: 'Majerhat', lat: 22.51906, lng: 88.32366 },
-  { id: 'taratala', name: 'Taratala', lat: 22.50770, lng: 88.32035 },
-  { id: 'behala-bazar', name: 'Behala Bazar', lat: 22.49880, lng: 88.31736 },
-  { id: 'behala-chowrasta', name: 'Behala Chowrasta', lat: 22.48740, lng: 88.31334 },
-  { id: 'sakher-bazar', name: 'Sakher Bazar', lat: 22.47489, lng: 88.30994 },
-  { id: 'thakurpukur', name: 'Thakurpukur', lat: 22.46441, lng: 88.30753 }, // junction with south branch
-  { id: 'joka', name: 'Joka', lat: 22.45237, lng: 88.30185 },
-
-  // ── Purple Line south branch — Thakurpukur ↔ Diamond Park (via IIM) — transcribed, approx ──
-  // (thakurpukur shared with main Purple)
-  { id: 'iim', name: 'IIM', lat: 22.45200, lng: 88.31200 },
-  { id: 'diamond-park', name: 'Diamond Park', lat: 22.44500, lng: 88.32200 },
+  // ── Purple Line (Line 2) — Victoria down the south-west to Joka, with the
+  //    Diamond Park branch off Thakurpukur ──
+  { id: 'victoria', name: 'Victoria', x: 150, y: 555 },
+  { id: 'kidderpore', name: 'Kidderpore', x: 140, y: 585 },
+  { id: 'mominpur', name: 'Mominpur', x: 130, y: 618 },
+  { id: 'majerhat', name: 'Majerhat', x: 125, y: 650 },
+  { id: 'taratala', name: 'Taratala', x: 122, y: 682 },
+  { id: 'behala-bazar', name: 'Behala Bazar', x: 122, y: 712 },
+  { id: 'behala-chowrasta', name: 'Behala Chowrasta', x: 125, y: 742 },
+  { id: 'sakher-bazar', name: 'Sakher Bazar', x: 130, y: 770 },
+  { id: 'thakurpukur', name: 'Thakurpukur', x: 138, y: 798 }, // junction with south branch
+  { id: 'joka', name: 'Joka', x: 150, y: 828 },
+  // (thakurpukur shared with the branch)
+  { id: 'iim', name: 'IIM', x: 185, y: 840 },
+  { id: 'diamond-park', name: 'Diamond Park', x: 222, y: 845 },
 ]
 
-// Display colours are chosen for contrast on both light and dark chrome, not
-// copied verbatim from the raw OSM tags (some were unusable, e.g. pure #FFFF00).
+// Display colours are chosen for contrast on both light and dark chrome.
 // Branches reuse their parent line's colour; the legend groups by colour.
 export const metroNetLines: MetroNetLine[] = [
   {
@@ -178,5 +178,6 @@ export const metroNetLines: MetroNetLine[] = [
 /** Distinct line colours — the legend shows one swatch per colour. */
 export const metroNetColors = [...new Set(metroNetLines.map((l) => l.color))]
 
-/** Attribution line for the UI — required by ODbL for the vendored core geometry. */
-export const METRO_NET_ATTRIBUTION = 'Core geometry © OpenStreetMap contributors (ODbL); extensions per the official Kolkata Metro map'
+/** Attribution line for the UI — the station set/topology draws on OSM + the
+    official map; positions here are schematic, not surveyed. */
+export const METRO_NET_ATTRIBUTION = 'Schematic layout after the official Kolkata Metro map; station set per OpenStreetMap contributors (ODbL)'

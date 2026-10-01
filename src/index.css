@@ -17,10 +17,12 @@
   --color-ivory-deep: #f2e7d3;
   --color-card: #fffcf4;
 
-  /* Charcoal ink */
+  /* Charcoal ink. `faint` is the smallest, most incidental label tier — it is
+     darkened to clear WCAG AA (4.5:1) on the card surfaces it sits on, as
+     measured in the redesign inspection (was 3.12:1 light / 4.06:1 dark). */
   --color-ink: #221a15;
   --color-ink-soft: #6b5d50;
-  --color-faint: #9c8d7e;
+  --color-faint: #71624f;
 
   /* Brand accent — formerly deep vermilion (orange). Now the violet anchor of
      the purple → pink → blue gradient applied to primary surfaces. Token name
@@ -52,10 +54,15 @@
   --font-bengali: 'Noto Serif Bengali', 'Playfair Display', serif;
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  --radius-card: 0.625rem;
+  /* Card radius raised to the premium 20px scale — matches the floating nav
+     pill's roundness and gives every surface the same calm, generous corner. */
+  --radius-card: 1.25rem;
 
-  --shadow-card: 0 1px 3px rgb(34 26 21 / 0.08), 0 4px 14px rgb(34 26 21 / 0.06);
-  --shadow-lift: 0 4px 10px rgb(34 26 21 / 0.12), 0 12px 28px rgb(34 26 21 / 0.14);
+  /* Warm two-layer elevation: a contact shadow for grounding + a wide ambient
+     shade for lift. Tinted from the ink hue so they read on ivory and, with
+     the black pairs below, in dark mode too. */
+  --shadow-card: 0 1px 2px rgb(34 26 21 / 0.10), 0 6px 18px -4px rgb(34 26 21 / 0.14);
+  --shadow-lift: 0 2px 6px rgb(34 26 21 / 0.14), 0 18px 40px -8px rgb(34 26 21 / 0.24);
 }
 
 /* Dark theme: surfaces flip, brand hues stay */
@@ -65,7 +72,7 @@
   --color-card: #241a14;
   --color-ink: #f1e6d4;
   --color-ink-soft: #bca992;
-  --color-faint: #8a7866;
+  --color-faint: #a99781;
   --color-vermilion: #8b5cf6; /* brighter violet so text/links stay legible on near-black */
   --color-vermilion-tint: #251a44;
 }
@@ -92,8 +99,52 @@
   h1, h2, h3 {
     @apply font-display;
   }
+  /* Optical tracking for the serif display voice — scoped to true headline
+     sizes so the many small card titles (also h3s) keep their normal UI
+     spacing. A hair of negative letter-space tightens the Playfair/Noto
+     Serif word shapes into proper editorial display type. */
+  :where(h1, h2, h3):is(.text-xl, .text-2xl, .text-3xl, .text-4xl, .text-5xl),
+  h1 {
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+  /* Browser-chrome surfaces themed from the palette (the craft floor: text
+     selection, caret and scrollbars ship with defaults that belong to no
+     design system). Violet-tinted selection reads on ivory and near-black
+     alike; the themed scrollbar only appears where one is visible at all —
+     desktop/preview, since html hides it in the WebView. */
+  ::selection {
+    background: rgb(124 58 237 / 0.22);
+    color: inherit;
+  }
+  html {
+    scrollbar-color: rgb(124 58 237 / 0.45) transparent;
+  }
+  @media (pointer: fine) {
+    html::-webkit-scrollbar, body::-webkit-scrollbar {
+      display: block; width: 10px; height: 10px;
+    }
+    html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+      background: rgb(124 58 237 / 0.4); border-radius: 9999px;
+      border: 3px solid transparent; background-clip: content-box;
+    }
+    html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
+      background: rgb(124 58 237 / 0.65); background-clip: content-box;
+    }
+    html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: transparent; }
+  }
   [lang='bn'], .bn {
     font-family: var(--font-bengali);
+  }
+  /* Keyboard focus ring — an accessibility requirement, not a decoration.
+     `:focus-visible` matches only keyboard / assistive-tech focus, so pointer
+     users never see it. A branded violet reads on both the ivory and the
+     near-black surfaces, and outline-offset keeps it clear of the element
+     edge on gradient and glass controls (the browser default ring is often
+     lost against those). */
+  :focus-visible {
+    outline: 2px solid var(--color-vermilion);
+    outline-offset: 2px;
   }
   /* Safe-area aware padding for standalone PWA */
   #root {
@@ -162,7 +213,8 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.7),
       inset 0 -1px 0 rgb(34 26 21 / 0.04),
-      0 8px 26px rgb(34 26 21 / 0.10);
+      0 2px 4px rgb(34 26 21 / 0.07),
+      0 12px 32px -6px rgb(34 26 21 / 0.16);
   }
   /* diagonal specular sheen riding on top of the glass */
   .glass::after {
@@ -179,7 +231,8 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.14),
       inset 0 -1px 0 rgb(0 0 0 / 0.30),
-      0 10px 30px rgb(0 0 0 / 0.45);
+      0 3px 8px rgb(0 0 0 / 0.30),
+      0 14px 38px -6px rgb(0 0 0 / 0.55);
   }
   .dark .glass::after {
     background: linear-gradient(135deg, rgb(255 255 255 / 0.14) 0%, transparent 40%, transparent 70%, rgb(255 255 255 / 0.05) 100%);
@@ -315,27 +368,79 @@ html.is-scrolling .animated-border::before {
   background: var(--color-ivory-deep);
 }
 
-/* Theme reveal — a circle grows from the toggle icon's centre (--vt-x/--vt-y,
-   set by ThemeToggle before the transition starts) and unveils the new theme.
-   Custom properties are inheritable, so they reach the ::view-transition
-   pseudo-elements. On Chromium below 115 (no custom-update callback) the
-   :root cross-fade below still applies as the graceful fallback; in browsers
-   with no View Transitions at all the class flip is simply instant. */
+/* Theme reveal — a circle grows from the point the toggle was pressed
+   (--vt-x/--vt-y/--vt-r, published by ThemeToggle before the transition
+   starts) and unveils the new theme. Custom properties are inheritable, so
+   they reach the ::view-transition pseudo-elements. Defaults on :root keep the
+   animation sane even if the JS never runs: without them a missing --vt-r would
+   end the keyframe at circle(0) and leave the new theme permanently clipped
+   away. On Chromium without View Transitions at all the class flip is instant. */
+:root {
+  --vt-x: 50%;
+  --vt-y: 50%;
+  --vt-r: 150vmax;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 480ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Symmetric ease-in-out, not the app's signature overshoot: an out-quint
+     curve spends most of the radius in the first ~120ms, which reads as an
+     instant flash and hides the reveal entirely. */
+  animation-duration: 600ms;
+  animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
 }
 /* Old theme snapshot holds still underneath… */
 ::view-transition-old(root) {
   animation: none;
   mix-blend-mode: normal;
 }
-/* …while the new one is unveiled by a circle growing out of the icon. */
+/* …while the new one is unveiled by a circle growing out of the touch point. */
 ::view-transition-new(root) {
   animation-name: vt-reveal-circle;
 }
 @keyframes vt-reveal-circle {
-  from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 50%)); }
-  to   { clip-path: circle(var(--vt-r, 0) at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  from { clip-path: circle(0 at var(--vt-x) var(--vt-y)); }
+  to   { clip-path: circle(var(--vt-r) at var(--vt-x) var(--vt-y)); }
+}
+
+/* Theme icon — a second, concurrent view-transition group.
+   Both glyphs live in the DOM and html.dark picks one, so the swap happens
+   synchronously inside the update callback and is captured in the new snapshot.
+   Because the wrapper carries its own view-transition-name, the browser pulls it
+   OUT of the page (root) snapshot — no ghost underneath — and animates it
+   independently, in lockstep with the circular reveal. The sun↔moon rotation is
+   therefore visible from the first frame, not deferred until the sweep ends. */
+.theme-icon {
+  view-transition-name: theme-icon;
+  display: grid;
+  place-items: center;
+}
+.theme-icon .ic { grid-area: 1 / 1; }
+.theme-icon .ic-moon { display: none; }
+.dark .theme-icon .ic-sun { display: none; }
+.dark .theme-icon .ic-moon { display: block; }
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-group(theme-icon) {
+    animation-duration: 600ms;
+  }
+  ::view-transition-old(theme-icon),
+  ::view-transition-new(theme-icon) {
+    animation-duration: 600ms;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+    mix-blend-mode: normal;
+  }
+  ::view-transition-old(theme-icon) {
+    animation-name: icon-spin-out;
+  }
+  ::view-transition-new(theme-icon) {
+    animation-name: icon-spin-in;
+  }
+}
+@keyframes icon-spin-out {
+  from { opacity: 1; transform: rotate(0deg) scale(1); }
+  to   { opacity: 0; transform: rotate(-120deg) scale(0.4); }
+}
+@keyframes icon-spin-in {
+  from { opacity: 0; transform: rotate(120deg) scale(0.4); }
+  to   { opacity: 1; transform: rotate(0deg) scale(1); }
 }

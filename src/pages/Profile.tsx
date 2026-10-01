@@ -4,7 +4,7 @@ import {
   ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
   Flame, HandHeart, Lock, LogIn, MapPin, Palette, Phone, Share2, Siren, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
-import { Button, Card, Img, Page, SectionHeader } from '../components/ui'
+import { Avatar, Button, Card, Page, SectionHeader } from '../components/ui'
 import { Wallet } from '../components/Wallet'
 import { MyOrders } from '../components/MyOrders'
 import { walks } from '../data/demo'
@@ -51,7 +51,7 @@ export default function Profile() {
 
       {/* Identity */}
       <div className="mt-4 flex items-center gap-3">
-        <Img palette={{ from: '#8E5A2E', to: '#4A2A12' }} alt="Your avatar" className="h-14 w-14 rounded-full" />
+        <Avatar name={isAuthenticated ? user?.email?.split('@')[0] : undefined} alt="Your avatar" className="h-14 w-14 rounded-full text-lg" />
         <div>
           <p className="text-base font-semibold">{isAuthenticated ? user?.email?.split('@')[0] : 'You'}</p>
           <p className="text-xs text-faint">{isAuthenticated ? 'Signed in' : 'Kolkata'}</p>

@@ -14,6 +14,11 @@ interface Session {
   kind: 'category' | 'place' | 'search'
   label: string
   sublabel?: string
+  /** Finest-grained focus within `label` — e.g. the exact Metro line *and*
+      station the user was last looking at, so the resume card can say more
+      than "You were exploring: Metro". Additive on the single nested object,
+      so a persisted session without it just reads undefined — no migrate. */
+  detail?: string
   href: string
   at: number
 }

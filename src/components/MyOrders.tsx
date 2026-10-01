@@ -83,7 +83,7 @@ function OrderCard({ order }: { order: MarketplaceOrder }) {
   return (
     <Card className="p-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">Order · {money(order.amount)}</p>
+        <p className="text-sm font-medium tabular-nums">Order · {money(order.amount)}</p>
         <span className="text-[10px] text-faint">{new Date(order.created_at).toLocaleDateString()}</span>
       </div>
 

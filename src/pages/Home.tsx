@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, Calendar, BookOpen, Users, Megaphone } from 'lucide-react'
-import { Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
+import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, ChevronRight, Calendar, BookOpen, Users, Megaphone, TrainFront, Compass } from 'lucide-react'
+import { Avatar, Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { offers, sponsored, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn } from '../data/demo'
+import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn } from '../data/demo'
 import { useApp } from '../store'
 import { useProducts } from '../services/marketplace'
+import { productImage, productPalette } from '../services/marketplace.mock'
 import { useAuthorityAlerts } from '../services/authority'
 import { useT } from '../i18n'
 import type { Place } from '../data/types'
@@ -138,7 +139,7 @@ export default function Home() {
             )}
           </motion.button>
           <button onClick={() => nav('/profile')} aria-label="Open profile">
-            <Img palette={{ from: '#8E5A2E', to: '#4A2A12' }} alt="Profile" className="h-8 w-8 rounded-full" />
+            <Avatar alt="Profile" className="h-8 w-8 rounded-full" />
           </button>
         </div>
       </motion.header>
@@ -206,7 +207,7 @@ export default function Home() {
           hidden when the selected city has no seeded pandals) */}
       {cityPandals.length > 0 && (
         <Reveal>
-          <section className="mt-5">
+          <section className="mt-7">
             <SectionHeader title={t('exploreSpotlight')} action={t('viewAll')} onAction={() => nav('/explore')} />
             <SpotlightCarousel pool={cityPandals} />
           </section>
@@ -227,24 +228,46 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Sponsored — an editorial card planted mid-feed, no label (native by design) */}
-      <Reveal>
-        <section className="mt-6">
-          <Card className="flex items-stretch overflow-hidden">
-            <Img palette={sponsored.palette} alt={sponsored.brand} className="w-24 shrink-0" />
-            <div className="flex-1 p-3">
-              <h3 className="mt-0.5 text-sm font-semibold">{sponsored.title}</h3>
-              <p className="mt-0.5 text-xs text-ink-soft">{sponsored.description}</p>
-            </div>
-            <button
-              className="my-auto mr-3 rounded-full border border-gold/60 px-3 py-1.5 text-xs font-medium text-gold transition-transform hover:scale-105 active:scale-95"
-              onClick={() => copyAndToast(sponsored.brand, `${sponsored.brand} copied — search it to find the store`)}
-            >
-              {t('explore')}
-            </button>
-          </Card>
-        </section>
-      </Reveal>
+      {/* Continue where you left off (doc §6) — promoted from further down the
+          feed into the slot the sponsored Tanting card used to hold: resuming
+          an in-progress session beats trending discovery, and it is the only
+          card here that is about *this* user. Renders nothing when no session
+          exists, so the feed simply closes up. Markup unchanged. */}
+      {session && (
+        <Reveal>
+          <section className="mt-7">
+            <SectionHeader title={t('continueLeft')} />
+            <Card className="overflow-hidden p-0">
+              <div className="flex items-start gap-3 p-3.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-vermilion-tint text-vermilion">
+                  {session.href.includes('/transport/metro') ? <TrainFront size={20} />
+                    : session.kind === 'search' ? <SearchIcon size={20} />
+                    : session.kind === 'place' ? <MapPin size={20} />
+                    : <Compass size={20} />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] uppercase tracking-wide text-faint">You were exploring</p>
+                  <p className="truncate text-base font-semibold">{session.label}</p>
+                  {(session.sublabel || session.detail) && (
+                    <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-ink-soft">
+                      {session.sublabel && <span className="font-medium">{session.sublabel}</span>}
+                      {session.sublabel && session.detail && <span className="text-faint">·</span>}
+                      {session.detail && <span>{session.detail}</span>}
+                    </p>
+                  )}
+                </div>
+                <span className="shrink-0 rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-faint">{timeAgo(session.at)}</span>
+              </div>
+              <button
+                onClick={() => nav(session.href)}
+                className="grad-brand glow-vermilion flex w-full items-center justify-center gap-1.5 py-2.5 text-sm font-medium text-white transition-transform hover:brightness-105 active:scale-[0.99]"
+              >
+                {t('continueBtn')} <ChevronRight size={15} />
+              </button>
+            </Card>
+          </section>
+        </Reveal>
+      )}
 
       {/* Offers — small advertisement tablets, not product cards. Each slab is
           a single full-bleed visual with the brand + headline overlaid on a
@@ -293,7 +316,7 @@ export default function Home() {
           City-scoped, same empty-rail guard as restaurants above. */}
       {cityEvents.length > 0 && (
         <Reveal>
-          <section className="mt-5">
+          <section className="mt-7">
             <SectionHeader title={t('events')} action={t('viewAll')} onAction={() => nav('/beyond-puja')} />
             <Rail>
               {cityEvents.map((e) => (
@@ -319,7 +342,7 @@ export default function Home() {
           Currently demo (`shopping` in data/demo.ts); production replaces it
           with an aggregated feed from mall partners (online + in-store). */}
       <Reveal>
-        <section className="mt-5">
+        <section className="mt-7">
           <SectionHeader title={t('shopping')} />
           <p className="-mt-1 mb-2 text-xs text-ink-soft">{t('shoppingSub')}</p>
           <Rail>
@@ -339,10 +362,10 @@ export default function Home() {
                   <p className="text-[10px] uppercase tracking-wide text-faint">{s.mall}</p>
                   <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{s.name}</h3>
                   <p className="mt-1 flex items-baseline gap-1.5">
-                    <span className="text-sm font-semibold text-ink">
+                    <span className="text-sm font-semibold text-ink tabular-nums">
                       ₹{s.price.toLocaleString('en-IN')}
                     </span>
-                    <span className="text-[11px] text-faint line-through">
+                    <span className="text-[11px] text-faint line-through tabular-nums">
                       ₹{s.originalPrice.toLocaleString('en-IN')}
                     </span>
                   </p>
@@ -360,16 +383,19 @@ export default function Home() {
           fabricated live store. */}
       {flags.ENABLE_MARKETPLACE && marketProducts.length > 0 && (
         <Reveal>
-          <section className="mt-5">
+          <section className="mt-7">
             <SectionHeader title="Marketplace" action={t('viewAll')} onAction={() => nav('/marketplace')} />
             <Rail>
               {marketProducts.slice(0, 6).map((p) => (
                 <button key={p.id} onClick={() => nav('/marketplace')} className="w-40 shrink-0 text-left">
                   <Card className="overflow-hidden p-0">
-                    <div className="h-24 w-full" style={{ backgroundImage: 'linear-gradient(135deg, #4a1230, #963a5c)' }} />
+                    {/* Same tile the /marketplace grid builds: the product's own photo over
+                        its category gradient. Was a hardcoded gradient div, which made all
+                        six cards on this rail identical. */}
+                    <Img palette={productPalette(p)} src={productImage(p)} alt={p.name} className="h-24" />
                     <div className="p-2">
                       <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{p.name}</p>
-                      <p className="mt-1 text-[11px] font-semibold text-vermilion">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-vermilion tabular-nums">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
                       {p.is_demo && <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Demo</span>}
                     </div>
                   </Card>
@@ -383,7 +409,7 @@ export default function Home() {
       {/* Social matching teaser — activity-based companions, not dating. */}
       {flags.ENABLE_SOCIAL_MATCHING && (
         <Reveal>
-          <section className="mt-5">
+          <section className="mt-7">
             <button onClick={() => nav('/social')} className="w-full text-left active:scale-[0.99]">
               <Card className="flex items-center gap-3 border border-maya/20 p-3.5">
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-maya/15 text-maya"><Users size={18} /></span>
@@ -403,7 +429,7 @@ export default function Home() {
           the most. Sits above Curated walks because a user checking "what day
           is it?" is in the planning stage, not the on-the-road stage. */}
       <Reveal>
-        <section className="mt-5">
+        <section className="mt-7">
           <SectionHeader title={t('pujaTools')} />
           <div className="grid grid-cols-2 gap-3">
             <button onClick={() => nav('/tithi')} className="text-left active:scale-[0.98]">
@@ -432,7 +458,7 @@ export default function Home() {
           Tapping a card opens /walks where the full stop-by-stop itinerary is
           shown with an "Add to Planner" CTA that pre-loads that walk. */}
       <Reveal>
-        <section className="mt-5">
+        <section className="mt-7">
           <SectionHeader title={t('walks')} action={t('viewAll')} onAction={() => nav('/walks')} />
           <Rail>
             {walks.map((w) => (
@@ -451,27 +477,9 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Continue where you left off (doc §6) */}
-      {session && (
-        <Reveal>
-          <section className="mt-5">
-            <SectionHeader title={t('continueLeft')} />
-            <Card className="p-3">
-              <p className="text-xs text-ink-soft">You were exploring:</p>
-              <p className="text-sm font-semibold">{session.label}</p>
-              {session.sublabel && <p className="text-xs text-faint">Last viewed: {session.sublabel}</p>}
-              <button
-                onClick={() => nav(session.href)}
-                className="mt-3 w-full rounded-full grad-brand py-2 text-sm font-medium text-white glow-vermilion transition-transform hover:scale-[1.02] active:scale-95"
-              >
-                {t('continueBtn')}
-              </button>
-            </Card>
-          </section>
-        </Reveal>
-      )}
-
-      {/* Trending pandals rail was removed — the Explore Spotlight coverflow
+      {/* "Continue where you left off" moved up to the slot the sponsored
+          Tanting card held, just under Nearby Restaurants.
+          Trending pandals rail was removed — the Explore Spotlight coverflow
           at the top of Home already surfaces trending pandals, this second
           rail added scroll weight without adding information. */}
 
@@ -489,6 +497,18 @@ export default function Home() {
       )}
     </Page>
   )
+}
+
+/** Relative-time label for the resume card ("just now", "5 min ago", …). */
+function timeAgo(at: number): string {
+  const s = Math.max(0, Math.floor((Date.now() - at) / 1000))
+  if (s < 45) return 'just now'
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m} min ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h} hr ago`
+  const d = Math.floor(h / 24)
+  return d === 1 ? 'yesterday' : `${d} days ago`
 }
 
 /**

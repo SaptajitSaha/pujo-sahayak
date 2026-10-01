@@ -317,7 +317,7 @@ export default function PandalDetail() {
                     <div className="h-20 w-full" style={{ backgroundImage: 'linear-gradient(135deg, #4a1230, #963a5c)' }} />
                     <div className="p-2">
                       <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{p.name}</p>
-                      <p className="mt-1 text-[11px] font-semibold text-vermilion">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-vermilion tabular-nums">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
                       {p.is_demo && <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Demo</span>}
                     </div>
                   </Card>
@@ -340,7 +340,7 @@ export default function PandalDetail() {
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           {[
             { icon: MapPin, label: 'Location', to: `/trip/saptami` },
-            { icon: TrainFront, label: 'Metro', to: `/search?q=metro` },
+            { icon: TrainFront, label: 'Metro', to: `/transport/metro` },
             { icon: Truck, label: 'Facilities', to: `/search?q=facilities` },
             { icon: ShieldCheck, label: 'Safety', to: '/safety' },
           ].map(({ icon: Icon, label, to }) => (
@@ -542,7 +542,7 @@ export default function PandalDetail() {
                   <span className="shrink-0 rounded-full bg-ivory-deep px-2 py-1 text-[10px] text-ink capitalize">
                     {p.capacityHint}
                   </span>
-                  <span className="shrink-0 text-[11px] font-medium text-ink">₹{p.ratePerHour}/h</span>
+                  <span className="shrink-0 text-[11px] font-medium text-ink tabular-nums">₹{p.ratePerHour}/h</span>
                   {hinted && <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">Serves this pandal</span>}
                   <button onClick={() => openDirections(p.name, p.area)} aria-label={`Directions to ${p.name}`} className="shrink-0 rounded-full border border-vermilion/40 p-1.5 text-vermilion">
                     <MapPin size={13} />

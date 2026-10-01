@@ -154,6 +154,7 @@ export default function Safety() {
   const trustedContacts = useApp((s) => s.trustedContacts)
   const currentAddress = useApp((s) => s.currentAddress)
   const setSosActive = useApp((s) => s.setSosActive)
+  const [lostNote, setLostNote] = useState<string | null>(null)
 
   const triggerSos = () => {
     // 1. Set the "active" flag so Home shows the "I'm safe" dismiss banner
@@ -237,7 +238,7 @@ export default function Safety() {
         <button
           onClick={() => navigator.geolocation?.getCurrentPosition(
             (pos) => window.open(`https://www.google.com/maps/search/?api=1&query=${pos.coords.latitude},${pos.coords.longitude}`, '_blank'),
-            () => alert('Could not get your location. Share your surroundings with a nearby help desk.'),
+            () => setLostNote('Could not get your location. Share your surroundings with a nearby help desk, or call 112.'),
           )}
           className="rounded-full border border-white/25 bg-white/10 py-3 text-sm font-semibold text-on-image"
         >
@@ -247,6 +248,13 @@ export default function Safety() {
           <Users size={15} /> {t('reportMissing')}
         </button>
       </div>
+      {/* Inline, non-blocking error state (never window.alert — it is jarring,
+          untranslatable, and steals focus on a safety screen). */}
+      {lostNote && (
+        <p role="alert" className="mt-2 rounded-card border border-gold-bright/40 bg-gold-bright/10 px-3 py-2 text-center text-xs text-on-image">
+          {lostNote}
+        </p>
+      )}
 
       <p className="mt-6 text-center text-[10px] leading-relaxed text-on-image/40">
         SOS state is stored on this device. Missing-person reports save locally and, when a live

@@ -1,7 +1,7 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
-import { Children, useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, LayoutGrid, Heart, Moon, Sun, X } from 'lucide-react'
+import { Children, useEffect, useId, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, User, LayoutGrid, Heart, Moon, Sun, X } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import type { Palette } from '../data/types'
@@ -18,6 +18,16 @@ export const EASE = [0.22, 1, 0.36, 1] as const
 export function applyThemeClassNow(dark: boolean) {
   document.documentElement.classList.toggle('dark', dark)
 }
+
+/* startViewTransition is still missing from older Android System WebViews the
+   app ships into, so every call site has to treat it as optional. It returns a
+   ViewTransition whose `finished` promise resolves once the reveal has painted
+   — the hook the icon spin waits on. */
+type DocWithVT = Document & {
+  startViewTransition?: (cb: () => void) => { finished?: Promise<void> } | void
+}
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
 /* Pause the always-on paint animations (fluid nav gradient, animated search
    border) for the duration of each scroll, resuming ~160ms after it stops. Those
@@ -163,6 +173,26 @@ export function Img({
   )
 }
 
+/* Circular identity tile. There is no real profile photo in this build, so a
+   plain <Img> here rendered as an empty gradient swatch — the same defect as a
+   card with no picture. Shows the account initial(s) when we have a name to
+   derive them from, otherwise a neutral person glyph. Sized by the caller's
+   className (font-size cascades to the initials, the icon scales to the tile). */
+const AVATAR_PALETTE: Palette = { from: '#8E5A2E', to: '#4A2A12' }
+const initialsOf = (name?: string) => {
+  const words = (name ?? '').trim().split(/[\s.@_\-]+/).filter(Boolean)
+  if (!words.length || /^(you|user|guest)$/i.test(words[0])) return null
+  return words.slice(0, 2).map((w) => w[0].toUpperCase()).join('')
+}
+export function Avatar({ src, name, alt, className = '' }: { src?: string; name?: string; alt: string; className?: string }) {
+  const initials = initialsOf(name)
+  return (
+    <Img palette={AVATAR_PALETTE} src={src} alt={alt} className={`grid place-items-center ${className}`}>
+      {!src && (initials ? <span className="font-semibold leading-none text-on-image">{initials}</span> : <User className="h-1/2 w-1/2 text-on-image/80" />)}
+    </Img>
+  )
+}
+
 /* Full-screen photo/edition/dish viewer — the app's shared lightbox.
    Opens with backdrop-click, Escape, or the X button; takes focus on open so
    Escape always bubbles to the handler (same pattern as the review sheet). */
@@ -214,7 +244,7 @@ type BtnProps = HTMLMotionProps<'button'> & {
 }
 export function Button({ variant = 'primary', size = 'md', className = '', children, ...rest }: BtnProps) {
   const base =
-    'inline-flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none'
+    'inline-flex items-center justify-center gap-1.5 rounded-full font-semibold tracking-[-0.01em] transition-colors disabled:opacity-50 disabled:pointer-events-none'
   const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2.5 text-sm' }
   const variants = {
     primary: 'grad-brand text-white hover:brightness-110 glow-vermilion',
@@ -256,11 +286,14 @@ export function Chip({
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <div className="mb-2 flex items-center justify-between">
-      <h2 className="text-[15px] font-semibold text-ink">{title}</h2>
+    <div className="mb-2.5 flex items-end justify-between">
+      {/* Section titles join the app's editorial display voice (Playfair / Noto
+          Serif Bengali) — a deliberate step up from UI sans, sized with a
+          tighter baseline so the serif's ascenders don't crowd the rail. */}
+      <h2 className="font-display text-[17px] font-semibold leading-tight text-ink">{title}</h2>
       {action && (
-        <button onClick={onAction} className="flex items-center text-xs font-medium text-vermilion">
-          {action} <ChevronRight size={14} />
+        <button onClick={onAction} className="group flex items-center gap-0.5 pb-0.5 text-xs font-medium text-vermilion-deep transition-colors hover:text-vermilion dark:text-vermilion">
+          {action} <ChevronRight size={14} className="transition-transform duration-200 group-hover:translate-x-0.5" />
         </button>
       )}
     </div>
@@ -536,7 +569,7 @@ export function BackHeader({ title, right }: { title: string; right?: ReactNode 
       <button aria-label="Go back" onClick={() => history.back()} className="text-ink-soft">
         <ChevronRight size={20} className="rotate-180" />
       </button>
-      <h1 className="text-center text-base font-semibold">{title}</h1>
+      <h1 className="font-display text-center text-[17px] font-semibold leading-tight">{title}</h1>
       <div className="min-w-6 flex justify-end">{right}</div>
     </header>
   )
@@ -546,64 +579,79 @@ export function BackHeader({ title, right }: { title: string; right?: ReactNode 
 export function ThemeToggle() {
   const theme = useApp((s) => s.theme)
   const setTheme = useApp((s) => s.setTheme)
+  const reduceMotion = useApp((s) => s.reduceMotion)
   // Derive from `theme` (the source of truth), never the DOM — reading the html
   // class here would be one render stale because App toggles it in a useEffect.
   const systemDark = typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
   const isDark = theme === 'dark' || (theme === 'system' && systemDark)
   const btnRef = useRef<HTMLButtonElement>(null)
 
-  const flip = () => {
+  /* The glyph is a pure CSS swap keyed off html.dark (see .theme-icon in
+     index.css), and the icon wrapper is a named view-transition group. So during
+     a theme change the sun↔moon rotation and the page's circular reveal run AT
+     THE SAME TIME, on the snapshots — the icon no longer waits for the sweep to
+     finish, which is what was left of the perceived delay. */
+
+  /**
+   * Flip the theme, unveiling the new one with a circle that grows out of the
+   * point the finger landed (View Transitions API + the vt-reveal-circle
+   * keyframes in index.css), then spin the icon into its new glyph.
+   *
+   * The callback must mutate the DOM synchronously and return — the browser has
+   * already snapshotted the old state and captures the new one as soon as it
+   * returns. Awaiting anything here, a frame in particular, is fatal:
+   * requestAnimationFrame never fires in a hidden or backgrounded surface, so
+   * the transition stalls until Chrome's ~5s timeout aborts it. The icon spin
+   * rides along too — it is a second view-transition group, animated in CSS.
+   */
+  const flip = (e: ReactMouseEvent<HTMLButtonElement>) => {
     const nextDark = !isDark
-    // Reveal animation: a circle grows out of the exact centre of this icon
-    // and unveils the other theme (View Transitions API). The html class is
-    // flipped synchronously inside the callback — waiting for App's useEffect
-    // could paint the new theme one frame early, outside the snapshot.
-    type DocWithVT = Document & { startViewTransition?: (o: { updateCallback: () => void | Promise<void> }) => { updateCallback: () => void | Promise<void> } }
-    const doc = document as DocWithVT
-    const reduce = useApp.getState().reduceMotion
-    const apply = () => applyThemeClassNow(nextDark)
-    if (doc.startViewTransition && !reduce) {
-      const rect = btnRef.current?.getBoundingClientRect()
-      const x = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
-      const y = rect ? rect.top + rect.height / 2 : 0
-      // Farthest viewport corner from the icon — circle must cover everything.
-      const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
-      // Custom-update callback: applying the class here hands the transition
-      // an explicit old→new DOM pair; both theme snapshots are captured
-      // inside it (one rAF so React's sync pass has flushed).
-      doc.startViewTransition({
-        updateCallback: async () => { apply(); await new Promise((res) => requestAnimationFrame(res)) },
-      })
-      const st = document.documentElement.style
-      st.setProperty('--vt-x', `${x}px`)
-      st.setProperty('--vt-y', `${y}px`)
-      st.setProperty('--vt-r', `${Math.ceil(r)}px`)
-    } else {
-      apply()
+    const apply = () => {
+      applyThemeClassNow(nextDark)
+      setTheme(nextDark ? 'dark' : 'light')
     }
-    setTheme(nextDark ? 'dark' : 'light')
+    const doc = document as DocWithVT
+    if (!doc.startViewTransition || reduceMotion) { apply(); return }
+
+    // Origin = the pointer. Keyboard activation reports 0,0, so fall back to the
+    // icon's own centre; both clamp into the viewport, because a control that
+    // has scrolled off-screen would otherwise start the sweep where nothing can
+    // see it — uncovering the page before the first painted circle.
+    const rect = btnRef.current?.getBoundingClientRect()
+    const viaKeyboard = e.clientX === 0 && e.clientY === 0
+    const x = clamp(viaKeyboard && rect ? rect.left + rect.width / 2 : e.clientX, 0, window.innerWidth)
+    const y = clamp(viaKeyboard && rect ? rect.top + rect.height / 2 : e.clientY, 0, window.innerHeight)
+    // Radius out to the farthest corner — the circle has to cover everything.
+    const r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
+
+    // Publish before starting: the keyframes read these on the very first frame.
+    const style = document.documentElement.style
+    style.setProperty('--vt-x', `${Math.round(x)}px`)
+    style.setProperty('--vt-y', `${Math.round(y)}px`)
+    style.setProperty('--vt-r', `${Math.ceil(r)}px`)
+
+    // Both the reveal and the icon spin are view-transition groups captured from
+    // the synchronous apply() — they animate together, so nothing hangs off
+    // `finished` any more. The callback must stay synchronous (never await here).
+    try { doc.startViewTransition(apply) } catch { apply() }
   }
 
   return (
     <motion.button
       ref={btnRef}
-      whileTap={{ scale: 0.82, rotate: 90 }}
+      whileTap={{ scale: 0.9 }}
       transition={{ type: 'spring', stiffness: 380, damping: 16 }}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       onClick={flip}
       className="relative grid h-8 w-8 place-items-center rounded-full text-vermilion"
     >
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span
-          key={String(isDark)}
-          initial={{ opacity: 0, y: -6, rotate: -30 }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
-          exit={{ opacity: 0, y: 6, rotate: 30 }}
-          transition={{ duration: 0.18 }}
-        >
-          {isDark ? <Moon size={19} /> : <Sun size={19} />}
-        </motion.span>
-      </AnimatePresence>
+      {/* Both glyphs live in the DOM; html.dark shows one (index.css .theme-icon).
+          The wrapper is a named view-transition group, so it spins sun↔moon in
+          lockstep with the reveal. Reduced-motion / no-VT: the CSS swap is instant. */}
+      <span className="theme-icon">
+        <Sun size={19} className="ic ic-sun" />
+        <Moon size={19} className="ic ic-moon" />
+      </span>
     </motion.button>
   )
 }

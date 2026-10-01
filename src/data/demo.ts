@@ -19,13 +19,17 @@ const brass = p('#2a1e0c', '#7a5a24'  )
 const clay = p('#38200e', '#8a5230')
 const brick = p('#5a1e14', '#b0472a')
 
+/* Every dish carries its own photo. The Popular Dishes rail inside a restaurant
+   shows up to three of these side by side, so dishes sharing a bare gradient
+   read as a rendering bug. The gradient stays as the underlay behind the photo
+   and as the lightbox backdrop. */
 const dishes: Dish[] = [
-  { id: 'd1', name: 'Kocha Mango', nameBn: 'কচা আম', palette: marigold },
-  { id: 'd2', name: 'Bhetki Paturi', nameBn: 'ভেটকি পাটুরি', palette: clay },
-  { id: 'd3', name: 'Mishti Doi', nameBn: 'মিষ্টি দই', palette: lamp },
-  { id: 'd4', name: 'Kosha Mangsho', nameBn: 'কোষা মাংস', palette: fire },
-  { id: 'd5', name: 'Chingri Malaikari', nameBn: 'চিংড়ি মলাইকারি', palette: brass },
-  { id: 'd6', name: 'Luchi Alur Dom', nameBn: 'লুচি আলু দম', palette: silk },
+  { id: 'd1', name: 'Kocha Mango', nameBn: 'কচা আম', palette: { ...marigold, img: '/img/dish-kocha-mango.jpg' } },
+  { id: 'd2', name: 'Bhetki Paturi', nameBn: 'ভেটকি পাটুরি', palette: { ...clay, img: '/img/dish-bhetki-paturi.jpg' } },
+  { id: 'd3', name: 'Mishti Doi', nameBn: 'মিষ্টি দই', palette: { ...lamp, img: '/img/dish-mishti-doi.jpg' } },
+  { id: 'd4', name: 'Kosha Mangsho', nameBn: 'কোষা মাংস', palette: { ...fire, img: '/img/dish-kosha-mangsho.jpg' } },
+  { id: 'd5', name: 'Chingri Malaikari', nameBn: 'চিংড়ি মলাইকারি', palette: { ...brass, img: '/img/dish-chingri-malaikari.jpg' } },
+  { id: 'd6', name: 'Luchi Alur Dom', nameBn: 'লুচি আলু দম', palette: { ...silk, img: '/img/dish-luchi-alur-dom.jpg' } },
 ]
 
 const rReviews = [
@@ -316,15 +320,15 @@ export const categories: CategoryDef[] = [
   { id: 'c-pandals', label: 'Pandals', labelBn: 'প্যান্ডেল', icon: 'pandal', group: 'places', route: '/explore' },
   { id: 'c-restaurants', label: 'Restaurants', labelBn: 'রেস্টুরেন্ট', icon: 'restaurant', group: 'places', route: '/search?type=restaurant' },
   { id: 'c-places', label: 'Places', labelBn: 'জায়গা', icon: 'place', group: 'places', route: '/search?type=place' },
-  { id: 'c-metro', label: 'Metro', labelBn: 'মেট্রো', icon: 'metro', group: 'transport', route: '/search?q=metro' },
-  { id: 'c-bus', label: 'Bus', labelBn: 'বাস', icon: 'bus', group: 'transport', route: '/search?q=bus' },
-  { id: 'c-parking', label: 'Parking', labelBn: 'পার্কিং', icon: 'parking', group: 'transport', route: '/search?q=parking' },
-  { id: 'c-police', label: 'Police Station', labelBn: 'পুলিশ স্টেশন', icon: 'police', group: 'utilities', route: '/safety' },
-  { id: 'c-hospital', label: 'Hospital', labelBn: 'হাসপাতাল', icon: 'hospital', group: 'utilities', route: '/safety' },
-  { id: 'c-atm', label: 'ATM', labelBn: 'এটিএম', icon: 'atm', group: 'utilities', route: '/search?q=atm' },
-  { id: 'c-pharmacy', label: 'Pharmacy', labelBn: 'ফার্মেসি', icon: 'pharmacy', group: 'utilities', route: '/search?q=pharmacy' },
-  { id: 'c-toilet', label: 'Toilet', labelBn: 'টয়লেট', icon: 'toilet', group: 'utilities', route: '/search?q=toilet' },
-  { id: 'c-helpdesk', label: 'Help Desk', labelBn: 'হেল্প ডেস্ক', icon: 'help', group: 'utilities', route: '/safety' },
+  { id: 'c-metro', label: 'Metro', labelBn: 'মেট্রো', icon: 'metro', group: 'transport', route: '/transport/metro' },
+  { id: 'c-bus', label: 'Bus', labelBn: 'বাস', icon: 'bus', group: 'transport', route: '/services/bus' },
+  { id: 'c-parking', label: 'Parking', labelBn: 'পার্কিং', icon: 'parking', group: 'transport', route: '/services/parking' },
+  { id: 'c-police', label: 'Police Station', labelBn: 'পুলিশ স্টেশন', icon: 'police', group: 'utilities', route: '/services/police' },
+  { id: 'c-hospital', label: 'Hospital', labelBn: 'হাসপাতাল', icon: 'hospital', group: 'utilities', route: '/services/hospital' },
+  { id: 'c-atm', label: 'ATM', labelBn: 'এটিএম', icon: 'atm', group: 'utilities', route: '/services/atm' },
+  { id: 'c-pharmacy', label: 'Pharmacy', labelBn: 'ফার্মেসি', icon: 'pharmacy', group: 'utilities', route: '/services/pharmacy' },
+  { id: 'c-toilet', label: 'Toilet', labelBn: 'টয়লেট', icon: 'toilet', group: 'utilities', route: '/services/toilet' },
+  { id: 'c-helpdesk', label: 'Help Desk', labelBn: 'হেল্প ডেস্ক', icon: 'help', group: 'utilities', route: '/services/helpdesk' },
 ]
 
 export const interests = ['Photography', 'Pandal hopping', 'Food', 'Music', 'Art', 'Night exploration', 'Heritage', 'Family-friendly']
@@ -354,32 +358,60 @@ const PHOTOS: Record<string, string> = {
 for (const pl of places) if (PHOTOS[pl.id]) pl.palette = { ...pl.palette, img: PHOTOS[pl.id] }
 for (const ev of events) if (PHOTOS[ev.id]) ev.palette = { ...ev.palette, img: PHOTOS[ev.id] }
 
-// Illustrative stand-ins for pandals that have no curated photo, so a card
-// never renders as a bare gradient right next to its photo-bearing siblings
-// (the earlier gap left 24 of 32 pandals imageless across Siliguri/Howrah/
-// Delhi). Chosen by theme keyword with a stable per-id rotation as the last
-// resort. Honest: these are the same AI-generated sample photos as above —
-// no real venue is claimed. Shopping and Walks are filled with category/theme
-// photos just below, so no rail renders as a bare gradient next to its
-// photo-bearing siblings. The Img gradient fallback stays intact as the true
-// last resort for any entity that still has no image.
+/* The full pool of illustrative pandal photography — each frame reads as a lit
+   pandal at some hour of the day; no real venue is claimed, same convention as
+   the curated PHOTOS above. Deliberately larger than the biggest single-city
+   rail (Howrah, 10 pandals), which is what makes a no-repeats-within-a-city
+   assignment possible at all. The Img gradient fallback stays the last resort
+   for any entity that still ends up with no image. */
 const PANDAL_PHOTOS = [
   '/img/pandal-grand.jpg', '/img/pandal-terracotta.jpg', '/img/pandal-traditional.jpg',
   '/img/pandal-tower.jpg', '/img/pandal-heritage.jpg', '/img/pandal-art.jpg',
-  '/img/pandal-sculpture.jpg', '/img/pandal-neon.jpg',
+  '/img/pandal-sculpture.jpg', '/img/pandal-neon.jpg', '/img/pandal-illumination.jpg',
+  '/img/pandal-arch.jpg', '/img/pandal-lantern-street.jpg', '/img/pandal-courtyard.jpg',
 ]
-const hashIdx = (s: string, n: number) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h % n }
-const themePhoto = (theme: string, id: string): string => {
-  const t = (theme || '').toLowerCase()
-  if (/terracotta|clay/.test(t)) return '/img/pandal-terracotta.jpg'
-  if (/light|neon|cathedral|installation|modern/.test(t)) return '/img/pandal-neon.jpg'
-  if (/sculpt|idol|stone|cave|kumortuli|ravana|three worlds/.test(t)) return '/img/pandal-sculpture.jpg'
-  if (/heritage|traditional|tradition|barowari|barari|bonedi|boat|river|renaissance|journey|haat|shakti/.test(t)) return '/img/pandal-heritage.jpg'
-  if (/\bart\b|weav|folk|craft|paper|eternal|city|tower/.test(t)) return '/img/pandal-art.jpg'
-  if (/nature|tea|green|marigold|silk/.test(t)) return '/img/pandal-grand.jpg'
-  return PANDAL_PHOTOS[hashIdx(id, PANDAL_PHOTOS.length)]
+
+/* Theme keyword → the frame that actually depicts it, checked in order, so a
+   terracotta-themed pandal gets the terracotta photo rather than any spare. */
+const THEME_PHOTO: [RegExp, string][] = [
+  [/terracotta|clay/, '/img/pandal-terracotta.jpg'],
+  [/light|neon|illumination|cathedral|installation|modern/, '/img/pandal-neon.jpg'],
+  [/lantern|street|bunting|road|market/, '/img/pandal-lantern-street.jpg'],
+  [/arch|entrance|gateway|door|threshold/, '/img/pandal-arch.jpg'],
+  [/courtyard|bonedi|barari|household|home|family/, '/img/pandal-courtyard.jpg'],
+  [/sculpt|idol|stone|cave|kumortuli|ravana|three worlds/, '/img/pandal-sculpture.jpg'],
+  [/heritage|traditional|tradition|barowari|boat|river|renaissance|journey|haat|shakti/, '/img/pandal-heritage.jpg'],
+  [/\bart\b|weav|folk|craft|paper|eternal|city|tower/, '/img/pandal-art.jpg'],
+  [/nature|tea|green|marigold|silk|garden/, '/img/pandal-grand.jpg'],
+]
+
+/* Assign one city's cards at a time. A city's pandals sit on screen together, so
+   within a group no two may share a frame: theme keyword first, then the next
+   photo nobody has taken. Curated photos are already on the palette and merely
+   mark their frame as used. Grouping by cityId — rather than walking `places` —
+   keeps that scope correct if the array is ever reordered. */
+function assignPandalPhotos(group: Place[]) {
+  const used = new Set<string>()
+  for (const pl of group) if (pl.palette.img) used.add(pl.palette.img)
+  for (const pl of group) {
+    if (pl.type !== 'pandal' || pl.palette.img) continue
+    const theme = (pl.theme ?? '').toLowerCase()
+    const pick =
+      THEME_PHOTO.find(([re, img]) => re.test(theme) && !used.has(img))?.[1] ??
+      PANDAL_PHOTOS.find((img) => !used.has(img))
+    // Pool exhausted → leave the gradient rather than repeat a sibling.
+    if (!pick) continue
+    used.add(pick)
+    pl.palette = { ...pl.palette, img: pick }
+  }
 }
-for (const pl of places) if (!pl.palette.img && pl.type === 'pandal') pl.palette = { ...pl.palette, img: themePhoto(pl.theme ?? '', pl.id) }
+const placesByCity = new Map<City, Place[]>()
+for (const pl of places) {
+  const group = placesByCity.get(pl.cityId ?? CITY_DEFAULT)
+  if (group) group.push(pl)
+  else placesByCity.set(pl.cityId ?? CITY_DEFAULT, [pl])
+}
+for (const group of placesByCity.values()) assignPandalPhotos(group)
 
 /** Approximate user position for demo distance rendering (Ballygunge, Kolkata). */
 export const DEMO_USER = { lat: 22.527, lng: 88.359 }
@@ -412,23 +444,22 @@ export const walks: Walk[] = [
 ]
 
 // ─── Shopping + Walks imagery ────────────────────────────────────────────────
-// Illustrative photos for the two rails that previously rendered as bare
-// gradients. Reuses the existing honest AI-sample pool (same convention as the
-// pandal/offers fill above) — chosen by product category / walk theme, so the
-// Shopping and Curated Walks cards read as photographic like every sibling.
-// A few categories share an image (small rail cards, repetition is invisible
-// when scrolling); no real product or venue is claimed.
+// One photo per product, shot for that exact item. These tiles sit side by side
+// in the same Home rail and the same Shopping grid, so a repeated picture (the
+// earlier state: one apparel photo across four different products) reads as a
+// bug even at rail-card size. Same honest convention as the pandal/offers fill:
+// AI-generated illustrative samples, no real seller's product claimed.
 const SHOP_PHOTOS: Record<string, string> = {
-  s1: '/img/tanting-saree.jpg',   // Baluchari silk saree
-  s2: '/img/offer-apparel.jpg',   // handloom tant saree
-  s3: '/img/offer-watch.jpg',     // shakha-pola adornment
-  s4: '/img/offer-watch.jpg',     // gold-plated haar
-  s5: '/img/offer-apparel.jpg',   // kids frock lehenga
-  s6: '/img/offer-apparel.jpg',   // dhuti-kurta set
-  s7: '/img/offer-shoes.jpg',     // mojari jutti
-  s8: '/img/food-thali.jpg',      // brass pujo thali
-  s9: '/img/offer-gadgets.jpg',   // hand-painted jute tote
-  s10: '/img/offer-apparel.jpg',  // kantha quilt (textile)
+  s1: '/img/shop-baluchari-saree.jpg',  // Baluchari silk saree
+  s2: '/img/shop-tant-saree.jpg',       // handloom tant saree
+  s3: '/img/shop-shakha-pola.jpg',      // shakha-pola conch & coral
+  s4: '/img/shop-chandor-haar.jpg',     // gold-plated chandor haar
+  s5: '/img/shop-kids-lehenga.jpg',     // girls' frock lehenga
+  s6: '/img/shop-dhuti-kurta.jpg',      // dhuti-kurta set
+  s7: '/img/shop-mojari.jpg',           // mojari jutti
+  s8: '/img/shop-brass-thali.jpg',      // brass pujo thali
+  s9: '/img/shop-jute-tote.jpg',        // hand-painted jute tote
+  s10: '/img/shop-kantha.jpg',          // kantha quilt
 }
 for (const s of shopping) if (SHOP_PHOTOS[s.id]) s.palette = { ...s.palette, img: SHOP_PHOTOS[s.id] }
 
@@ -438,6 +469,48 @@ const WALK_PHOTOS: Record<string, string> = {
   'walk-family': '/img/pandal-grand.jpg',        // easy family stroll
 }
 for (const w of walks) if (WALK_PHOTOS[w.id]) w.palette = { ...w.palette, img: WALK_PHOTOS[w.id] }
+
+// ─── Artists, Meetups & per-pandal galleries imagery ─────────────────────────
+// The three surfaces that still rendered every card as a bare gradient.
+
+/* An artist's tile shows the pandal they built (their own pandalIds), not a
+   stock portrait — the work is the credential. The one credit shared by two
+   artists (Santosh Mitra Square) resolves to the Kumartuli studio shot, which
+   is literally where that artist's clay-relief craft is practised. */
+const ARTIST_PHOTOS: Record<string, string> = {
+  'artist-paresh':   '/img/pandal-grand.jpg',       // Santosh Mitra Square
+  'artist-ramkumar': '/img/pandal-heritage.jpg',    // Ekdalia
+  'artist-manju':    '/img/pandal-terracotta.jpg',  // Kalyani ITI
+  'artist-arun':     '/img/pandal-art.jpg',         // Mudiali
+  'artist-bimal':    '/img/pandal-sculpture.jpg',   // Suruchi Sangha
+  'artist-kanak':    '/img/pandal-traditional.jpg', // Baghbazar
+  'artist-santi':    '/img/pandal-tower.jpg',       // Deshapriya
+  'artist-jhantu':   '/img/event-kumartuli.jpg',    // Kumortuli, clay reliefs
+}
+for (const ar of artists) if (ARTIST_PHOTOS[ar.id]) ar.palette = { ...ar.palette, img: ARTIST_PHOTOS[ar.id] }
+
+/* Meetup tiles: four distinct routes, four distinct pictures — they stack in
+   one list on /meets and one rail on Beyond Puja. */
+const MEETUP_PHOTOS: Record<string, string> = {
+  m1: '/img/pandal-sculpture.jpg',  // south kolkata pandal hop
+  m2: '/img/pandal-neon.jpg',       // golden-hour photography walk
+  m3: '/img/food-multi.jpg',        // late-night puja food crawl
+  m4: '/img/pandal-heritage.jpg',   // heritage barowari trail
+}
+for (const mu of meetups) if (MEETUP_PHOTOS[mu.id]) mu.palette = { ...mu.palette, img: MEETUP_PHOTOS[mu.id] }
+
+/* A pandal's own page shows its hero, its past-editions rail and its top-clicks
+   grid on one screen — so none of those tiles may repeat the hero, or each
+   other. Drawn deterministically from the pandal pool with the host's own photo
+   filtered out: editions take the first slots, clicks are offset past them. */
+const galleryPhoto = (hostImg: string | undefined, i: number): string => {
+  const pool = hostImg ? PANDAL_PHOTOS.filter((p) => p !== hostImg) : PANDAL_PHOTOS
+  return pool[i % pool.length]
+}
+for (const pl of places) {
+  pl.pastEditions?.forEach((e, i) => { e.palette = { ...e.palette, img: galleryPhoto(pl.palette.img, i) } })
+  pl.topClicks?.forEach((ph, i) => { ph.palette = { ...ph.palette, img: galleryPhoto(pl.palette.img, i + 3) } })
+}
 
 // ─── Parking ─────────────────────────────────────────────────────────────────
 export const parkingSpots: ParkingSpot[] = [

@@ -40,6 +40,16 @@ export default function Planner() {
   const [picker, setPicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
+  // Keyboard dismissal for the place-picker sheet: it closes on outside-click
+  // and via the X button, but Escape is the affordance keyboard and screen-
+  // reader users expect from a modal, and the sheet otherwise traps them.
+  useEffect(() => {
+    if (!picker) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPicker(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [picker])
+
   // A shared /planner?day=X&stops=id1,id2 URL materialises itself into the
   // user's Zustand store on mount — but only for stops that aren't already
   // on that day, so a re-open of an old link doesn't duplicate. After applying

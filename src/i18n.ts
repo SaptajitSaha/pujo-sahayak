@@ -35,6 +35,7 @@ export const STRINGS: Dict = {
   explore: { en: 'Explore', bn: 'এক্সপ্লোর', hi: 'एक्सप्लोर' },
   exploreSpotlight: { en: 'Explore Spotlight', bn: 'এক্সপ্লোর স্পটলাইট', hi: 'एक्सप्लोर स्पॉटलाइट' },
   nearbyRestaurants: { en: 'Nearby Restaurants', bn: 'কাছের রেস্তোরাঁ', hi: 'नज़दीकी रेस्तरां' },
+  forTwo: { en: 'for two', bn: 'দুজনের জন্য', hi: 'दो लोगों के लिए' },
   offers: { en: 'Offers & Discounts', bn: 'অফার ও ছাড়', hi: 'ऑफ़र और छूट' },
   shopping: { en: 'Shopping', bn: 'শপিং', hi: 'शॉपिंग' },
   shoppingSub: { en: 'Pujo sale picks from Kolkata malls', bn: 'কলকাতা মলের পুজোর সেল পছন্দ', hi: 'कोलकाता मॉल की पूजा सेल पसंद' },

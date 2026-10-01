@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { MapPin, Route as RouteIcon } from 'lucide-react'
 import type { Place } from '../data/types'
 import { crowdLabel, useT } from '../i18n'
+import { costForTwo, formatInr } from '../lib/price'
 import { Card, Chip, CrowdTag, Img, Stars } from './ui'
 
 export function placeHref(p: Place) {
@@ -12,6 +13,7 @@ export function placeHref(p: Place) {
 export function PlaceCard({ place }: { place: Place }) {
   const t = useT()
   const nav = useNavigate()
+  const cost = costForTwo(place)
   return (
     <Card className="p-3">
       <div className="flex gap-3">
@@ -26,6 +28,15 @@ export function PlaceCard({ place }: { place: Place }) {
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             <Stars rating={place.rating} />
             <span className="text-xs text-faint">• {place.distanceKm} km •</span>
+            {/* Approximate cost for two, derived from the seeded price band —
+                the leading ≈ is what keeps it honest (doc §58). Null for
+                pandals and for any place with no band on record. */}
+            {cost !== null && (
+              <span className="text-xs font-medium text-ink tabular-nums">
+                <span className="text-faint">≈ </span>{formatInr(cost)}{' '}
+                <span className="font-normal text-ink-soft">{t('forTwo')}</span>
+              </span>
+            )}
             {place.crowd && <CrowdTag level={place.crowd} />}
           </div>
           {place.theme && <p className="mt-0.5 truncate text-xs text-ink-soft">Theme: {place.theme}</p>}
@@ -59,6 +70,7 @@ export function PlaceCard({ place }: { place: Place }) {
 export function RailCard({ place, width = 'w-40' }: { place: Place; width?: string }) {
   const t = useT()
   const nav = useNavigate()
+  const cost = costForTwo(place)
   return (
     <button onClick={() => nav(placeHref(place))} className={`${width} flex shrink-0 text-left`}>
       <Card className="flex w-full flex-col">
@@ -74,7 +86,15 @@ export function RailCard({ place, width = 'w-40' }: { place: Place; width?: stri
           <div className="mt-1 flex items-center gap-1.5 text-xs text-faint">
             <Stars rating={place.rating} /> • {place.distanceKm} km
           </div>
-          {place.cuisine && <p className="mt-0.5 truncate text-[11px] text-ink-soft">{place.cuisine} • {place.priceBand}</p>}
+          {place.cuisine && <p className="mt-0.5 truncate text-[11px] text-ink-soft">{place.cuisine}</p>}
+          {/* Own line rather than a suffix on the cuisine: appended to it, the
+              string truncates inside the price and the figure is lost. */}
+          {cost !== null && (
+            <p className="mt-0.5 truncate text-[11px] font-medium text-ink tabular-nums">
+              <span className="text-faint">≈ </span>{formatInr(cost)}{' '}
+              <span className="font-normal text-ink-soft">{t('forTwo')}</span>
+            </p>
+          )}
           {place.theme && <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-soft">Theme: {place.theme}</p>}
         </div>
       </Card>

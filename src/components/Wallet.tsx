@@ -79,7 +79,7 @@ export function Wallet({ userId }: { userId: string | null }) {
                   <p className="text-[10px] text-faint">{new Date(t.created_at).toLocaleDateString()}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">{money(t.amount)}</span>
+                  <span className="font-medium tabular-nums">{money(t.amount)}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLES[t.status]}`}>
                     {t.status.replace('_', ' ')}
                   </span>

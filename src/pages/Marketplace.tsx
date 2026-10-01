@@ -11,19 +11,9 @@ import { motion } from 'framer-motion'
 import { ShoppingBag, Store } from 'lucide-react'
 import { BackHeader, Button, Card, Chip, EASE, Img, Page, QueryError } from '../components/ui'
 import { useProducts, useCreateOrder } from '../services/marketplace'
-import { MARKETPLACE_CATEGORIES } from '../services/marketplace.mock'
+import { MARKETPLACE_CATEGORIES, productImage, productPalette } from '../services/marketplace.mock'
 import { useAuth } from '../lib/auth'
-import type { MarketplaceProduct, Palette } from '../data/types'
-
-/** Deterministic palette per category so each card has a warm, distinct tile. */
-const CAT_PALETTE: Record<string, Palette> = {
-  clothing: { from: '#4a1230', to: '#963a5c' },
-  accessories: { from: '#5c3a0a', to: '#c08a2a' },
-  puja_essentials: { from: '#3a2410', to: '#8a5a1e' },
-  handmade: { from: '#1a1230', to: '#4a3070' },
-  experiences: { from: '#4a1508', to: '#a8401c' },
-  partner_offers: { from: '#2a1e0c', to: '#7a5a24' },
-}
+import type { MarketplaceProduct } from '../data/types'
 
 const money = (n: number) => (n > 0 ? `₹${n.toLocaleString('en-IN')}` : 'Free')
 
@@ -78,14 +68,14 @@ export default function Marketplace() {
               className="text-left"
             >
               <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
-                <Img palette={CAT_PALETTE[p.category] ?? CAT_PALETTE.handmade} alt={p.name} className="h-28" />
+                <Img palette={productPalette(p)} src={productImage(p)} alt={p.name} className="h-28" />
                 <div className="p-2.5">
                   <div className="flex items-center gap-1.5">
                     <p className="min-w-0 flex-1 truncate text-[13px] font-semibold">{p.name}</p>
                   </div>
                   <p className="mt-0.5 flex items-center gap-1 text-[11px] text-faint"><Store size={10} /> {p.area}</p>
                   <div className="mt-1.5 flex items-center justify-between">
-                    <span className="text-sm font-semibold text-vermilion">{money(p.price)}</span>
+                    <span className="text-sm font-semibold text-vermilion tabular-nums">{money(p.price)}</span>
                     {p.is_demo && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">Demo</span>}
                   </div>
                 </div>
@@ -125,10 +115,10 @@ function ProductModal({ product, onClose, onOrder, orderPending }: {
         onClick={(e) => e.stopPropagation()}
         role="dialog" aria-modal="true" aria-labelledby="mp-title"
       >
-        <Img palette={CAT_PALETTE[product.category] ?? CAT_PALETTE.handmade} alt={product.name} className="h-40 w-full rounded-xl" />
+        <Img palette={productPalette(product)} src={productImage(product)} alt={product.name} className="h-40 w-full rounded-xl" />
         <div className="mt-3 flex items-start justify-between gap-2">
           <h3 id="mp-title" className="text-lg font-semibold">{product.name}</h3>
-          <span className="text-lg font-semibold text-vermilion">{money(product.price)}</span>
+          <span className="text-lg font-semibold text-vermilion tabular-nums">{money(product.price)}</span>
         </div>
         <p className="mt-0.5 text-xs text-faint capitalize">{product.category.split('_').join(' ')} · {product.area}</p>
         <p className="mt-2 text-sm leading-relaxed text-ink-soft">{product.description}</p>

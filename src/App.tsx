@@ -40,6 +40,8 @@ const loaders = {
   Auth: () => import('./pages/Auth'),
   SocialMatch: () => import('./pages/SocialMatch'),
   Marketplace: () => import('./pages/Marketplace'),
+  MetroGuide: () => import('./pages/MetroGuide'),
+  ServiceDirectory: () => import('./pages/ServiceDirectory'),
 }
 
 const Explore = lazy(loaders.Explore)
@@ -69,6 +71,8 @@ const ShareTarget = lazy(loaders.ShareTarget)
 const Auth = lazy(loaders.Auth)
 const SocialMatch = lazy(loaders.SocialMatch)
 const Marketplace = lazy(loaders.Marketplace)
+const MetroGuide = lazy(loaders.MetroGuide)
+const ServiceDirectory = lazy(loaders.ServiceDirectory)
 
 /** Fire every route's chunk download + parse in staggered waves. Called from
     main.tsx right after the app mounts so it runs during the inline CSS boot
@@ -223,6 +227,8 @@ function Shell() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/social" element={<SocialMatch />} />
       <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/transport/metro" element={<MetroGuide />} />
+      <Route path="/services/:cat" element={<ServiceDirectory />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

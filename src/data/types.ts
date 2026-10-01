@@ -283,6 +283,80 @@ export interface MetroETA {
   nearestPandalIds: string[]
 }
 
+// ─── Transport & services directory model ──────────────────────────────────
+// The Categories tiles for Metro / Bus / Parking and the Utilities group each
+// open a dedicated page instead of falling through to the search bar. Metro is
+// a bespoke experience (line map + timings); the rest are directories rendered
+// through one shared page. ALL of it is static reference data, clearly labeled
+// "sample — verify on-site" per the app's anti-fake policy: no live feed is
+// simulated and no real business is claimed to be verified.
+
+/** A metro line drawn on the schematic map. `stations` run in order so the
+    map and the station list never disagree. Colors are display hex only. */
+export interface MetroLine {
+  id: string
+  name: string // "Blue Line (Line 1)"
+  short: string // "Line 1"
+  color: string
+  terminals: [string, string]
+  stations: string[]
+  interchange: string[] // station names shared with another line
+  firstTrain: string
+  lastTrain: string
+  headwayMin: number
+  fareRange: [number, number] // INR min–max
+  note?: string
+}
+
+/** One row in a service directory. `lat`/`lng` optional: only seeded where a
+    map/directions pin is honest to show. `meta` is a short pre-formatted string
+    (rate, walk time, distance, groups) so the row shape stays generic. */
+export interface DirectoryItem {
+  id: string
+  name: string
+  area: string
+  subtitle?: string
+  meta?: string
+  hours?: string
+  phone?: string
+  tags?: string[]
+  lat?: number
+  lng?: number
+}
+
+/** A bus route (corridor) rather than a point — rendered by the shared page's
+    "route" layout: from → to, via stops, frequency, fare, first/last trip. */
+export interface BusRoute {
+  id: string
+  name: string
+  from: string
+  to: string
+  via: string[]
+  type: 'AC' | 'Normal' | 'Circular'
+  firstTrip: string
+  lastTrip: string
+  frequencyMin: number
+  fareINR: [number, number]
+  pujaNote?: string
+}
+
+/** The `:cat` keys the shared ServiceDirectory understands. */
+export type ServiceCategory =
+  | 'bus' | 'parking' | 'police' | 'hospital' | 'atm' | 'pharmacy' | 'toilet' | 'helpdesk'
+
+/** Config that turns one `:cat` key into a rendered directory. */
+export interface ServiceDirectory {
+  id: ServiceCategory
+  title: string
+  titleBn: string
+  blurb: string
+  /** 'route' renders BusRoute[]; 'point' renders DirectoryItem[]. */
+  kind: 'route' | 'point'
+  /** Honest caption shown under the list. */
+  disclaimer: string
+  phoneNote?: string
+}
+
 /** A day in the puja tithi calendar (Mahalaya → Bijoya). */
 export interface Tithi {
   id: string

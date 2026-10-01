@@ -10,6 +10,10 @@ import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, Sectio
 import { RailCard } from '../components/PlaceCard'
 import { PandalPulse } from '../components/PandalPulse'
 import { BestTime } from '../components/BestTime'
+import { PandalHistory } from '../components/PandalHistory'
+import { StoryMode } from '../components/StoryMode'
+import { AccessibilityInfo } from '../components/AccessibilityInfo'
+import { PhotoGuide } from '../components/PhotoGuide'
 import { OfficialNotices } from '../components/OfficialNotices'
 import { LiveNotes } from '../components/LiveNotes'
 import { SaveIntentSheet } from '../components/SaveIntentSheet'
@@ -390,6 +394,12 @@ export default function PandalDetail() {
           </section>
         </Reveal>
 
+        {/* Story Mode — chaptered expander over the pandal's own record. */}
+        {flags.ENABLE_STORY_MODE && <StoryMode place={place} />}
+
+        {/* Accessibility — illustrative on-site facts + a report micro-flow. */}
+        {flags.ENABLE_ACCESSIBILITY && <AccessibilityInfo place={place} />}
+
         {/* Ask Maya */}
         <button onClick={askMaya} className="mt-4 w-full">
           <Card className="flex items-center gap-3 border border-maya/20 !bg-card p-3">
@@ -399,24 +409,29 @@ export default function PandalDetail() {
           </Card>
         </button>
 
-        {/* Past editions */}
-        {place.pastEditions?.length ? (
-          <section className="mt-5">
-            <SectionHeader title={t('pastEditions')} />
-            <Rail>
-              {place.pastEditions.map((e) => (
-                <button key={e.year} onClick={() => setZoom({ title: `${e.year} — ${e.theme}`, sub: `Past edition of ${place.name}`, palette: e.palette })} className="w-32 shrink-0 text-left">
-                  <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
-                    <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" />
-                    <div className="p-2">
-                      <p className="text-xs font-semibold">{e.year}</p>
-                      <p className="text-[11px] text-ink-soft">{e.theme}</p>
-                    </div>
-                  </Card>
-                </button>
-              ))}
-            </Rail>
-          </section>
+        {/* Past editions — vertical timeline (re-presents existing data) when the
+            history flag is on; otherwise the original flat rail. */}
+        {place.pastEditions?.length || place.story ? (
+          flags.ENABLE_PANDAL_HISTORY ? (
+            <PandalHistory place={place} onOpen={setZoom} />
+          ) : (
+            <section className="mt-5">
+              <SectionHeader title={t('pastEditions')} />
+              <Rail>
+                {place.pastEditions?.map((e) => (
+                  <button key={e.year} onClick={() => setZoom({ title: `${e.year} — ${e.theme}`, sub: `Past edition of ${place.name}`, palette: e.palette })} className="w-32 shrink-0 text-left">
+                    <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
+                      <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" />
+                      <div className="p-2">
+                        <p className="text-xs font-semibold">{e.year}</p>
+                        <p className="text-[11px] text-ink-soft">{e.theme}</p>
+                      </div>
+                    </Card>
+                  </button>
+                ))}
+              </Rail>
+            </section>
+          )
         ) : null}
 
         {/* What others say — user reviews (persisted) on top, demo seed under */}
@@ -514,6 +529,9 @@ export default function PandalDetail() {
         {flags.ENABLE_SAVE_INTENT && (
           <SaveIntentSheet placeId={place.id} placeName={place.name} open={intentOpen} onClose={() => setIntentOpen(false)} />
         )}
+
+        {/* Photo guide — honest tips derived from hours, theme & crowd level. */}
+        {flags.ENABLE_PHOTO_GUIDE && <PhotoGuide place={place} />}
 
         {/* Top clicks + upload */}
         <section className="mt-5">

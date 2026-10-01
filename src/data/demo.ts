@@ -45,7 +45,7 @@ export const places: Place[] = [
     story: 'Inspired by the rich cultural heritage of Bengal, this year\'s theme brings to life the journey of humanity through time, blending tradition with modern artistry.',
     storyBn: 'বাংলার সমৃদ্ধ সাংস্কৃতিক ঐতিহ্য থেকে অনুপ্রাণিত হয়ে এবারের থিম জীবনযাপন, রন্ধন প্রভৃতি মানবজাতনার যাত্রাকে আধুনিক শিল্পের মাধ্যমে তুলে ধরে।',
     artist: 'Unknown artist', openTill: '2:00 AM', metro: 'Koley Market (Green Line)',
-    facilities: ['Help Desk', 'Medical Camp'], palette: lamp,
+    facilities: ['Help Desk', 'Medical Camp'], accessibility: ['Ramp access at main gate', 'Ground-level viewing platform', 'Well-lit evening pathways'], palette: lamp,
     pastEditions: [
       { year: 2024, theme: 'Egyptian Heritage', palette: dusk },
       { year: 2023, theme: 'Titanic', palette: night },
@@ -66,7 +66,7 @@ export const places: Place[] = [
     subtitle: 'Kalyani ITI Club', area: 'North Kolkata', lat: 22.6045, lng: 88.3702,
     rating: 4.5, reviewCount: 1400, distanceKm: 3.8, crowd: 'moderate', theme: 'Rustic Bengal',
     story: 'Village artisans recreate everyday rural Bengal — terracotta, thatch and hand-painted panels — on one of the busiest stretches of North Kolkata.',
-    openTill: '1:00 AM', metro: 'Koley Market (Green Line)', facilities: ['Help Desk'], palette: clay,
+    openTill: '1:00 AM', metro: 'Koley Market (Green Line)', facilities: ['Help Desk'], accessibility: ['Step-free entry from the footpath', 'Designated quiet queue route'], palette: clay,
     pastEditions: [
       { year: 2024, theme: 'Terracotta Temples', palette: fire },
       { year: 2023, theme: 'Bohaag of Bengal', palette: brass },
@@ -85,7 +85,7 @@ export const places: Place[] = [
     subtitle: 'Baghbazar Sarbojanin Durgotsab', area: 'North-East Kolkata', lat: 22.5803, lng: 88.3738,
     rating: 4.6, reviewCount: 1900, distanceKm: 3.2, crowd: 'low', theme: 'Heritage Bengal',
     story: 'One of Kolkata\'s oldest barowari pujas, known for its traditional dhak beats and heritage-style pandal recreating old Calcutta courtyards.',
-    openTill: '11:30 PM', metro: 'Pyne Bazar (Purple Line)', facilities: ['Help Desk', 'Medical Camp'], palette: dusk,
+    openTill: '11:30 PM', metro: 'Pyne Bazar (Purple Line)', facilities: ['Help Desk', 'Medical Camp'], accessibility: ['Wheelchair-friendly front viewing', 'Seated rest area nearby'], palette: dusk,
     pastEditions: [
       { year: 2024, theme: 'Shobhabazar Rajbari', palette: marigold },
       { year: 2023, theme: 'Court of the Nawabs', palette: silk },
@@ -102,7 +102,7 @@ export const places: Place[] = [
     subtitle: 'Deshapriya Park Sangharsh Samiti', area: 'South Kolkata', lat: 22.5077, lng: 88.3409,
     rating: 4.7, reviewCount: 2100, distanceKm: 1.2, crowd: 'moderate', theme: 'A Journey Through Time',
     story: 'Famous for its towering, meticulously crafted art installations, Deshapriya Park\'s pandal is a South Kolkata landmark every puja.',
-    openTill: '2:00 AM', metro: 'Netaji Bhawan (Blue Line)', facilities: ['Help Desk', 'Parking'], palette: fire,
+    openTill: '2:00 AM', metro: 'Netaji Bhawan (Blue Line)', facilities: ['Help Desk', 'Parking'], accessibility: ['Ramp to the queue entrance', 'Tactile guide path on main aisle'], palette: fire,
     pastEditions: [
       { year: 2024, theme: 'Maa in the Clouds', palette: dusk },
       { year: 2023, theme: '20 000 Yojana', palette: night },

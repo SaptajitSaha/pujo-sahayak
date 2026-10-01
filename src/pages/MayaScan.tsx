@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Flashlight, ImageUp, Sparkles, X } from 'lucide-react'
+import { Flashlight, ImageUp, Sparkles, X, ZoomIn } from 'lucide-react'
 import { Button, Card, Img, MayaMark } from '../components/ui'
 import { identifyDemo } from '../maya/brain'
+import { useApp } from '../store'
 import type { Place } from '../data/types'
 import { useT } from '../i18n'
 
@@ -23,6 +24,9 @@ export default function MayaScan() {
   // actually light up; applyConstraints rejects elsewhere and we say so.
   const [flashOn, setFlashOn] = useState(false)
   const [flashMsg, setFlashMsg] = useState<string | null>(null)
+  const flags = useApp((s) => s.featureFlags)
+  // Look Closer: a chosen tap-target region, or null while prompting.
+  const [closerRegion, setCloserRegion] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -46,6 +50,7 @@ export default function MayaScan() {
   const capture = () => {
     setScanning(true)
     setResult(null)
+    setCloserRegion(null)
     // Demo pipeline: visual-embedding match is simulated (honest, doc §58).
     setTimeout(() => {
       setScanning(false)
@@ -144,6 +149,43 @@ export default function MayaScan() {
               <p className="text-xs text-ink-soft">{result.area} • Theme: {result.theme}</p>
             </div>
             <Button size="sm" onClick={() => nav(`/pandal/${result.id}`)}>{t('viewDetails')}</Button>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Look Closer — after a full-pandal match, tap a region. Offline the demo
+          match has no element-level ground truth, so we stay honest: say we can't
+          confidently identify that element and offer only what the pandal's real
+          record already supports. Never names an element it can't verify (§37). */}
+      {flags.ENABLE_LOOK_CLOSER && result && (
+        <motion.div initial={{ y: 24, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="relative z-10 mx-4 mt-3">
+          <Card className="bg-card p-3 text-ink">
+            {!closerRegion ? (
+              <>
+                <p className="flex items-center gap-1.5 text-xs font-semibold text-ink"><ZoomIn size={14} className="text-maya" /> {t('lookCloser')}</p>
+                <p className="mt-1 text-[11px] text-ink-soft">{t('lookCloserHint')}</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {['The idol', 'The facade', 'A detail'].map((r) => (
+                    <button key={r} onClick={() => setCloserRegion(r)} className="rounded-lg border border-ink/10 bg-ivory-deep px-2 py-2 text-[11px] font-medium text-ink transition-colors hover:bg-vermilion/10">
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-semibold text-ink">{closerRegion}: {t('lookCloserUnknown')}</p>
+                <p className="mt-2 text-xs font-medium text-maya">{t('lookCloserRelated')}</p>
+                <ul className="mt-1 space-y-0.5 text-xs text-ink-soft">
+                  {result.theme && <li>• Theme this year: {result.theme}</li>}
+                  {result.artist && <li>• Crafted by: {result.artist}</li>}
+                  <li>• Area: {result.area}</li>
+                </ul>
+                <button onClick={() => setCloserRegion(null)} className="mt-2 rounded-full border border-ink/10 px-3 py-1.5 text-xs font-medium text-ink-soft">
+                  {t('lookCloserRetry')} · {t('lookCloserFull')}
+                </button>
+              </>
+            )}
           </Card>
         </motion.div>
       )}

@@ -131,6 +131,52 @@ Leaflet.
 - **Motion with a brake** — every scroll reveal, count-up and rail honours
   `prefers-reduced-motion` (and an in-app toggle), rendering content instantly.
 
+## 🔌 Backend integration (optional)
+
+Five community features — **Live Notes**, **Social Matching**, **Marketplace**,
+**Wallet / Payments** and **Authority Integration** — are built on **Supabase**
+(Postgres + Auth + Realtime + Edge Functions). The whole app still runs with **no
+backend at all**: every service falls back to clearly-labelled demo data (or an
+honest empty state) when Supabase is unconfigured, and nothing is ever fabricated
+as live.
+
+```bash
+# .env.local — leave unset to stay in the local/demo mode
+VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+- **Schema & RLS**: apply `supabase/migrations/001_initial_schema.sql`. Tables
+  start **empty**; Row Level Security lets anonymous users read published content
+  while writes require a signed-in session.
+- **Auth**: email magic-link via Supabase Auth. Browsing is public and works
+  signed-out; posting a note, saving preferences or ordering requires sign-in.
+- **Realtime**: `live_notes`, `official_notices` and `authority_alerts` are in the
+  realtime publication; sections subscribe passively (no always-on animation) and
+  stay readable offline via the query cache.
+- **Trust hierarchy, visibly enforced**: *Official* content renders with a gold
+  accent + shield; *Visitor* notes with a muted border + "Visitor" chip — so a
+  community observation is never mistaken for an authority notice.
+- **Auto-expiry & moderation**: `supabase/functions/expire-notes` retires stale
+  notes and auto-rejects over-reported ones; rate-limits posting.
+
+### Feature flags
+
+Every new surface is gated in `src/config/features.ts` (compile-time env defaults
+plus a runtime override under **Settings → Developer**). Turning a flag off hides
+its UI and blocks its route. Set any of `VITE_FLAG_LIVE_NOTES`, `VITE_FLAG_SOCIAL`,
+`VITE_FLAG_MARKETPLACE`, `VITE_FLAG_WALLET`, `VITE_FLAG_AUTHORITY` to `false`/`true`.
+
+### Payment provider swap
+
+Payments go through a single `PaymentService` abstraction (`src/services/payment.ts`).
+Today it is backed by `MockPaymentAdapter` (`src/services/payment.mock.ts`) which
+**never moves real money** — every transaction is tagged `demo_completed` /
+`is_demo` and the UI shows a "DEMO — no real payment processed" banner. To go live,
+implement `PaymentService` with a real gateway (e.g. Razorpay), tokenize cards on
+the provider side (raw card data is never stored), and return the new adapter from
+`getPaymentService()`. No UI or order flow needs to change.
+
 ## 📜 License
 
 Private project — all rights reserved.

@@ -98,3 +98,71 @@ See `tasks/todo.md`. Checkpoints after each feature.
 - Canvas recap card in F1 — good, but separate deliverable; text share first, canvas later.
 - SW RuntimeCaching for the weather API — own localStorage cache is simpler, one code
   path, works identically in dev.
+
+---
+
+# Implementation Plan: Second Product Extension (20 features, phased)
+
+> Tier 1 (Scorecard + Weather) is **complete and shipped** (see commits b9386ff… —
+> all tests green). This section tracks the Second Product Extension agreed as a
+> 5-phase, 20-feature layer built by *extending* the existing surfaces, not
+> rebuilding them. Every phase shipped behind its own feature flag, local-first,
+> with anti-fabrication labels, and one atomic commit.
+
+## Ground rules (applied to every phase)
+
+- **Extend, don't rebuild** — attach points were audited first: `lib/pulse.ts`+
+  `PandalPulse`, `OfficialNotices`/`LiveNotes`/`authority.ts`/`UserReport`,
+  `scorecard.ts` check-ins, `pastEditions`, `topClicks`, Planner/Meets/Safety/Maya.
+- **Feature flags** — 18 new flags in `src/config/features.ts` (env-overridable,
+  default on for the demo build); off = UI hidden + route blocked via
+  `<Navigate>` guard. Settings → Developer auto-lists them.
+- **Anti-fabrication** — derived-from-real-data or modelled estimates labelled
+  "modelled — illustrative"; demo seeds carry IS_DEMO captions; no fake live
+  statuses, no fake "friends nearby".
+- **Persistence** — local-first Zustand; Supabase only via the `if (!supabase)`
+  null-safe service pattern; store `version` bumped 4→5 (additive slices).
+- **Tests** — vitest red-first for every pure module; `npm run build` +
+  `npx vitest run` green before each phase commit; suite grew 106 → 117.
+
+## Phase 0 — Foundation (no user-visible features) — commit d31007b
+- 18 feature flags + types (`SaveIntent`, `DiaryEntry`, `Place.accessibility?`,
+  `UserReport.target_type` += `place_info`/`official_notice`); store v5
+  (`saveIntents`, `diary` + actions, migrate defaults); i18n keys (en+bn+hi).
+
+## Phase 1 — Contextual outing layer — commit f2f3275
+- **1a Best Time To Visit** — `src/lib/bestTime.ts` (TDD) + PandalDetail section.
+- **1b Pandal Pulse** — freshness + provenance rows (official/visitor/modelled).
+- **1c Tonight Dashboard** — time-aware Home card composing existing slices.
+- **1d What Should I Do Next?** — `src/lib/whatsnext.ts` (TDD) + Home bottom sheet.
+- **1e Save With Intent** — intent chip sheet on PlaceCard/PandalDetail.
+
+## Phase 2 — Safety & meeting — commit 3c1b00f
+- **2a Safety Circle** — up to 5 trusted contacts, tap-to-share location
+  (`navigator.share`), no live/background tracking; SOS notifies the circle.
+- **2b Smart Meeting Point** — centroid constrained to real known spots, explicit
+  "suggest a spot", walking distance via `haversineKm` — never auto-chosen.
+
+## Phase 3 — Story, camera, knowledge — commit 77912ba
+- **3a History Timeline**, **3b Story Mode** (chaptered, Web Speech read-aloud
+  where supported), **3c Look Closer** (honest low-confidence behaviour),
+  **3d Accessibility** (illustrative, verify-on-site), **3e Photo Guide**.
+
+## Phase 4 — Season & memory layer — commit b48fe7a
+- **4a Puja Mode** strip, **4b Puja Passport** (`/passport`, GPS-check-in stamps
+  only), **4c Puja Diary** (`/diary`, private on-device), **4d Personal
+  Statistics** (`src/lib/pujastats.ts`, TDD), **4e AI-free Puja Recap**
+  (deterministic template — no LLM).
+
+## Phase 5 — Notices, reports, Maya glue — commit a44ecfc
+- **5a** Festival-notices Home digest (`useCityNotices`) + expired state.
+- **5b** Report incorrect info (`place_info` reports, on-device queue when no
+  backend) + per-note report flag.
+- **5c** Maya integration — `UserActivity` intents in `brain.ts`/`askMaya`/
+  `buildContext`; Maya only quotes what the deterministic modules would say.
+
+## Rejected / parked (unchanged spirit)
+- Live location sharing / "friends nearby" — needs a real-time backend (parked,
+  per "Traveling Together" precedent).
+- Element-level ground truth for Look Closer — none exists offline, so it stays
+  honest-unknown; LLM stays optional chat-only, never the recap source.

@@ -49,6 +49,22 @@ trilingual, and grounded in *real* Kolkata pandals and restaurants.
 - **Pandal-hopping scorecard** — GPS-verified on-site check-ins build your
   streak, badges and pandals-seen, all computed on your device. No location,
   no check-in.
+- **Best Time To Visit & Pandal Pulse** — a modelled hour-by-hour crowd window
+  and freshness/provenance labels ("Official · 8 min ago" / "Visitor estimate" /
+  "modelled — illustrative") so you always know how much to trust a number.
+- **Tonight & "What should I do next?"** — a time-aware evening dashboard and a
+  top-3 next-step engine scored from your real plan, saves and distances.
+- **Save with intent · Story mode · History · Look Closer · Photo guide ·
+  Accessibility** — richer pandal pages, every derived surface honestly labelled.
+- **Safety Circle & Smart Meeting Point** — a local circle of up to 5 trusted
+  contacts with tap-to-share (no live tracking) and a suggested meeting point
+  built from real known spots.
+- **Season & memory layer** — Puja Mode countdown, a GPS-earned **Puja Passport**
+  (`/passport`), a private on-device **Puja Diary** (`/diary`), live **Personal
+  Statistics** and an **AI-free Puja Recap**, all computed from your own activity.
+- **Festival notices & info reports** — a Home digest of official notices with an
+  "applies to" line, and a "report incorrect info" queue kept on-device until a
+  backend is connected.
 - **Meetups** — create and join plans so no one wanders the crowds alone.
 - **Safety** — a dedicated hub with a missing-person flow and help-desk / medical
   camp info surfaced on every pandal card.
@@ -166,6 +182,14 @@ Every new surface is gated in `src/config/features.ts` (compile-time env default
 plus a runtime override under **Settings → Developer**). Turning a flag off hides
 its UI and blocks its route. Set any of `VITE_FLAG_LIVE_NOTES`, `VITE_FLAG_SOCIAL`,
 `VITE_FLAG_MARKETPLACE`, `VITE_FLAG_WALLET`, `VITE_FLAG_AUTHORITY` to `false`/`true`.
+
+The **Second Product Extension** adds eighteen more flags (`ENABLE_BEST_TIME`,
+`ENABLE_TONIGHT`, `ENABLE_WHAT_NEXT`, `ENABLE_SAVE_INTENT`, `ENABLE_SAFETY_CIRCLE`,
+`ENABLE_SMART_MEETING`, `ENABLE_STORY_MODE`, `ENABLE_LOOK_CLOSER`,
+`ENABLE_PANDAL_HISTORY`, `ENABLE_ACCESSIBILITY`, `ENABLE_PHOTO_GUIDE`,
+`ENABLE_PUJA_MODE`, `ENABLE_PUJA_PASSPORT`, `ENABLE_PUJA_DIARY`, `ENABLE_PUJA_STATS`,
+`ENABLE_PUJA_RECAP`, `ENABLE_FESTIVAL_NOTICES`, `ENABLE_INFO_REPORTS`) — on by
+default in the demo build, each overridable with `VITE_FLAG_<NAME>=false`.
 
 ### Payment provider swap
 

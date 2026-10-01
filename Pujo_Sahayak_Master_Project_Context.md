@@ -1871,6 +1871,107 @@ This gives the product a recognizable personality without making the whole appli
 
 ---
 
+# 62. Second Product Extension — Overview
+
+A 20-feature layer added across five phases, each behind its own feature flag in
+`src/config/features.ts` (off = UI hidden + route blocked). The rule was **extend,
+don't rebuild** — every surface attaches to something that already existed
+(Pandal Pulse, official notices / live notes, GPS check-ins, past editions, top
+clicks, Planner / Meets / Safety / Maya).
+
+The governing principle across all of it stays **anti-fabrication**: a number is
+either derived from real data or explicitly labelled *modelled — illustrative*.
+Nothing pretends to be live that isn't.
+
+---
+
+# 63. Contextual Outing Layer
+
+Helps the user decide *when* and *what next*, from their real state:
+
+```text
+Best Time To Visit  — modelled hour-by-hour crowd window (honest estimate)
+Pandal Pulse        — freshness + provenance per row (Official · 8 min ago /
+                      Visitor estimate / modelled — illustrative)
+Tonight Dashboard   — time-aware evening card composing plan + pulse + weather
+What Should I Do    — top-3 next steps scored from plan, saves, distance, hours
+Next?
+Save With Intent    — optional intent chip (tonight / with friends / photography…)
+```
+
+No fake live queue counts, no invented statuses — the pulse falls back to
+`modelled` when nothing official or visitor-backed supports a row.
+
+---
+
+# 64. Safety Circle & Smart Meeting Point
+
+Family / Friend Safety Circle: a **local circle of up to 5** trusted contacts.
+Sharing is **explicit and tap-to-share** (Web Share to a chosen contact).
+There is **no live or background location tracking** — that model needs a
+real-time backend and stays parked ("Traveling Together" precedent). SOS reaches
+the whole circle.
+
+Smart Meeting Point: when creating a meetup, the app can *suggest* a point =
+centroid of members' areas **constrained to real known places** (metro /
+safety points), with walking distance. It is always a suggestion the user acts
+on — never auto-chosen.
+
+---
+
+# 65. Story, Knowledge & Camera
+
+```text
+History Timeline — past editions re-presented as a vertical timeline
+Story Mode       — chaptered story (origin / theme / artist / then-vs-now),
+                   optional browser read-aloud; no fabricated audio
+Look Closer      — tap a region of a photo; because there is no element-level
+                   ground truth offline, Maya answers honestly ("I can't
+                   confidently identify that element") + related real facts
+Accessibility    — facility info labelled "illustrative — verify on-site"
+Photo Guide      — derived tips (lit hours, front vs interior, crowd tradeoff)
+```
+
+Look Closer never names an element it cannot verify — honesty over confidence.
+
+---
+
+# 66. Season & Memory Layer
+
+The personal record of a Puja, computed entirely on-device from the user's own
+GPS check-ins — never from fabricated activity:
+
+```text
+Puja Mode      — in-window seasonal shell (tithi countdown, tonight promoted)
+Puja Passport  — /passport, a stamp per tithi earned ONLY by real check-in
+Puja Diary     — /diary, private on-device entries, never uploaded
+Statistics     — pandals/day, distinct tithis, streak, km, saved-vs-visited
+Puja Recap     — deterministic, template-based seasonal story (no LLM)
+```
+
+The recap uses the same template engine offline so it works with no backend and
+cannot invent a narrative; when there is no real activity it says so honestly.
+
+---
+
+# 67. Notices, Reports & Maya Integration
+
+Festival Notices: a Home digest of official notices for the selected city's
+places, with an "applies to" line and an expired state (via `expires_at`).
+
+Report Information: a "report incorrect info" flow (crowd / timing / facilities
+/ location / accessibility / outdated) writing `place_info` reports — kept in an
+on-device queue with an honest "recorded — not transmitted" status until a
+backend is connected; live notes gain a per-note report flag.
+
+Maya: `askMaya` now receives a `UserActivity` (plan, saves, check-ins, diary,
+circle size). New intents — "what next", "best time", "where should we meet",
+"summarize my puja" — answer by quoting the *same* derived data the
+deterministic modules produce. **Maya never says anything the modules wouldn't,
+and the LLM stays optional chat-only — never the source of a stat or recap.**
+
+---
+
 ## Final Product Definition
 
 > **Pujo Sahayak is a modern local-discovery and community platform centered around the Durga Puja experience. It helps users discover pandals and local places, understand what they are seeing through Maya's AI-powered visual and conversational assistance, plan their outings, find restaurants and events, join activity-based meetups, share experiences, access safety information, and build a personal record of places they have explored. Its architecture and information model should remain broad enough to continue serving Kolkata's local-discovery needs beyond the Puja season.**

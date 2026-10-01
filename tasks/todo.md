@@ -36,3 +36,50 @@ Tier 1 expansion. Each task leaves the app runnable.
 - [x] Tests (25/25) + build green; CLS-safe chip row; no new always-on animation (FPS
   budget intact); README feature list updated; committed; **awaiting user confirmation
   for Tier 2 (Voice mode, phonetic search, lost-child safety kit).**
+
+---
+
+# Task List: Second Product Extension (20 features, 5 phases)
+
+> Built by extending existing surfaces behind 18 new feature flags, local-first,
+> anti-fabrication labels throughout. Suite grew 106 → 117 tests; every phase
+> `npm run build` + `npx vitest run` green before one atomic commit.
+
+## Phase 0 — Foundation  ✅ committed d31007b
+- [x] Dark-theme `index.css` fix (own atomic commit f16a7fd).
+- [x] 18 feature flags + env overrides + Settings→Developer listing.
+- [x] Types: `SaveIntent`, `DiaryEntry`, `Place.accessibility?`, report target types.
+- [x] Store v5: `saveIntents`, `diary` slices + actions, migrate defaults.
+- [x] i18n keys (en+bn+hi) for all later phases in one pass.
+
+## Phase 1 — Contextual outing layer  ✅ committed f2f3275
+- [x] 1a Best Time To Visit — `bestTime.ts` TDD + PandalDetail + Home chip.
+- [x] 1b Pandal Pulse freshness/provenance rows; `pulse.test.ts` updated.
+- [x] 1c Tonight Dashboard on Home (composition of existing slices).
+- [x] 1d What Should I Do Next? — `whatsnext.ts` TDD + Home bottom sheet.
+- [x] 1e Save With Intent — chip sheet, badge on Favorites, consumed by 1c/1d.
+
+## Phase 2 — Safety & meeting  ✅ committed 3c1b00f
+- [x] 2a Safety Circle — up to 5 contacts, tap-to-share, SOS to whole circle.
+- [x] 2b Smart Meeting Point — centroid over real known spots, explicit suggest.
+
+## Phase 3 — Story, camera, knowledge  ✅ committed 77912ba
+- [x] 3a Pandal History Timeline; 3b Story Mode (+ read-aloud); 3c Look Closer
+  honest-unknown; 3d Accessibility (illustrative); 3e Photo Guide.
+
+## Phase 4 — Season & memory layer  ✅ committed b48fe7a
+- [x] 4a Puja Mode strip (countdown + passport progress, demo-honest).
+- [x] 4b Puja Passport `/passport` — GPS-check-in stamps only.
+- [x] 4c Puja Diary `/diary` — private on-device CRUD.
+- [x] 4d Personal Statistics — `pujastats.ts` TDD.
+- [x] 4e AI-free Puja Recap — deterministic template, honest empty state.
+
+## Phase 5 — Notices, reports, Maya glue  ✅ committed a44ecfc
+- [x] 5a Festival-notices Home digest (`useCityNotices`) + expired state.
+- [x] 5b Report incorrect info (`place_info`) + per-note report flag.
+- [x] 5c Maya `UserActivity` intents — brain/askMaya/buildContext; `brain.test.ts`.
+
+### Checkpoint: Extension complete  ✅
+- [x] 117 tests + build green; each surface ships empty/loading/error/offline
+  variants; flag-off hides UI + blocks route; README / plan.md / Master Context
+  updated (no new bloat files); Docs committed atomically.

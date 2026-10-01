@@ -19,7 +19,7 @@ import { motion } from 'framer-motion'
 import { Info, Maximize2, Minimize2 } from 'lucide-react'
 import { Card } from './ui'
 import { useApp } from '../store'
-import { polylineLength, projectNetwork, type LayoutMap } from '../lib/metroMap'
+import { labelPlacements, polylineLength, projectNetwork, type LayoutMap } from '../lib/metroMap'
 import { metroNetLines, metroNetStations, METRO_NET_ATTRIBUTION } from '../data/metroNetwork'
 
 // Fixed diagram canvas; the SVG scales to the card via viewBox so this is
@@ -33,7 +33,6 @@ const START = 0.25
 
 export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
   const reduce = useApp((s) => s.reduceMotion)
-  const [showAll, setShowAll] = useState(false)
   const [zoom, setZoom] = useState(1)
   const [full, setFull] = useState(false)
 
@@ -41,6 +40,17 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
     () => projectNetwork({ lines: metroNetLines, stations: metroNetStations }, { width: W, height: H }),
     [],
   )
+
+  // Every station shows its name, always — the collision-free layout decides
+  // each label's position (which side of its dot) and text size up front, in
+  // pure, tested geometry (lib/metroMap.labelPlacements).
+  const labels = useMemo(() => {
+    const byId = new Map(map.stations.map((s) => [s.id, s]))
+    return labelPlacements(map).map((p) => {
+      const s = byId.get(p.id)!
+      return { ...p, name: s.name, bold: s.terminal || s.interchange }
+    })
+  }, [map])
 
   // Per-line draw plan, computed once from pure geometry (no DOM measure):
   // longer lines trace a touch slower so every line feels the same speed.
@@ -80,19 +90,10 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
           <h2 className="text-sm font-semibold">{bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}</h2>
           <p className="mt-0.5 text-xs text-ink-soft">
             {bn
-              ? `${metroNetLines.length} লাইন · ${metroNetStations.length} স্টেশন · সব নাম দেখতে ট্যাপ করুন`
-              : `${metroNetLines.length} lines · ${metroNetStations.length} stations · tap to show every name`}
+              ? `${metroNetLines.length} লাইন · ${metroNetStations.length} স্টেশন`
+              : `${metroNetLines.length} lines · ${metroNetStations.length} stations`}
           </p>
         </div>
-        <button
-          onClick={() => setShowAll((v) => !v)}
-          aria-pressed={showAll}
-          className="shrink-0 rounded-full border border-white/50 px-3 py-1 text-[11px] font-medium text-ink-soft transition-colors hover:text-ink dark:border-white/15"
-        >
-          {showAll
-            ? (bn ? 'কম নাম' : 'Fewer labels')
-            : (bn ? 'সব নাম' : 'All labels')}
-        </button>
         {/* Full-screen viewer: on a phone the diagram scales to ~320px and the
             labels shrink away — this shows it at real size with native pan,
             and +/− zoom via CSS transform (compositor-only, no libraries). */}
@@ -112,7 +113,7 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
           .join('; ')}. Interchanges: Esplanade, Kavi Subhash, Noapara.`}
         className="mt-2"
       >
-        <MapSvg map={map} showAll={showAll} instant={instant} dotDelay={dotDelay} plan={plan} onTap={() => setShowAll((v) => !v)} />
+        <MapSvg map={map} labels={labels} instant={instant} dotDelay={dotDelay} plan={plan} />
       </figure>
 
       {/* Legend — the five operational lines. */}
@@ -155,7 +156,7 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
             <div style={{ width: W * zoom, height: H * zoom }}>
               {/* Viewer: fully drawn (the trace already ran behind the card),
                   every name labelled — that is the point of zooming in. */}
-              <MapSvg map={map} showAll instant dotDelay={() => 0} plan={plan} />
+              <MapSvg map={map} labels={labels} instant dotDelay={() => 0} plan={plan} />
             </div>
           </div>
         </div>
@@ -165,19 +166,22 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
 }
 
 /** The diagram itself — shared by the card and the full-screen viewer. In the
- *  viewer everything is already drawn (instant) and every name shows. */
+ *  viewer everything is already drawn (instant). Labels always show; their
+ *  collision-free positions come pre-computed from labelPlacements. */
 function MapSvg({
-  map, showAll, instant, dotDelay, plan, onTap,
+  map, labels, instant, dotDelay, plan,
 }: {
   map: LayoutMap
-  showAll: boolean
+  labels: {
+    id: string; name: string; bold: boolean
+    anchorX: number; anchorY: number; textAnchor: 'middle' | 'start' | 'end'; size: number
+  }[]
   instant: boolean
   dotDelay: (id: string) => number
   plan: { win: Map<string, { start: number; dur: number }> }
-  onTap?: () => void
 }) {
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full select-none" onClick={onTap}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full select-none">
       {/* Line casings — a faint wide halo so coloured paths read on both themes. */}
       {map.lines.map((l) => (
         <path key={`halo-${l.id}`} d={l.d} fill="none" stroke="currentColor" strokeWidth={9}
@@ -214,22 +218,23 @@ function MapSvg({
         )
       })}
 
-      {/* Labels — terminals and interchanges always; everything else when
-          "All labels" is on. Halo stroke keeps text legible over paths. */}
-      {map.stations
-        .filter((s) => showAll || s.terminal || s.interchange)
-        .map((s) => (
-          <text
-            key={`label-${s.id}`} x={s.x} y={s.y - 11}
-            textAnchor="middle" fontSize={s.terminal || s.interchange ? 12.5 : 10.5}
-            fontWeight={s.terminal || s.interchange ? 600 : 400}
-            fill="var(--color-ink, #221a15)"
-            stroke="var(--color-card, #fff)" strokeWidth={3.5}
-            style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }}
-          >
-            {s.name}
-          </text>
-        ))}
+      {/* Labels — EVERY station is named, always. Each label's side and size
+          were chosen by the tested collision-free layout, so names read clear
+          of one another; the halo stroke keeps even the dense core legible. */}
+      {labels.map((l) => (
+        <motion.text
+          key={`label-${l.id}`} x={l.anchorX} y={l.anchorY}
+          textAnchor={l.textAnchor} fontSize={l.size} fontWeight={l.bold ? 600 : 400}
+          fill="var(--color-ink, #221a15)"
+          stroke="var(--color-card, #fff)" strokeWidth={3.5}
+          style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }}
+          initial={instant ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: dotDelay(l.id), duration: instant ? 0 : 0.3 }}
+        >
+          {l.name}
+        </motion.text>
+      ))}
     </svg>
   )
 }

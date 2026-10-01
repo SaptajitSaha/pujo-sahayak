@@ -9,7 +9,7 @@ import {
   photoSpotRating,
   type PulseItem,
 } from './pulse'
-import type { CrowdLevel, Place } from '../data/types'
+import type { CrowdLevel, LiveNote, OfficialNotice, Place } from '../data/types'
 
 /**
  * Dates chosen against the 2026 calendar: Oct 7 = Wednesday (weekday),
@@ -135,5 +135,58 @@ describe('computePulse', () => {
     expect(items.find((i) => i.key === 'queue')?.value).toBe('—')
     expect(items.find((i) => i.key === 'window')?.value).toBe('—')
     expect(items.find((i) => i.key === 'crowd')?.value).toBe('Not reported')
+  })
+
+  it('defaults every row to modelled provenance with no live signals', () => {
+    const items = computePulse(base, { now: at('2026-10-07T21:00:00') })
+    expect(items.every((i) => i.source === 'modelled')).toBe(true)
+  })
+
+  const notice = (over: Partial<OfficialNotice>): OfficialNotice => ({
+    id: 'n', place_id: 'pandal-santosh-mitra', source: 'Traffic Police', text: '',
+    created_at: '2026-10-07T19:00:00Z', updated_at: '2026-10-07T19:00:00Z',
+    expires_at: '2027-01-01T00:00:00Z', verification_status: 'official', ...over,
+  })
+  const note = (over: Partial<LiveNote>): LiveNote => ({
+    id: 'm', place_id: 'pandal-santosh-mitra', author_id: null, text: '',
+    created_at: '2026-10-07T19:30:00Z', expires_at: '2027-01-01T00:00:00Z',
+    moderation_status: 'approved', helpful_count: 0, reported_count: 0, ...over,
+  })
+  const now = { now: at('2026-10-07T20:00:00') }
+
+  it('promotes the crowd row to visitor provenance from a matching note', () => {
+    const items = computePulse(base, { ...now, notes: [note({ text: 'Huge crowd at the gate right now' })] })
+    const crowd = items.find((i) => i.key === 'crowd')!
+    expect(crowd.source).toBe('visitor')
+    expect(crowd.updatedAt).toBe('2026-10-07T19:30:00Z')
+  })
+
+  it('ranks an official notice above a visitor note for the same row', () => {
+    const items = computePulse(base, {
+      ...now,
+      notices: [notice({ text: 'Very heavy crowd, expect long waits', updated_at: '2026-10-07T19:45:00Z' })],
+      notes: [note({ text: 'Crowd is moderate' })],
+    })
+    expect(items.find((i) => i.key === 'crowd')!.source).toBe('official')
+  })
+
+  it('sources the queue and medical rows from notices that name them', () => {
+    const items = computePulse(base, {
+      ...now,
+      notices: [
+        notice({ text: 'Darshan queue currently 90 minutes', updated_at: '2026-10-07T19:50:00Z' }),
+        notice({ text: 'Medical aid post relocated to Gate 2', updated_at: '2026-10-07T19:40:00Z' }),
+      ],
+    })
+    expect(items.find((i) => i.key === 'queue')!.source).toBe('official')
+    expect(items.find((i) => i.key === 'medical')!.source).toBe('official')
+  })
+
+  it('ignores expired notices when attributing provenance', () => {
+    const items = computePulse(base, {
+      ...now,
+      notices: [notice({ text: 'Crowd surge expected', expires_at: '2000-01-01T00:00:00Z' })],
+    })
+    expect(items.find((i) => i.key === 'crowd')!.source).toBe('modelled')
   })
 })

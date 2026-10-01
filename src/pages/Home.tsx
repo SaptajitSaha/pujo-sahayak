@@ -2,10 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, ChevronRight, Calendar, BookOpen, Users, Megaphone, TrainFront, Compass } from 'lucide-react'
+import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, ChevronRight, Calendar, BookOpen, Users, Megaphone, TrainFront, Compass, Sparkles } from 'lucide-react'
 import { Avatar, Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn } from '../data/demo'
+import { TonightDashboard } from '../components/TonightDashboard'
+import { WhatNextSheet } from '../components/WhatNextSheet'
+import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn, placeById, DEMO_USER } from '../data/demo'
+import { suggestNext, type NextSuggestion } from '../lib/whatsnext'
 import { useApp } from '../store'
 import { useProducts } from '../services/marketplace'
 import { productImage, productPalette } from '../services/marketplace.mock'
@@ -24,6 +27,11 @@ export default function Home() {
   const selectedCity = useApp((s) => s.selectedCity)
   const tithiDemoMode = useApp((s) => s.tithiDemoMode)
   const flags = useApp((s) => s.featureFlags)
+  const planner = useApp((s) => s.planner)
+  const saved = useApp((s) => s.saved)
+  const saveIntents = useApp((s) => s.saveIntents)
+  const visited = useApp((s) => s.visited)
+  const checkins = useApp((s) => s.checkins)
 
   // City-aware datasets — every rail on Home scopes to the selected city.
   const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
@@ -67,6 +75,27 @@ export default function Home() {
     if (tithiDemoMode) return { th: tithis.find((x) => x.planDay === 'ashtami') ?? null, demo: true }
     return { th: null as null | (typeof tithis)[number], demo: false }
   }, [tithiDemoMode])
+
+  // ── Tonight + What-next (Second Product Extension) ──
+  // Both compose only facts already on-device: today's tithi, tonight's plan,
+  // saved places + intents, GPS check-ins and real distances. Nothing new.
+  const [whatNextOpen, setWhatNextOpen] = useState(false)
+  const tonightDay = todayTithi.th?.planDay ?? null
+  const planStops = useMemo(() => {
+    if (!tonightDay) return [] as { place: Place; time: string }[]
+    return (planner[tonightDay] ?? [])
+      .map((s) => ({ place: placeById(s.placeId), time: s.time }))
+      .filter((x): x is { place: Place; time: string } => !!x.place)
+  }, [planner, tonightDay])
+  const suggestions = useMemo<NextSuggestion[]>(() => {
+    if (!flags.ENABLE_WHAT_NEXT) return []
+    return suggestNext({
+      user: DEMO_USER, now: new Date(),
+      todayPlan: tonightDay ? planner[tonightDay] : [], todayDay: tonightDay,
+      saved, saveIntents, visited, checkedIn: checkins.map((c) => c.placeId),
+      candidates: [...cityPandals, ...cityRestaurants],
+    })
+  }, [flags.ENABLE_WHAT_NEXT, tonightDay, planner, saved, saveIntents, visited, checkins, cityPandals, cityRestaurants])
 
   return (
     <Page>
@@ -266,6 +295,37 @@ export default function Home() {
               </button>
             </Card>
           </section>
+       </Reveal>
+      )}
+
+      {/* Tonight Dashboard — contextual evening card (inside the puja window,
+          or under tithiDemoMode). Composes plan + weather + one next-step. */}
+      {flags.ENABLE_TONIGHT && tonightDay && todayTithi.th && (
+        <Reveal>
+          <section className="mt-6">
+            <TonightDashboard
+              day={tonightDay}
+              tithi={todayTithi.th}
+              isDemo={todayTithi.demo}
+              planStops={planStops}
+              topSuggestion={suggestions[0] ?? null}
+              showWhatNext={flags.ENABLE_WHAT_NEXT}
+              onOpenNext={() => setWhatNextOpen(true)}
+            />
+          </section>
+        </Reveal>
+      )}
+
+      {/* What-next stays reachable outside the puja window via a slim trigger. */}
+      {flags.ENABLE_WHAT_NEXT && !(flags.ENABLE_TONIGHT && tonightDay) && (
+        <Reveal>
+          <button
+            onClick={() => setWhatNextOpen(true)}
+            className="mt-6 flex w-full items-center justify-between rounded-card glass p-3.5 text-left"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium"><Sparkles size={16} className="text-vermilion" /> {t('whatNextTitle')}</span>
+            <ChevronRight size={16} className="text-faint" />
+          </button>
         </Reveal>
       )}
 
@@ -495,6 +555,8 @@ export default function Home() {
         </div>,
         document.body,
       )}
+
+      <WhatNextSheet open={whatNextOpen} onClose={() => setWhatNextOpen(false)} suggestions={suggestions} />
     </Page>
   )
 }

@@ -9,8 +9,12 @@ import {
 import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { PandalPulse } from '../components/PandalPulse'
+import { BestTime } from '../components/BestTime'
 import { OfficialNotices } from '../components/OfficialNotices'
 import { LiveNotes } from '../components/LiveNotes'
+import { SaveIntentSheet } from '../components/SaveIntentSheet'
+import { useOfficialNotices } from '../services/authority'
+import { useLiveNotes } from '../services/liveNotes'
 import { demoProductsNear } from '../services/marketplace.mock'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
@@ -28,10 +32,15 @@ export default function PandalDetail() {
   const visited = useApp((s) => s.visited)
   const toggleSaved = useApp((s) => s.toggleSaved)
   const toggleVisited = useApp((s) => s.toggleVisited)
+  const saveIntents = useApp((s) => s.saveIntents)
   const checkins = useApp((s) => s.checkins)
   const addCheckin = useApp((s) => s.addCheckin)
   const track = useApp((s) => s.track)
   const flags = useApp((s) => s.featureFlags)
+  // Live signals shared (same query keys) with the Official Notices / Live Notes
+  // sections below; they promote Pandal Pulse rows to sourced provenance.
+  const { data: pulseNotices } = useOfficialNotices(place?.id ?? '')
+  const { data: pulseNotes } = useLiveNotes(place?.id ?? '')
   const [photoState, setPhotoState] = useState<'idle' | 'checking' | 'ok'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -76,6 +85,8 @@ export default function PandalDetail() {
   const [toast, setToast] = useState<string | null>(null)
   // Shared lightbox — top-click photos and past-edition themes open here.
   const [zoom, setZoom] = useState<LightboxItem | null>(null)
+  // Optional "why saving" sheet — plain Save stays one tap; this only enriches.
+  const [intentOpen, setIntentOpen] = useState(false)
 
   // Opens an external walking/driving route for a named spot (parking ground,
   // metro station). Plain Maps search URL — no key, no fake integration.
@@ -267,6 +278,11 @@ export default function PandalDetail() {
           <Button variant={isSaved ? 'dark' : 'outline'} size="sm" className="flex-1" onClick={() => toggleSaved(place.id)}>
             {isSaved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />} {isSaved ? t('saved') : t('save')}
           </Button>
+          {flags.ENABLE_SAVE_INTENT && (
+            <Button variant="outline" size="sm" onClick={() => setIntentOpen(true)} aria-label="Add a saving reason">
+              {saveIntents[place.id] ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
+            </Button>
+          )}
           <Button variant={isVisited ? 'dark' : 'outline'} size="sm" className="flex-1" onClick={() => toggleVisited(place.id)}>
             <CalendarCheck size={14} /> {isVisited ? 'Visited ✓' : t('visited')}
           </Button>
@@ -296,7 +312,10 @@ export default function PandalDetail() {
         </div>
 
         {/* Pandal Pulse — six at-a-glance status tiles, derived/modelled on-device. */}
-        <PandalPulse place={place} />
+        <PandalPulse place={place} notices={pulseNotices} notes={pulseNotes} />
+
+        {/* Best time to visit — modelled calm vs peak windows. */}
+        {flags.ENABLE_BEST_TIME && <BestTime place={place} />}
 
         {/* Trust hierarchy: Official Notices (top) → Visitor Notes (bottom) */}
         {flags.ENABLE_AUTHORITY_INTEGRATION && (
@@ -491,6 +510,10 @@ export default function PandalDetail() {
         )}
 
         <Lightbox item={zoom} onClose={() => setZoom(null)} />
+
+        {flags.ENABLE_SAVE_INTENT && (
+          <SaveIntentSheet placeId={place.id} placeName={place.name} open={intentOpen} onClose={() => setIntentOpen(false)} />
+        )}
 
         {/* Top clicks + upload */}
         <section className="mt-5">

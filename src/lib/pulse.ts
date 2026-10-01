@@ -14,10 +14,13 @@
 //   • Queue wait .......... modelled from crowd × time-of-day × weekend — the only
 //                           fully-simulated field, per the "no backend" constraint.
 
-import type { CrowdLevel, Place } from '../data/types'
+import type { CrowdLevel, LiveNote, OfficialNotice, Place } from '../data/types'
 
 export type PulseTone = 'good' | 'warn' | 'bad' | 'neutral'
 export type PulseIcon = 'users' | 'clock' | 'window' | 'metro' | 'medical' | 'camera'
+/** Where a row's value comes from. `modelled`/`seed` = computed on-device;
+    `official` = backed by a live authority notice; `visitor` = a community note. */
+export type PulseSource = 'official' | 'visitor' | 'modelled'
 
 export interface PulseItem {
   key: 'crowd' | 'queue' | 'window' | 'metro' | 'medical' | 'photo'
@@ -25,6 +28,10 @@ export interface PulseItem {
   value: string
   tone: PulseTone
   icon: PulseIcon
+  /** Provenance of the value. Defaults to `modelled` unless a live signal backs it. */
+  source: PulseSource
+  /** ISO timestamp of the notice/note that sourced this row (when live). */
+  updatedAt?: string
 }
 
 export interface PulseReadout {
@@ -65,7 +72,7 @@ export function estimateQueueMin(crowd: CrowdLevel | undefined, when: Date): num
 }
 
 /** Parse "H:MM AM/PM" → minutes since midnight, or null if it doesn't match. */
-function parseClock(s: string): number | null {
+export function parseClock(s: string): number | null {
   const m = /^(\d{1,2}):(\d{2})\s*([AP]M)$/i.exec(s.trim())
   if (!m) return null
   const h = Number(m[1]) % 12
@@ -76,7 +83,7 @@ function parseClock(s: string): number | null {
 }
 
 /** Minutes since midnight → "H:MM AM/PM", wrapping across midnight. */
-function formatClock(totalMin: number): string {
+export function formatClock(totalMin: number): string {
   const min = ((totalMin % 1440) + 1440) % 1440
   const h = Math.floor(min / 60)
   const mm = min % 60
@@ -134,8 +141,43 @@ export function metroReadout(place: Pick<Place, 'id' | 'metro'>): PulseReadout {
   return { value: `${stableMinutes(place.id)} min · ${station}`, tone: 'neutral' }
 }
 
-/** Assemble the six Pulse rows in fixed display order. Pure and clock-injectable. */
-export function computePulse(place: Place, deps: { now?: Date } = {}): PulseItem[] {
+/** Live signals that can promote a modelled row to sourced provenance. */
+export interface PulseSignals {
+  now?: Date
+  notices?: OfficialNotice[]
+  notes?: LiveNote[]
+}
+
+// Row-relevance keywords. A live notice/note only sources the row its text
+// actually speaks to — we never claim a notice backs a figure it doesn't name.
+const CROWD_RE = /crowd|bher|rush|packe|heav(y|i)|jama|gather/i
+const QUEUE_RE = /queue|wait|line|darshan|closure|closed|gate|re-?open/i
+const MEDICAL_RE_LIVE = /medical|first\s*aid|clinic|hospital|ambulance|doctor|stretcher|aid\s*post/i
+
+/** An un-expired notice whose text matches `re`, freshest first. */
+function freshestNotice(notices: OfficialNotice[] | undefined, re: RegExp, now: Date): OfficialNotice | undefined {
+  if (!notices) return undefined
+  return notices
+    .filter((n) => (n.expires_at == null || new Date(n.expires_at).getTime() > now.getTime()) && re.test(n.text))
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())[0]
+}
+
+/** The freshest un-expired community note whose text matches `re`. */
+function freshestNote(notes: LiveNote[] | undefined, re: RegExp): LiveNote | undefined {
+  if (!notes) return undefined
+  return notes
+    .filter((n) => new Date(n.expires_at).getTime() > Date.now() && re.test(n.text))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+}
+
+/**
+ * Assemble the six Pulse rows in fixed display order. Pure and clock-injectable.
+ * When live notices/notes are supplied they promote the crowd / queue / medical
+ * rows to `official`/`visitor` provenance with a freshness stamp; otherwise the
+ * row stays honestly `modelled`. Nothing is invented — a row is only re-sourced
+ * when a real signal's text speaks to it.
+ */
+export function computePulse(place: Place, deps: PulseSignals = {}): PulseItem[] {
   const now = deps.now ?? new Date()
   const crowd = crowdReadout(place.crowd)
   const queue = estimateQueueMin(place.crowd, now)
@@ -144,12 +186,39 @@ export function computePulse(place: Place, deps: { now?: Date } = {}): PulseItem
   const medical = medicalStatus(place.facilities ?? [])
   const photo = photoSpotRating(place)
 
-  return [
-    { key: 'crowd', label: 'Crowd', icon: 'users', ...crowd },
-    { key: 'queue', label: 'Queue wait', icon: 'clock', value: queue == null ? NONE : `~${queue} min`, tone: queue == null ? 'neutral' : crowd.tone },
-    { key: 'window', label: 'Best window', icon: 'window', value: window ?? NONE, tone: window ? 'good' : 'neutral' },
-    { key: 'metro', label: 'Nearest metro', icon: 'metro', ...metro },
-    { key: 'medical', label: 'Medical aid', icon: 'medical', ...medical },
-    { key: 'photo', label: 'Photo spot', icon: 'camera', ...photo },
+  const items: PulseItem[] = [
+    { key: 'crowd', label: 'Crowd', icon: 'users', source: 'modelled', ...crowd },
+    { key: 'queue', label: 'Queue wait', icon: 'clock', source: 'modelled', value: queue == null ? NONE : `~${queue} min`, tone: queue == null ? 'neutral' : crowd.tone },
+    { key: 'window', label: 'Best window', icon: 'window', source: 'modelled', value: window ?? NONE, tone: window ? 'good' : 'neutral' },
+    { key: 'metro', label: 'Nearest metro', icon: 'metro', source: 'modelled', ...metro },
+    { key: 'medical', label: 'Medical aid', icon: 'medical', source: 'modelled', ...medical },
+    { key: 'photo', label: 'Photo spot', icon: 'camera', source: 'modelled', ...photo },
   ]
+
+  // Crowd row: a visitor note takes precedence over an official notice only in
+  // recency; official outranks visitor for the same row (trust hierarchy).
+  const crowdNotice = freshestNotice(deps.notices, CROWD_RE, now)
+  const crowdNote = freshestNote(deps.notes, CROWD_RE)
+  const crowdRow = items[0]
+  if (crowdNotice && (!crowdNote || new Date(crowdNotice.updated_at) >= new Date(crowdNote.created_at))) {
+    crowdRow.source = 'official'
+    crowdRow.updatedAt = crowdNotice.updated_at
+  } else if (crowdNote) {
+    crowdRow.source = 'visitor'
+    crowdRow.updatedAt = crowdNote.created_at
+  }
+
+  const queueNotice = freshestNotice(deps.notices, QUEUE_RE, now)
+  if (queueNotice) {
+    items[1].source = 'official'
+    items[1].updatedAt = queueNotice.updated_at
+  }
+
+  const medicalNotice = freshestNotice(deps.notices, MEDICAL_RE_LIVE, now)
+  if (medicalNotice) {
+    items[4].source = 'official'
+    items[4].updatedAt = medicalNotice.updated_at
+  }
+
+  return items
 }

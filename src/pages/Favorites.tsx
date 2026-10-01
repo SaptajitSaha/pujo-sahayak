@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CalendarRange } from 'lucide-react'
 import { Card, Img, Page, SectionHeader } from '../components/ui'
 import { PlaceCard, RailCard } from '../components/PlaceCard'
+import { SaveIntentBadge } from '../components/SaveIntentSheet'
 import { pandals, placeById } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
@@ -12,6 +13,8 @@ export default function Favorites() {
   const nav = useNavigate()
   const saved = useApp((s) => s.saved)
   const visited = useApp((s) => s.visited)
+  const saveIntents = useApp((s) => s.saveIntents)
+  const flags = useApp((s) => s.featureFlags)
 
   const savedPlaces = saved.map((id) => placeById(id)).filter(Boolean)
   const visitedPlaces = visited.map((id) => placeById(id)).filter(Boolean)
@@ -46,7 +49,14 @@ export default function Favorites() {
         <SectionHeader title="Saved Pandals" />
         {savedPlaces.length ? (
           <div className="space-y-3">
-            {savedPlaces.map((p) => p && <PlaceCard key={p.id} place={p} />)}
+            {savedPlaces.map((p) => p && (
+              <div key={p.id} className="relative">
+                {flags.ENABLE_SAVE_INTENT && saveIntents[p.id] && (
+                  <div className="absolute right-3 top-3 z-10"><SaveIntentBadge intent={saveIntents[p.id]} /></div>
+                )}
+                <PlaceCard place={p} />
+              </div>
+            ))}
           </div>
         ) : (
           <EmptyHint text={`Nothing saved yet. Tap ${t('save')} on any pandal.`} onBrowse={() => nav('/explore')} />

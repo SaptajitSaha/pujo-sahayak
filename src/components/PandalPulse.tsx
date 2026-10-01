@@ -1,11 +1,17 @@
 import { useMemo } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Camera, Clock, Cross, Moon, TrainFront, Users } from 'lucide-react'
-import { computePulse, type PulseIcon, type PulseTone } from '../lib/pulse'
-import type { Place } from '../data/types'
+import { computePulse, type PulseIcon, type PulseSource, type PulseTone } from '../lib/pulse'
+import { relativeTime } from '../services/liveNotes'
+import type { LiveNote, OfficialNotice, Place } from '../data/types'
 
 const ICON: Record<PulseIcon, typeof Users> = {
   users: Users, clock: Clock, window: Moon, metro: TrainFront, medical: Cross, camera: Camera,
+}
+
+/** Short provenance tag shown beside a row that a live signal backs. */
+const SOURCE_TAG: Record<Exclude<PulseSource, 'modelled'>, string> = {
+  official: 'Official', visitor: 'Visitor',
 }
 
 // Semantic status colours (green / amber / rose), kept on the same
@@ -27,9 +33,9 @@ const DOTTED = new Set<string>(['crowd'])
  * throwaway layers, disabled entirely under prefers-reduced-motion, so it costs
  * nothing at rest and stays well inside the WebView FPS budget.
  */
-export function PandalPulse({ place }: { place: Place }) {
+export function PandalPulse({ place, notices, notes }: { place: Place; notices?: OfficialNotice[]; notes?: LiveNote[] }) {
   const reduce = useReducedMotion()
-  const items = useMemo(() => computePulse(place, { now: new Date() }), [place])
+  const items = useMemo(() => computePulse(place, { now: new Date(), notices, notes }), [place, notices, notes])
 
   return (
     <motion.section
@@ -81,6 +87,11 @@ export function PandalPulse({ place }: { place: Place }) {
                   {DOTTED.has(i.key) && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${tone.dot}`} />}
                   {i.value}
                 </p>
+                {i.source !== 'modelled' && i.updatedAt && (
+                  <p className="truncate text-[9px] text-faint">
+                    {SOURCE_TAG[i.source]} · {relativeTime(i.updatedAt)}
+                  </p>
+                )}
               </div>
             </li>
           )

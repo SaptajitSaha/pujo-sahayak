@@ -224,6 +224,22 @@ export const STRINGS: Dict = {
   pujaMode: { en: 'Puja season', bn: 'পুজোর মরসুম', hi: 'पूजा सीज़न' },
   todayIs: { en: 'Today is', bn: 'আজ', hi: 'आज है' },
   daysToGo: { en: 'to go', bn: 'বাকি', hi: 'बाकी' },
+  // ── Second Product Extension · Phase 5 (notices digest, reports, Maya glue) ──
+  noticesDigest: { en: 'Festival notices', bn: 'পুজোর নোটিশ', hi: 'पूजा सूचनाएं' },
+  noticesDigestSub: { en: 'Official notices for pandals near you — fresh only.', bn: 'আপনার কাছের প্যান্ডেলের আনুষ্ঠানিক নোটিশ — শুধু চলমান।', hi: 'आपके पास के पंडालों की आधिकारिक सूचनाएं — केवल सक्रिय।' },
+  appliesTo: { en: 'Applies to', bn: 'প্রযোজ্য', hi: 'लागू होता है' },
+  reportInfoTitle: { en: 'Report incorrect info', bn: 'ভুল তথ্য জানান', hi: 'गलत जानकारी बताएं' },
+  reportInfoSub: { en: 'Pick what looks wrong. It is recorded on this device and only sent if a backend is connected.', bn: 'কী ভুল তা বেছে নিন। এি এই ডিভাইসে নথিভুক্ত হয় এবং ব্যাকএন্ড সংযুক্ত থাকলেই পাঠানো হয়।', hi: 'चुनें कि क्या गलत है। यह इस डिवाइस पर दर्ज होता है और केवल बैकएंड जुड़े होने पर भेजा जाता है।' },
+  reportSend: { en: 'Send report', bn: 'রিপোর্ট পাঠান', hi: 'रिपोर्ट भेजें' },
+  reportSent: { en: 'Recorded on this device — not transmitted unless a backend is connected.', bn: 'এি ডিভাইসে নথিভুক্ত — ব্যাকএন্ড সংযুক্ত না হলে পাঠানো হয়নি।', hi: 'इस डिवाइस पर दर्ज — बैकएंड न जुड़े तो नहीं भेजा गया।' },
+  reportCancel: { en: 'Cancel', bn: 'বাতিল', hi: 'रद्द करें' },
+  reportFlag: { en: 'Report', bn: 'জানায', hi: 'रिपोर्ट' },
+  reasonCrowd: { en: 'Crowd level', bn: 'ভীড়', hi: 'भीड़' },
+  reasonTiming: { en: 'Timings', bn: 'সময়', hi: 'समय' },
+  reasonFacilities: { en: 'Facilities', bn: 'সুযোগসুবিধা', hi: 'सुविधाएं' },
+  reasonLocation: { en: 'Location', bn: 'অবস্থান', hi: 'स्थान' },
+  reasonAccessibility: { en: 'Accessibility', bn: 'সুলভতা', hi: 'सुलभता' },
+  reasonOutdated: { en: 'Outdated notice', bn: 'পুরনো নোটিশ', hi: 'पुरानी सूचना' },
   walkApprox: { en: '~ straight-line', bn: '~ সরাসরি', hi: '~ सीधी-रेखा' },
 }
 

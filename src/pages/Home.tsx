@@ -8,6 +8,7 @@ import { RailCard } from '../components/PlaceCard'
 import { TonightDashboard } from '../components/TonightDashboard'
 import { WhatNextSheet } from '../components/WhatNextSheet'
 import { PujaModeStrip } from '../components/PujaMode'
+import { FestivalNoticesDigest } from '../components/FestivalNoticesDigest'
 import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn, placeById, DEMO_USER } from '../data/demo'
 import { suggestNext, type NextSuggestion } from '../lib/whatsnext'
 import { useApp } from '../store'
@@ -331,6 +332,17 @@ export default function Home() {
             <span className="flex items-center gap-2 text-sm font-medium"><Sparkles size={16} className="text-vermilion" /> {t('whatNextTitle')}</span>
             <ChevronRight size={16} className="text-faint" />
           </button>
+        </Reveal>
+      )}
+
+      {/* Festival notices digest (5a) — official, fresh notices across the
+          selected city's pandals; renders nothing when there are none. */}
+      {flags.ENABLE_FESTIVAL_NOTICES && cityPandals.length > 0 && (
+        <Reveal>
+          <FestivalNoticesDigest
+            placeIds={cityPandals.map((p) => p.id)}
+            onOpenPlace={(id) => nav(`/pandal/${id}`)}
+          />
         </Reveal>
       )}
 

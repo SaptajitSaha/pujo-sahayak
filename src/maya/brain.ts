@@ -8,14 +8,40 @@
 // chatbot: ~40 intents across pandals / logistics / culture / food / shopping
 // / safety / rituals / Bengali / greetings, plus a strict off-topic gate.
 
-import { events, pandals, places, restaurants, safetyPoints, shopping } from '../data/demo'
-import type { Place } from '../data/types'
+import { events, pandals, places, restaurants, safetyPoints, shopping, placeById } from '../data/demo'
+import type { DiaryEntry, Place, PlanDay, PlanStop, SaveIntent } from '../data/types'
 import type { LiveNote, OfficialNotice } from '../data/types'
+import { suggestNext } from '../lib/whatsnext'
+import { bestWindows } from '../lib/bestTime'
+import { suggestMeetingPoint } from '../lib/meetingPoint'
+import { computePujaStats } from '../lib/pujastats'
+import type { Checkin } from '../lib/scorecard'
 
 /** Live, place-specific signals handed to the brain by the orchestrator. */
 export interface LiveContext {
   notices: OfficialNotice[]
   notes: LiveNote[]
+}
+
+/**
+ * The user's real on-device activity. Maya's activity-grounded intents answer
+ * ONLY from this — the same slices the deterministic engines (whatsnext,
+ * bestTime, meetingPoint, pujastats) already use. Nothing here is invented: if
+ * a field is empty the intent falls back rather than fabricating a story.
+ */
+export interface UserActivity {
+  now: Date
+  user: { lat: number; lng: number }
+  candidates: Place[]
+  todayPlan?: PlanStop[]
+  todayDay?: PlanDay | null
+  saved: string[]
+  saveIntents: Record<string, SaveIntent>
+  visited: string[]
+  /** Place IDs already GPS-checked-in — excluded from "what next". */
+  checkedIn: string[]
+  checkins: Checkin[]
+  diary: DiaryEntry[]
 }
 
 export interface MayaReply {
@@ -116,9 +142,57 @@ const fmtPlaces = (list: Place[], cap = 3) =>
 
 // ─── LOCAL BRAIN ─────────────────────────────────────────────────────────────
 
-export function answer(qRaw: string, ctx?: Place | null, live?: LiveContext | null): MayaReply {
+export function answer(qRaw: string, ctx?: Place | null, live?: LiveContext | null, activity?: UserActivity | null): MayaReply {
   const q = qRaw.toLowerCase().trim()
   if (!q) return NO_DATA
+
+  // ── Activity-grounded intents (Second Product Extension §23) ──────────
+  // These quote the SAME deterministic modules the UI uses, so Maya never says
+  // anything the on-device engines wouldn't. With no activity context the whole
+  // block is skipped and the generic planning answers below still apply.
+  if (activity) {
+    if (has(q, 'what should i do', 'what next', 'next do', 'where should i go', 'what should i', 'suggest something', 'bored', 'right now what')) {
+      const s = suggestNext({
+        user: activity.user, now: activity.now,
+        todayPlan: activity.todayPlan, todayDay: activity.todayDay,
+        saved: activity.saved, saveIntents: activity.saveIntents,
+        visited: activity.visited, checkedIn: activity.checkedIn,
+        candidates: activity.candidates,
+      }, 3)
+      if (s.length) {
+        const top = s[0]
+        return {
+          text: `From your plan and saves: ${top.place.name} (${top.place.area}) — ${top.reason}.${s[1] ? ` Also worth a look: ${s.slice(1).map((x) => x.place.name).join(', ')}.` : ''}`,
+          chips: ['Help me plan my evening', 'Best pandals this year?'],
+        }
+      }
+    }
+    if (ctx && has(q, 'best time', 'when should i', 'when to visit', 'best window', 'quiet time')) {
+      const w = bestWindows(ctx)
+      if (w.best.length) {
+        const calm = w.best.map((b) => b.label).join(' or ')
+        const avoid = w.avoid ? ` Avoid ${w.avoid.label}.` : ''
+        return { text: `Quietest at ${ctx.name} around ${calm}${w.hasCrowdData ? '' : ' (typical pattern, not place-specific)'}.${avoid} A modelled estimate — not a live count.`, chips: ['Help me plan my evening'] }
+      }
+    }
+    if (has(q, 'where should we meet', 'meet me', 'meeting point', 'where to meet', 'meetup point', 'meet up')) {
+      const origins = [activity.user, ...(ctx ? [{ lat: ctx.lat, lng: ctx.lng }] : [])]
+      const spots = safetyPoints.map((sp) => ({ id: sp.id, name: sp.name, detail: sp.detail, lat: sp.lat, lng: sp.lng }))
+      const s = suggestMeetingPoint(origins, spots)
+      if (s) {
+        return { text: `A known spot between you${ctx ? ` and ${ctx.name}` : ''}: ${s.spot.name}${s.spot.detail ? ` — ${s.spot.detail}` : ''} (~${s.distancesKm[0].toFixed(1)} km from you). It's a suggestion between real places you both know — never auto-chosen.`, chips: ['Open Safety Center'] }
+      }
+    }
+    if (has(q, 'what did i do', 'summarize', 'summary', 'my puja so far', 'recap', 'how many have i', 'my stats', 'statistics')) {
+      const st = computePujaStats({ checkins: activity.checkins, saved: activity.saved.length, visited: activity.visited.length })
+      if (activity.checkins.length === 0) {
+        return { text: 'You have no check-ins yet, so I have nothing true to summarise. Check in at a pandal and I can tell your story.', chips: ['Best pandals this year?'] }
+      }
+      const first = [...activity.checkins].sort((a, b) => a.ts - b.ts)[0]
+      const fp = placeById(first.placeId)
+      return { text: `So far: ${st.distinctPandals} pandal${st.distinctPandals === 1 ? '' : 's'} across ${st.distinctTithis} tith${st.distinctTithis === 1 ? 'i' : 'is'}, best streak ${st.longestStreak} day${st.longestStreak === 1 ? '' : 's'}.${fp ? ` Your first darshan was ${fp.name}.` : ''} All from your own GPS check-ins.`, chips: ['Help me plan my evening'] }
+    }
+  }
 
   // ── "What's happening here?" — trust-hierarchy answer ────────────────
   // Official notices first, then visitor notes; every line is labelled by its

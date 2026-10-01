@@ -17,7 +17,7 @@
 
 import { pandals, restaurants, shopping } from '../data/demo'
 import type { Place } from '../data/types'
-import type { MayaReply } from './brain'
+import type { MayaReply, UserActivity } from './brain'
 
 export interface ChatTurn {
   from: 'user' | 'maya'
@@ -34,12 +34,21 @@ STRICT ROLE:
 - Match the user's language (English / বাংলা / हिन्दी). Default to English when unclear.
 - Return plain text only, no markdown, no bullet lists.`
 
-function buildContext(ctx?: Place | null): string {
+function buildContext(ctx?: Place | null, activity?: UserActivity | null): string {
   const topPandals = pandals.slice(0, 6).map((p) => `- ${p.name} (${p.area}) — theme: ${p.theme}, artist: ${p.artist ?? 'n/a'}, metro: ${p.metro ?? 'n/a'}`).join('\n')
   const topFood = restaurants.slice(0, 4).map((r) => `- ${r.name} (${r.cuisine}, ${r.distanceKm} km)`).join('\n')
   const topShopping = shopping.slice(0, 5).map((s) => `- ${s.name} at ${s.mall} (${s.area}) — ₹${s.price} (was ₹${s.originalPrice})`).join('\n')
   const ctxLine = ctx ? `\n\nThe user is currently looking at: ${ctx.name} — ${ctx.area}. Theme: ${ctx.theme}. Story: ${ctx.story ?? 'n/a'}.` : ''
-  return `TOP PANDALS:\n${topPandals}\n\nTOP NEARBY FOOD:\n${topFood}\n\nPUJO SALE PICKS:\n${topShopping}${ctxLine}`
+  // Ground the LLM in the user's REAL activity when we have it, so it can answer
+  // "what next / my recap" without inventing — these are the same facts the
+  // deterministic engines use, quoted, not new.
+  let actLine = ''
+  if (activity) {
+    const n = activity.checkins.length
+    actLine = `\n\nUSER ACTIVITY (real, on-device): ${activity.saved.length} saved, ${activity.visited.length} visited, ${n} GPS check-in${n === 1 ? '' : 's'}.` +
+      (n ? ` Use ONLY these for anything about what they have done.` : ' They have no check-ins yet — never invent visits.')
+  }
+  return `TOP PANDALS:\n${topPandals}\n\nTOP NEARBY FOOD:\n${topFood}\n\nPUJO SALE PICKS:\n${topShopping}${ctxLine}${actLine}`
 }
 
 const KEY = import.meta.env.VITE_OPENAI_KEY as string | undefined
@@ -52,11 +61,11 @@ export const isLLMEnabled = (): boolean => !!KEY
  * network fails, or the response is malformed — the caller falls back to the
  * offline brain so Maya keeps working in every case.
  */
-export async function askLLM(q: string, ctx: Place | null | undefined, history: ChatTurn[]): Promise<MayaReply | null> {
+export async function askLLM(q: string, ctx: Place | null | undefined, history: ChatTurn[], activity?: UserActivity | null): Promise<MayaReply | null> {
   if (!KEY) return null
   try {
     const messages: { role: 'system' | 'user' | 'assistant'; content: string }[] = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\n[CONTEXT]\n${buildContext(ctx)}` },
+      { role: 'system', content: `${SYSTEM_PROMPT}\n\n[CONTEXT]\n${buildContext(ctx, activity)}` },
     ]
     // Include the last 6 turns so Maya remembers the thread.
     for (const t of history.slice(-6)) {

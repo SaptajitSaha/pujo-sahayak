@@ -17,6 +17,7 @@ import { PhotoGuide } from '../components/PhotoGuide'
 import { OfficialNotices } from '../components/OfficialNotices'
 import { LiveNotes } from '../components/LiveNotes'
 import { SaveIntentSheet } from '../components/SaveIntentSheet'
+import { ReportInfoSheet } from '../components/ReportInfoSheet'
 import { useOfficialNotices } from '../services/authority'
 import { useLiveNotes } from '../services/liveNotes'
 import { demoProductsNear } from '../services/marketplace.mock'
@@ -91,6 +92,8 @@ export default function PandalDetail() {
   const [zoom, setZoom] = useState<LightboxItem | null>(null)
   // Optional "why saving" sheet — plain Save stays one tap; this only enriches.
   const [intentOpen, setIntentOpen] = useState(false)
+  // "Report incorrect info" micro-flow (5b) — queues a local place_info report.
+  const [reportOpen, setReportOpen] = useState(false)
 
   // Opens an external walking/driving route for a named spot (parking ground,
   // metro station). Plain Maps search URL — no key, no fake integration.
@@ -294,6 +297,16 @@ export default function PandalDetail() {
             <RouteIcon size={14} /> {t('route')}
           </Button>
         </div>
+
+        {/* Report incorrect info — discreet, honest local queue (see 5b). */}
+        {flags.ENABLE_INFO_REPORTS && (
+          <button
+            onClick={() => setReportOpen(true)}
+            className="mt-2 text-[11px] text-faint underline-offset-2 hover:text-vermilion hover:underline"
+          >
+            {t('reportInfoTitle')}
+          </button>
+        )}
 
         {/* On-site check-in — verified by GPS, feeds the Scorecard in Profile. */}
         <div className="mt-2">
@@ -528,6 +541,10 @@ export default function PandalDetail() {
 
         {flags.ENABLE_SAVE_INTENT && (
           <SaveIntentSheet placeId={place.id} placeName={place.name} open={intentOpen} onClose={() => setIntentOpen(false)} />
+        )}
+
+        {flags.ENABLE_INFO_REPORTS && (
+          <ReportInfoSheet placeId={place.id} placeName={place.name} open={reportOpen} onClose={() => setReportOpen(false)} />
         )}
 
         {/* Photo guide — honest tips derived from hours, theme & crowd level. */}

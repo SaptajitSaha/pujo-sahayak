@@ -7,8 +7,10 @@
 // the section shows "No updates yet" — no fake data.
 
 import { useState } from 'react'
-import { MessageCircle, Send, ThumbsUp } from 'lucide-react'
+import { Flag, MessageCircle, Send, ThumbsUp } from 'lucide-react'
 import { useAuth } from '../lib/auth'
+import { useApp } from '../store'
+import { useT } from '../i18n'
 import { QueryError } from './ui'
 import {
   useLiveNotes,
@@ -23,7 +25,16 @@ interface Props {
 }
 
 export function LiveNotes({ placeId }: Props) {
+  const t = useT()
   const { isAuthenticated } = useAuth()
+  const flags = useApp((s) => s.featureFlags)
+  const addReport = useApp((s) => s.addReport)
+  const [reported, setReported] = useState<Record<string, boolean>>({})
+  const reportNote = (id: string) => {
+    if (reported[id]) return
+    addReport({ target_type: 'live_note', target_id: id, reason: 'live_note' })
+    setReported((r) => ({ ...r, [id]: true }))
+  }
   const { data: notes = [], isLoading, isError, refetch } = useLiveNotes(placeId)
   useLiveNotesSubscription(placeId)
   const postNote = usePostLiveNote(placeId)
@@ -77,6 +88,16 @@ export function LiveNotes({ placeId }: Props) {
               >
                 <ThumbsUp size={12} />
               </button>
+              {flags.ENABLE_INFO_REPORTS && (
+                <button
+                  onClick={() => reportNote(note.id)}
+                  className={`absolute right-8 top-2 rounded-full p-1 active:scale-90 ${reported[note.id] ? 'text-vermilion' : 'text-faint hover:text-vermilion'}`}
+                  aria-label={t('reportFlag')}
+                  title={reported[note.id] ? t('reportSent') : t('reportFlag')}
+                >
+                  <Flag size={12} />
+                </button>
+              )}
             </div>
           ))}
         </div>

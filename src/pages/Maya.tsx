@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Camera, ChevronRight, Mic, Play, Square } from 'lucide-react'
 import { MayaMark, Page } from '../components/ui'
-import { placeById } from '../data/demo'
-import { askMaya, type ChatTurn } from '../maya'
+import { DEMO_USER, pandalsIn, placeById, restaurantsIn } from '../data/demo'
+import { askMaya, type ChatTurn, type UserActivity } from '../maya'
+import { tithiForTs } from '../lib/scorecard'
 import { useApp } from '../store'
 import type { Place } from '../data/types'
 
@@ -51,6 +52,29 @@ export default function Maya() {
   const [typing, setTyping] = useState(false)
   const endRef = useRef<HTMLDivElement>(null)
 
+  // The user's real on-device activity, assembled from the same slices the
+  // deterministic engines use. Maya's derived intents quote these; they never
+  // invent anything beyond them.
+  const flags = useApp((s) => s.featureFlags)
+  const planner = useApp((s) => s.planner)
+  const saved = useApp((s) => s.saved)
+  const saveIntents = useApp((s) => s.saveIntents)
+  const visited = useApp((s) => s.visited)
+  const checkins = useApp((s) => s.checkins)
+  const diary = useApp((s) => s.diary)
+  const selectedCity = useApp((s) => s.selectedCity)
+  const activity = useMemo<UserActivity>(() => {
+    const now = new Date()
+    const todayDay = tithiForTs(now.getTime())
+    return {
+      now, user: DEMO_USER,
+      candidates: [...pandalsIn(selectedCity), ...restaurantsIn(selectedCity)],
+      todayPlan: todayDay ? planner[todayDay] : [], todayDay,
+      saved, saveIntents, visited,
+      checkedIn: checkins.map((c) => c.placeId), checkins, diary,
+    }
+  }, [planner, saved, saveIntents, visited, checkins, diary, selectedCity])
+
   useEffect(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), [msgs, typing])
   useEffect(() => () => speechSynthesis?.cancel(), [])
 
@@ -67,7 +91,7 @@ export default function Maya() {
       // never strands if a network call hangs. The offline path always resolves
       // well inside that; if we time out we render a friendly fallback.
       const reply = await Promise.race([
-        askMaya(turn, ctx, history),
+        askMaya(turn, ctx, history, flags.ENABLE_WHAT_NEXT || flags.ENABLE_PUJA_STATS ? activity : null),
         new Promise<never>((_, rej) => setTimeout(() => rej(new Error('maya-timeout')), 12_000)),
       ])
       setMsgs((m) => [...m, { from: 'maya', ...reply }])

@@ -47,3 +47,9 @@ assets/screens/raw/
 /maya-*.png
 /nav-*.png
 /.qoder-splash.png
+
+# Browser-subagent verification screenshots in assets/screens/ (phone-*.png
+# mockups stay tracked; these audit/verify/vt captures are throwaway dev output).
+assets/screens/audit-*.png
+assets/screens/verify-*.png
+assets/screens/vt-*.png

@@ -334,8 +334,10 @@ export default function PandalDetail() {
         {/* Best time to visit — modelled calm vs peak windows. */}
         {flags.ENABLE_BEST_TIME && <BestTime place={place} />}
 
-        {/* Trust hierarchy: Official Notices (top) → Visitor Notes (bottom) */}
-        {flags.ENABLE_AUTHORITY_INTEGRATION && (
+        {/* Trust hierarchy: Official Notices (top) → Visitor Notes (bottom).
+            Festival notices belong on the pandal they apply to, so the
+            ENABLE_FESTIVAL_NOTICES flag surfaces them here per-place. */}
+        {(flags.ENABLE_AUTHORITY_INTEGRATION || flags.ENABLE_FESTIVAL_NOTICES) && (
           <OfficialNotices placeId={place.id} />
         )}
         {flags.ENABLE_LIVE_NOTES && (

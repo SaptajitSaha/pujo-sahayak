@@ -1956,8 +1956,10 @@ cannot invent a narrative; when there is no real activity it says so honestly.
 
 # 67. Notices, Reports & Maya Integration
 
-Festival Notices: a Home digest of official notices for the selected city's
-places, with an "applies to" line and an expired state (via `expires_at`).
+Festival Notices: each official notice is surfaced **on the pandal it applies
+** — the per-place `OfficialNotices` block on PandalDetail with an expired
+state (via `expires_at`) — rather than aggregated as a Home digest. A notice
+belongs to one pandal's gate, so it lives there, not as a city-wide list.
 
 Report Information: a "report incorrect info" flow (crowd / timing / facilities
 / location / accessibility / outdated) writing `place_info` reports — kept in an

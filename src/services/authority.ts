@@ -69,26 +69,6 @@ export function useOfficialNotices(placeId: string) {
   })
 }
 
-/** Notices across a set of places (the Home festival digest). Without a backend
-    this returns the clearly-labeled demo notices whose place_id is in the set;
-    with one it queries `official_notices` filtered to those places. Falls back
-    to demo only when the real query returns nothing. */
-export function useCityNotices(placeIds: string[]) {
-  return useQuery<OfficialNotice[]>({
-    queryKey: ['city-notices', placeIds.join(',')],
-    enabled: placeIds.length > 0,
-    queryFn: async () => {
-      if (!supabase) return DEMO_NOTICES.filter((n) => placeIds.includes(n.place_id))
-      const { data, error } = await supabase
-        .from('official_notices').select('*').in('place_id', placeIds)
-        .order('created_at', { ascending: false }).limit(30)
-      if (error) throw error
-      const notices = (data ?? []) as OfficialNotice[]
-      return notices.length ? notices : DEMO_NOTICES.filter((n) => placeIds.includes(n.place_id))
-    },
-  })
-}
-
 export function useAuthorityAlerts(placeId?: string) {
   return useQuery<AuthorityAlert[]>({
     queryKey: ['authority-alerts', placeId ?? 'all'],

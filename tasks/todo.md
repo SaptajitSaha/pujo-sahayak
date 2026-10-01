@@ -75,7 +75,7 @@ Tier 1 expansion. Each task leaves the app runnable.
 - [x] 4e AI-free Puja Recap — deterministic template, honest empty state.
 
 ## Phase 5 — Notices, reports, Maya glue  ✅ committed a44ecfc
-- [x] 5a Festival-notices Home digest (`useCityNotices`) + expired state.
+- [x] 5a Festival notices surfaced per-pandal (`OfficialNotices`, expired state).
 - [x] 5b Report incorrect info (`place_info`) + per-note report flag.
 - [x] 5c Maya `UserActivity` intents — brain/askMaya/buildContext; `brain.test.ts`.
 

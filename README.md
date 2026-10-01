@@ -62,9 +62,9 @@ trilingual, and grounded in *real* Kolkata pandals and restaurants.
 - **Season & memory layer** — Puja Mode countdown, a GPS-earned **Puja Passport**
   (`/passport`), a private on-device **Puja Diary** (`/diary`), live **Personal
   Statistics** and an **AI-free Puja Recap**, all computed from your own activity.
-- **Festival notices & info reports** — a Home digest of official notices with an
-  "applies to" line, and a "report incorrect info" queue kept on-device until a
-  backend is connected.
+- **Festival notices & info reports** — official notices shown on each pandal
+  they apply to (with an expired state), and a "report incorrect info" queue
+  kept on-device until a backend is connected.
 - **Meetups** — create and join plans so no one wanders the crowds alone.
 - **Safety** — a dedicated hub with a missing-person flow and help-desk / medical
   camp info surfaced on every pandal card.

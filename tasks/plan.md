@@ -155,7 +155,8 @@ See `tasks/todo.md`. Checkpoints after each feature.
   (deterministic template — no LLM).
 
 ## Phase 5 — Notices, reports, Maya glue — commit a44ecfc
-- **5a** Festival-notices Home digest (`useCityNotices`) + expired state.
+- **5a** Festival notices surfaced per-pandal (`OfficialNotices`, expired state) —
+  delivered on each pandal's own page rather than a Home digest.
 - **5b** Report incorrect info (`place_info` reports, on-device queue when no
   backend) + per-note report flag.
 - **5c** Maya integration — `UserActivity` intents in `brain.ts`/`askMaya`/

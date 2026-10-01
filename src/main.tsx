@@ -45,23 +45,22 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Warm every code-split page's JS chunk while the inline CSS boot splash is
-// still on-screen and fonts are decoding, so a later tap on any bottom-nav
-// item resolves React.lazy from Vite's module cache — no Suspense fallback,
-// no black loading flash between pages.
-preloadRoutes()
-
 /* ── Boot-splash hand-off ──────────────────────────────────────────────────
    The festive intro is pure CSS/HTML inline in index.html, so it paints on the
    very first frame and animates on the compositor (no JS) while this ~116 KB
-   bundle + fonts + Home are still loading. Once the app has mounted and fonts
-   have settled, fade it out to reveal Home. Tap dismisses it immediately. */
+   bundle + fonts + Home are still loading. Route-chunk pre-warming is deferred
+   until THIS point — the moment the splash starts fading — and then idled one
+   chunk at a time (App.preloadRoutes), so it never competes with the intro
+   animation or Home's hydration for the main thread. Tap dismisses immediately
+   and, on a skip, also starts the warm-up. */
+let preloaded = false
 function hideBoot() {
   const boot = document.getElementById('boot')
   if (!boot || boot.classList.contains('boot-hide')) return
   boot.classList.add('boot-hide')
   boot.addEventListener('transitionend', () => boot.remove(), { once: true })
   window.setTimeout(() => boot.remove(), 700) // safety if transitionend never fires
+  if (!preloaded) { preloaded = true; preloadRoutes() }
 }
 document.getElementById('boot')?.addEventListener('pointerdown', hideBoot)
 

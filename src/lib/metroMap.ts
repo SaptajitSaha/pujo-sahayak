@@ -15,6 +15,15 @@ export interface MetroNetworkInput {
   stations: MetroNetStation[]
 }
 
+/** The diagram's internal coordinate space, shared by the renderer and the
+ *  tests so they can never drift. Portrait on purpose: the Kolkata network
+ *  spans ~1.7× more latitude than (corrected) longitude, and the full official
+ *  map labels all ~90 stations. The generous box is what lets every name — plus
+ *  its halo — sit clear of its neighbours (see metroLabels.test collision check);
+ *  the card scales this down to a thumbnail and the full-screen viewer shows it
+ *  1:1, so these units are layout space, not on-screen pixels. */
+export const METRO_MAP_CANVAS = { width: 1160, height: 1950 }
+
 export interface LayoutPoint {
   id: string
   x: number
@@ -152,7 +161,8 @@ export function projectNetwork(
 // lets crowded stations re-pick against everyone's current position. When the
 // cramped core still offers none, the least-bad (smallest-overlap) option wins
 // — with the SVG halo stroke it reads. Pure geometry, fully unit-tested
-// (metroLabels.test) — on the real network the worst residual graze is <1%.
+// (metroLabels.test) — at the shared canvas size the full official network
+// (all ~90 stations) places with zero box-on-box overlap.
 
 export interface LabelPlacement {
   id: string
@@ -169,9 +179,12 @@ export interface LabelPlacement {
 
 export interface Rect { x: number; y: number; w: number; h: number }
 
-// Average glyph advance ≈ 0.6em for the UI font — good enough for collision
-// boxes; the same estimator is used by the tests so they agree.
-const estWidth = (name: string, size: number) => name.length * size * 0.6
+// Average glyph advance ≈ 0.62em and line height ≈ 1.4em for the UI font. These
+// are deliberately generous (real rendered text sits around 0.6 / 1.25): a box
+// that over-reserves guarantees the painted labels never touch, which the
+// browser check confirmed the tight values did not. Tests share this estimator.
+const estWidth = (name: string, size: number) => name.length * size * 0.62
+const estHeight = (size: number) => size * 1.4
 
 const overlapArea = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
@@ -195,30 +208,39 @@ export function labelPlacements(map: LayoutMap): LabelPlacement[] {
   const candsOf = new Map<string, Cand[]>()
   const order: string[] = []
 
+  // The collision box is the label's RENDERED footprint: the glyph box plus the
+  // halo stroke painted around it (the component strokes every label; the halo
+  // is sized in viewBox units so it scales with the diagram and is modelable
+  // here). Reserving the halo — not just the bare glyphs — is what makes two
+  // names' painted boxes never touch, which is what "no overlap" means to a reader.
+  const HALO = 3 // ≥ half the renderer's label strokeWidth (4), with margin
+
   for (const s of priority) {
     const size = s.terminal || s.interchange ? 12.5 : 10.5
-    const w = estWidth(s.name, size)
-    const h = size * 1.16
-    // Eight candidate positions. For centred (above/below) the anchor is the
-    // box's horizontal centre; for side/diagonal the anchor is the box edge
-    // nearest the station, with text-anchor start/end pushing it away.
+    const gw = estWidth(s.name, size)
+    const gh = estHeight(size)
+    // Candidate slots. For centred (above/below) the anchor is the glyph box's
+    // horizontal centre; for side/diagonal the anchor is the edge nearest the
+    // station, with text-anchor start/end pushing the text away from the dot.
     const aboveBase = s.y - VGAP
     const belowBase = s.y + VGAP + size
-    const midBase = (top: number) => top + h / 2 + size * 0.35
+    const midBase = (top: number) => top + gh / 2 + size * 0.35
+    // Glyph top-left → collision box, padded by the halo on every side.
+    const box = (gx: number, gy: number): Rect => ({ x: gx - HALO, y: gy - HALO, w: gw + 2 * HALO, h: gh + 2 * HALO })
     const candidates: Cand[] = [
       // Straight sides first (most legible), then diagonals as escape routes.
-      { anchorX: s.x, anchorY: aboveBase, textAnchor: 'middle', size, box: { x: s.x - w / 2, y: aboveBase - h, w, h } },
-      { anchorX: s.x, anchorY: belowBase, textAnchor: 'middle', size, box: { x: s.x - w / 2, y: s.y + VGAP, w, h } },
-      { anchorX: s.x + HGAP, anchorY: midBase(s.y - h / 2), textAnchor: 'start', size, box: { x: s.x + HGAP, y: s.y - h / 2, w, h } },
-      { anchorX: s.x - HGAP, anchorY: midBase(s.y - h / 2), textAnchor: 'end', size, box: { x: s.x - HGAP - w, y: s.y - h / 2, w, h } },
+      { anchorX: s.x, anchorY: aboveBase, textAnchor: 'middle', size, box: box(s.x - gw / 2, aboveBase - gh) },
+      { anchorX: s.x, anchorY: belowBase, textAnchor: 'middle', size, box: box(s.x - gw / 2, s.y + VGAP) },
+      { anchorX: s.x + HGAP, anchorY: midBase(s.y - gh / 2), textAnchor: 'start', size, box: box(s.x + HGAP, s.y - gh / 2) },
+      { anchorX: s.x - HGAP, anchorY: midBase(s.y - gh / 2), textAnchor: 'end', size, box: box(s.x - HGAP - gw, s.y - gh / 2) },
       // Four true corners (offset both axes) + far vertical — real escape routes
       // for the cramped central cluster, only tried after the clean straight slots.
-      { anchorX: s.x + HGAP, anchorY: aboveBase, textAnchor: 'start', size, box: { x: s.x + HGAP, y: aboveBase - h, w, h } },
-      { anchorX: s.x - HGAP, anchorY: aboveBase, textAnchor: 'end', size, box: { x: s.x - HGAP - w, y: aboveBase - h, w, h } },
-      { anchorX: s.x + HGAP, anchorY: belowBase, textAnchor: 'start', size, box: { x: s.x + HGAP, y: s.y + VGAP, w, h } },
-      { anchorX: s.x - HGAP, anchorY: belowBase, textAnchor: 'end', size, box: { x: s.x - HGAP - w, y: s.y + VGAP, w, h } },
-      { anchorX: s.x, anchorY: aboveBase - (h + VGAP), textAnchor: 'middle', size, box: { x: s.x - w / 2, y: aboveBase - h - (h + VGAP), w, h } },
-      { anchorX: s.x, anchorY: belowBase + (h + VGAP), textAnchor: 'middle', size, box: { x: s.x - w / 2, y: s.y + VGAP + (h + VGAP), w, h } },
+      { anchorX: s.x + HGAP, anchorY: aboveBase, textAnchor: 'start', size, box: box(s.x + HGAP, aboveBase - gh) },
+      { anchorX: s.x - HGAP, anchorY: aboveBase, textAnchor: 'end', size, box: box(s.x - HGAP - gw, aboveBase - gh) },
+      { anchorX: s.x + HGAP, anchorY: belowBase, textAnchor: 'start', size, box: box(s.x + HGAP, s.y + VGAP) },
+      { anchorX: s.x - HGAP, anchorY: belowBase, textAnchor: 'end', size, box: box(s.x - HGAP - gw, s.y + VGAP) },
+      { anchorX: s.x, anchorY: aboveBase - (gh + VGAP), textAnchor: 'middle', size, box: box(s.x - gw / 2, aboveBase - gh - (gh + VGAP)) },
+      { anchorX: s.x, anchorY: belowBase + (gh + VGAP), textAnchor: 'middle', size, box: box(s.x - gw / 2, s.y + VGAP + (gh + VGAP)) },
     ]
     candsOf.set(s.id, candidates)
     order.push(s.id)
@@ -249,10 +271,10 @@ export function labelPlacements(map: LayoutMap): LabelPlacement[] {
   // 2. Relaxation sweeps — the greedy locks early choices, so a low-priority
   //    station crowded by an interchange may sit on a bad slot. Re-examine each
   //    station against the CURRENT positions of all the others and move it to
-  //    its strictly-best slot. A couple of passes settles the dense core; runs
+  //    its strictly-best slot. Several passes settle the dense core; runs
   //    in fixed order so the result stays deterministic.
   const boxOf = (id: string) => candsOf.get(id)![chosen.get(id)!].box
-  for (let pass = 0; pass < 4; pass++) {
+  for (let pass = 0; pass < 8; pass++) {
     let moved = false
     for (const id of order) {
       const cs = candsOf.get(id)!

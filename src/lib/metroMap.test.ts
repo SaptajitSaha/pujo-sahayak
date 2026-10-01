@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { polylineLength, projectNetwork } from './metroMap'
+import { polylineLength, projectNetwork, METRO_MAP_CANVAS } from './metroMap'
 import { metroNetLines, metroNetStations } from '../data/metroNetwork'
 
-// The real vendored network (55 stations, 5 lines) projected once for the whole
-// suite — every test asserts on this same deterministic layout.
-const map = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, { width: 800, height: 600 })
+// The full vendored network (all 6 official lines) projected once for the whole
+// suite — every test asserts on this same deterministic layout. Counts are read
+// from the data so the suite stays honest as the network grows.
+const map = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, METRO_MAP_CANVAS)
 
 const station = (id: string) => {
   const s = map.stations.find((x) => x.id === id)
@@ -47,11 +48,16 @@ describe('projectNetwork', () => {
     }
   })
 
-  it('marks the three real interchanges with both lines', () => {
+  it('marks the real interchanges with every line that serves them', () => {
     expect(station('esplanade').lines.sort()).toEqual(['blue', 'green'])
     expect(station('esplanade').interchange).toBe(true)
-    expect(station('kavi-subhash').interchange).toBe(true)
-    expect(station('noapara').interchange).toBe(true)
+    expect(station('kavi-subhash').lines.sort()).toEqual(['blue', 'orange'])
+    expect(station('noapara').lines.sort()).toEqual(['blue', 'pink', 'yellow'])
+    expect(station('salt-lake-sector-v').lines.sort()).toEqual(['green', 'orange'])
+    expect(station('biman-bandar').lines.sort()).toEqual(['orange', 'yellow'])
+    for (const id of ['esplanade', 'kavi-subhash', 'noapara', 'salt-lake-sector-v', 'biman-bandar']) {
+      expect(station(id).interchange, id).toBe(true)
+    }
   })
 
   it('marks ordinary stations as single-line terminals where they are endpoints', () => {
@@ -61,13 +67,13 @@ describe('projectNetwork', () => {
     expect(station('maidan').terminal).toBe(false)
   })
 
-  it('returns the full station roster — 55 unique physical stations', () => {
-    expect(map.stations).toHaveLength(55)
-    expect(new Set(map.stations.map((s) => s.id)).size).toBe(55)
+  it('returns the full station roster — every physical station, no duplicates', () => {
+    expect(map.stations).toHaveLength(metroNetStations.length)
+    expect(new Set(map.stations.map((s) => s.id)).size).toBe(metroNetStations.length)
   })
 
   it('is deterministic: same input, identical layout', () => {
-    const again = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, { width: 800, height: 600 })
+    const again = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, METRO_MAP_CANVAS)
     expect(again).toEqual(map)
   })
 

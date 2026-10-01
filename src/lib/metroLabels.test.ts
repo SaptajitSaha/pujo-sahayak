@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { labelPlacements, projectNetwork, type Rect } from './metroMap'
+import { labelPlacements, projectNetwork, METRO_MAP_CANVAS, type Rect } from './metroMap'
 import { metroNetLines, metroNetStations } from '../data/metroNetwork'
 
-const map = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, { width: 800, height: 600 })
+const map = projectNetwork({ lines: metroNetLines, stations: metroNetStations }, METRO_MAP_CANVAS)
 const places = labelPlacements(map)
 
 // Each placement carries its own collision box (single source of truth — the
@@ -38,15 +38,15 @@ describe('labelPlacements', () => {
 
   it('avoids label-on-label collisions: no two text boxes overlap materially', () => {
     // Greedy priority placement + relaxation sweeps, with straight / corner /
-    // far-vertical escape slots. In the real network the worst residual box
-    // graze is sub-pixel (a corner touch in the dense core); glyphs never
-    // collide, and the SVG halo keeps even that readable. Bar: <5% of a box.
+    // far-vertical escape slots, at the shared canvas size. Across the full
+    // official network (~90 stations) this is zero box-on-box overlap; the bar
+    // keeps a little tolerance for the width estimator against real font metrics.
     for (let i = 0; i < places.length; i++) {
       for (let j = i + 1; j < places.length; j++) {
         const a = rectOf(places[i].id)
         const b = rectOf(places[j].id)
         const overlap = intersectArea(a, b)
-        const threshold = 0.05 * Math.min(a.w * a.h, b.w * b.h)
+        const threshold = 0.02 * Math.min(a.w * a.h, b.w * b.h)
         expect(overlap, `${places[i].id} vs ${places[j].id}`).toBeLessThanOrEqual(threshold)
       }
     }

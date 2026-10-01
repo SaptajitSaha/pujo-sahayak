@@ -1,7 +1,7 @@
 // ─── Animated Kolkata Metro network map ─────────────────────────────────────
-// The full system — 5 lines, 55 stations, 3 real interchanges — drawn as an
-// SVG diagram that traces itself once, line by line (a "metro train" running
-// out along each route), then dots the stations as each line reaches them.
+// The full official network — 6 lines, ~90 stations, the real interchanges —
+// drawn as an SVG diagram that traces itself once, line by line (a "metro train"
+// running out along each route), then dots the stations as each line reaches them.
 //
 // Geometry is REAL (data/metroNetwork.ts, vendored from OpenStreetMap) and the
 // projection is pure/tested (lib/metroMap.ts). This component only draws.
@@ -19,13 +19,12 @@ import { motion } from 'framer-motion'
 import { Info, Maximize2, Minimize2 } from 'lucide-react'
 import { Card } from './ui'
 import { useApp } from '../store'
-import { labelPlacements, polylineLength, projectNetwork, type LayoutMap } from '../lib/metroMap'
-import { metroNetLines, metroNetStations, METRO_NET_ATTRIBUTION } from '../data/metroNetwork'
+import { labelPlacements, polylineLength, projectNetwork, METRO_MAP_CANVAS, type LayoutMap } from '../lib/metroMap'
+import { metroNetLines, metroNetStations, metroNetColors, METRO_NET_ATTRIBUTION } from '../data/metroNetwork'
 
-// Fixed diagram canvas; the SVG scales to the card via viewBox so this is
-// purely the internal coordinate space (labels are laid out at these sizes).
-const W = 720
-const H = 640
+// Fixed diagram canvas (shared with the tests); the SVG scales to the card via
+// viewBox so this is purely the internal coordinate space the labels live in.
+const { width: W, height: H } = METRO_MAP_CANVAS
 
 // One-shot timeline: each line starts after the previous is nearly done.
 const LINE_GAP = 0.45    // breathing room between lines
@@ -50,6 +49,13 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
       const s = byId.get(p.id)!
       return { ...p, name: s.name, bold: s.terminal || s.interchange }
     })
+  }, [map])
+
+  // Legend lists each colour once — a branch (e.g. the Purple Diamond Park
+  // spur) shares its parent line's colour, so it must not add a second swatch.
+  const legendLines = useMemo(() => {
+    const seen = new Set<string>()
+    return map.lines.filter((l) => (seen.has(l.color) ? false : (seen.add(l.color), true)))
   }, [map])
 
   // Per-line draw plan, computed once from pure geometry (no DOM measure):
@@ -90,8 +96,8 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
           <h2 className="text-sm font-semibold">{bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}</h2>
           <p className="mt-0.5 text-xs text-ink-soft">
             {bn
-              ? `${metroNetLines.length} লাইন · ${metroNetStations.length} স্টেশন`
-              : `${metroNetLines.length} lines · ${metroNetStations.length} stations`}
+              ? `${metroNetColors.length} লাইন · ${metroNetStations.length} স্টেশন`
+              : `${metroNetColors.length} lines · ${metroNetStations.length} stations`}
           </p>
         </div>
         {/* Full-screen viewer: on a phone the diagram scales to ~320px and the
@@ -110,16 +116,16 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
         role="img"
         aria-label={`Schematic network map of the Kolkata Metro: ${metroNetLines
           .map((l) => `${l.name} with ${l.stationIds.length} stations`)
-          .join('; ')}. Interchanges: Esplanade, Kavi Subhash, Noapara.`}
+          .join('; ')}. Interchanges: Noapara, Esplanade, Kavi Subhash, Salt Lake Sector V, Biman Bandar.`}
         className="mt-2"
       >
         <MapSvg map={map} labels={labels} instant={instant} dotDelay={dotDelay} plan={plan} />
       </figure>
 
-      {/* Legend — the five operational lines. */}
+      {/* Legend — one swatch per line colour (branches share their parent's). */}
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-        {map.lines.map((l) => (
-          <li key={l.id} className="flex items-center gap-1.5 text-[11px] text-ink-soft">
+        {legendLines.map((l) => (
+          <li key={l.color} className="flex items-center gap-1.5 text-[11px] text-ink-soft">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.color }} aria-hidden />
             {l.name}
           </li>
@@ -226,8 +232,8 @@ function MapSvg({
           key={`label-${l.id}`} x={l.anchorX} y={l.anchorY}
           textAnchor={l.textAnchor} fontSize={l.size} fontWeight={l.bold ? 600 : 400}
           fill="var(--color-ink, #221a15)"
-          stroke="var(--color-card, #fff)" strokeWidth={3.5}
-          style={{ paintOrder: 'stroke', vectorEffect: 'non-scaling-stroke' }}
+          stroke="var(--color-card, #fff)" strokeWidth={4}
+          style={{ paintOrder: 'stroke' }}
           initial={instant ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: dotDelay(l.id), duration: instant ? 0 : 0.3 }}

@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
-  Flame, HandHeart, Lock, LogIn, MapPin, Palette, Phone, Share2, Siren, Settings as SettingsIcon, Sparkles, Users,
+  Flame, HandHeart, Lock, LogIn, MapPin, Notebook, Palette, Phone, Share2, Siren, Stamp, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
 import { Avatar, Button, Card, Page, SectionHeader } from '../components/ui'
 import { Wallet } from '../components/Wallet'
 import { MyOrders } from '../components/MyOrders'
+import { PujaRecap, PujaStatsPanel } from '../components/PujaMemory'
 import { walks } from '../data/demo'
 import { useApp } from '../store'
 import { evaluateBadges, scorecardSummary } from '../lib/scorecard'
@@ -126,6 +127,10 @@ export default function Profile() {
         </Card>
       </section>
 
+      {/* Memory layer — each surface independently flag-gated (§Phase 4). */}
+      {flags.ENABLE_PUJA_STATS && <PujaStatsPanel />}
+      {flags.ENABLE_PUJA_RECAP && <PujaRecap />}
+
       {/* Cross-feature sections — each independently flag-gated. */}
       {flags.ENABLE_MARKETPLACE && <MyOrders />}
       {flags.ENABLE_WALLET && <Wallet userId={userId} />}
@@ -164,6 +169,8 @@ export default function Profile() {
       <div className="mt-5 space-y-2">
         {[
           { icon: CalendarCheck, label: t('allVisits'), to: '/favorites' },
+          ...(flags.ENABLE_PUJA_PASSPORT ? [{ icon: Stamp, label: t('passport'), to: '/passport' }] : []),
+          ...(flags.ENABLE_PUJA_DIARY ? [{ icon: Notebook, label: t('diary'), to: '/diary' }] : []),
           { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
           { icon: CreditCard, label: 'Payments & Subscriptions', to: '/profile/settings' },
           { icon: HandHeart, label: 'Donate', to: '/profile/settings' },

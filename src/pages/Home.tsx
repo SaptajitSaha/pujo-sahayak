@@ -7,6 +7,7 @@ import { Avatar, Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle
 import { RailCard } from '../components/PlaceCard'
 import { TonightDashboard } from '../components/TonightDashboard'
 import { WhatNextSheet } from '../components/WhatNextSheet'
+import { PujaModeStrip } from '../components/PujaMode'
 import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn, placeById, DEMO_USER } from '../data/demo'
 import { suggestNext, type NextSuggestion } from '../lib/whatsnext'
 import { useApp } from '../store'
@@ -214,6 +215,10 @@ export default function Home() {
           <ChevronDown size={16} className="shrink-0 -rotate-90 text-vermilion" />
         </motion.button>
       )}
+
+      {/* Puja Mode (4a) — seasonal header: next-tithi countdown + real passport
+          progress. Renders nothing once the season has passed (unless demo). */}
+      {flags.ENABLE_PUJA_MODE && <PujaModeStrip isDemo={todayTithi.demo} />}
 
       {/* Official alerts banner — urgent notices from an active authority.
           Renders nothing when no live feed is connected (honest, no fake alerts). */}

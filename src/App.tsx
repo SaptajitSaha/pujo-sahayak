@@ -42,6 +42,8 @@ const loaders = {
   Marketplace: () => import('./pages/Marketplace'),
   MetroGuide: () => import('./pages/MetroGuide'),
   ServiceDirectory: () => import('./pages/ServiceDirectory'),
+  Passport: () => import('./pages/Passport'),
+  Diary: () => import('./pages/Diary'),
 }
 
 const Explore = lazy(loaders.Explore)
@@ -73,6 +75,8 @@ const SocialMatch = lazy(loaders.SocialMatch)
 const Marketplace = lazy(loaders.Marketplace)
 const MetroGuide = lazy(loaders.MetroGuide)
 const ServiceDirectory = lazy(loaders.ServiceDirectory)
+const Passport = lazy(loaders.Passport)
+const Diary = lazy(loaders.Diary)
 
 /** Fire every route's chunk download + parse in staggered waves. Called from
     main.tsx right after the app mounts so it runs during the inline CSS boot
@@ -214,6 +218,8 @@ function Shell() {
       <Route path="/trip/:day" element={<TripMap />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/settings" element={<Settings />} />
+      <Route path="/passport" element={<Passport />} />
+      <Route path="/diary" element={<Diary />} />
       <Route path="/safety" element={<Safety />} />
       <Route path="/safety/missing-person" element={<MissingPerson />} />
       <Route path="/beyond-puja" element={<BeyondPuja />} />

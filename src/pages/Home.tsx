@@ -675,7 +675,7 @@ function SpotCard({ place, front }: { place: Place; front: boolean }) {
   const t = useT()
   return (
     <div className={`glass overflow-hidden rounded-card ${front ? 'shadow-lift' : 'shadow-card'}`}>
-      <Img palette={place.palette} alt={place.name} className="grain h-64">
+      <Img palette={place.palette} alt={place.name} className="grain h-64" priority>
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-night via-night/80 to-transparent p-3 pt-20">
           <div className="text-on-image [text-shadow:0_1px_10px_rgba(0,0,0,0.75)]">
             <h3 className="font-display text-lg">{place.name}</h3>

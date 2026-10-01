@@ -31,7 +31,10 @@ foreach ($file in (Get-ChildItem $Source -File | Where-Object { $_.Name -match $
   $outPath = Join-Path $dest $leaf
 
   $bmp = New-Object System.Drawing.Bitmap($file.FullName)
-  $scale = [Math]::Min(1, $MaxEdge / [Math]::Max($bmp.Width, $bmp.Height))
+  # NB: not [Math]::Min(1, ratio) — PowerShell binds that to the Int32 overload
+  # and truncates a sub-1 ratio (e.g. 0.47) to 0. Compute as double, then clamp.
+  $scale = [double]$MaxEdge / [Math]::Max($bmp.Width, $bmp.Height)
+  if ($scale -gt 1) { $scale = 1 }
   $w = [int]($bmp.Width * $scale); $h = [int]($bmp.Height * $scale)
 
   $flat = New-Object System.Drawing.Bitmap($w, $h)
@@ -46,4 +49,6 @@ foreach ($file in (Get-ChildItem $Source -File | Where-Object { $_.Name -match $
 
   Write-Host ('  {0}  {1}x{2}  {3}KB' -f $leaf, $w, $h, [math]::Round((Get-Item $outPath).Length / 1KB))
 }
+# Keep the responsive tiers in sync with the new masters (docs/PERFORMANCE.md).
+& (Join-Path $PSScriptRoot 'make-renditions.ps1')
 Write-Host 'done.'

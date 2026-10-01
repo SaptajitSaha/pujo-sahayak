@@ -226,7 +226,7 @@ export default function PandalDetail() {
       {/* Hero */}
       <div ref={heroRef} className="grain relative h-64 overflow-hidden">
         <motion.div style={{ y: heroY, scale: heroScale }} className="absolute -inset-8">
-          <Img palette={place.palette} alt={place.name} className="h-full w-full" />
+          <Img palette={place.palette} alt={place.name} className="h-full w-full" priority sizes="100vw" />
         </motion.div>
         <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
           <button aria-label="Go back" onClick={() => nav(-1)} className="rounded-full bg-night/50 p-2 text-on-image">

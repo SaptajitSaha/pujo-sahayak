@@ -151,11 +151,29 @@ export function MayaMark({ size = 40, className = '' }: { size?: number; classNa
 }
 
 /* Image surface: deterministic warm gradient (offline-safe); real photos can
-   layer over it later via `src` without breaking layout. */
+   layer over it later via `src` without breaking layout.
+
+   Responsive by default. The masters in public/img are authored at 1024px
+   (offline/PWA source of truth, reused as full-bleed heroes), but almost every
+   <Img> here is a 120-260px card — serving the 1024 master to those was ~73% of
+   the Home payload (docs/PERFORMANCE.md). scripts/make-renditions.ps1 emits
+   `@480` / `@800` renditions next to each 1024 master; we advertise them via
+   srcset/sizes so a phone downloads ~480px instead of 1024 for a thumbnail.
+   The 1024 master stays the last candidate so large surfaces (hero passes
+   `priority` + a wide `sizes`) still get full resolution. Callers that render
+   the above-the-fold / LCP image pass `priority` to load it eagerly at high
+   fetch priority instead of deferring it behind `loading="lazy"`. */
+const RENDITION_RE = /^\/img\/[\w-]+\.jpg$/
 export function Img({
-  palette, src, alt, className = '', children,
-}: { palette: Palette; src?: string; alt: string; className?: string; children?: ReactNode }) {
+  palette, src, alt, className = '', children, priority = false, sizes,
+}: { palette: Palette; src?: string; alt: string; className?: string; children?: ReactNode; priority?: boolean; sizes?: string }) {
   const image = src ?? palette.img
+  // Only the known 1024 masters get renditions; blobs / data URLs / anything
+  // else render exactly as before (avatar uploads, Maya scan results).
+  const responsive = typeof image === 'string' && RENDITION_RE.test(image)
+  const srcSet = responsive
+    ? `${image.replace(/\.jpg$/, '@480.jpg')} 480w, ${image.replace(/\.jpg$/, '@800.jpg')} 800w, ${image} 1024w`
+    : undefined
   return (
     <div
       className={`relative overflow-hidden bg-gradient-to-br ${className}`}
@@ -163,7 +181,18 @@ export function Img({
       role="img"
       aria-label={alt}
     >
-      {image && <img src={image} alt={alt} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
+      {image && (
+        <img
+          src={image}
+          srcSet={srcSet}
+          sizes={responsive ? (sizes ?? '(min-width: 768px) 320px, 46vw') : undefined}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          decoding={priority ? 'auto' : 'async'}
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
       {/* soft lamp glow only over flat gradients, keeps them from looking empty */}
       {!image && (
         <div className="pointer-events-none absolute -top-1/3 left-1/2 h-2/3 w-2/3 -translate-x-1/2 rounded-full bg-gold-bright/20 blur-2xl" />

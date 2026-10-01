@@ -68,6 +68,10 @@ export interface Place {
   openTill?: string
   metro?: string
   facilities: string[]
+  /** On-site accessibility facts (ramp, lighting, quiet queue…). Seeded for
+      demo places and always surfaced with an "Illustrative — verify on-site"
+      caption — never presented as surveyed ground truth. */
+  accessibility?: string[]
   palette: Palette
   pastEditions?: { year: number; theme: string; palette: Palette }[]
   reviews?: Review[]
@@ -524,9 +528,45 @@ export interface PaymentMethod {
 export interface UserReport {
   id: string
   reporter_id: string | null
-  target_type: 'live_note' | 'product' | 'user' | 'order'
+  target_type: 'live_note' | 'product' | 'user' | 'order' | 'place_info' | 'official_notice'
   target_id: string
   reason: string
   status: 'open' | 'reviewed' | 'actioned' | 'dismissed'
+  created_at: string
+}
+
+// ─── Second Product Extension types ─────────────────────────────────────────
+// Deliberately few: Passport / Stats / Recap are derived views over the
+// existing GPS-verified `checkins` log, not new stored entities.
+
+/** Why a place was saved — optional flavour on top of one-tap Save. */
+export type SaveIntent =
+  | 'tonight'
+  | 'on-saptami'
+  | 'with-friends'
+  | 'for-photography'
+  | 'food-trip'
+  | 'visit-later'
+
+/** Puja Diary entry — private, local-only, never uploaded. */
+export interface DiaryEntry {
+  id: string
+  /** Local ISO date (YYYY-MM-DD) the entry belongs to. */
+  date: string
+  /** Optional attachment to a place the user actually visited/checked in. */
+  placeId?: string
+  mood?: 'amazed' | 'happy' | 'peaceful' | 'crowded' | 'tired'
+  text: string
+  createdAt: string
+}
+
+/** Locally queued information report ("this looks wrong") — mirrors the
+    user_reports shape; transmitted only when a backend is configured. */
+export interface LocalReport {
+  id: string
+  target_type: 'place_info' | 'official_notice' | 'live_note'
+  target_id: string
+  reason: string
+  note?: string
   created_at: string
 }

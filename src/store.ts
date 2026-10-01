@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
-  AppNotification, City, Lang, MissingPersonReport, PlanDay, PlanStop, SavedAddress, Theme, TrustedContact, UserReview,
+  AppNotification, City, DiaryEntry, Lang, LocalReport, MissingPersonReport, PlanDay, PlanStop, SavedAddress, SaveIntent, Theme, TrustedContact, UserReview,
 } from './data/types'
 import { placeById } from './data/demo'
 import { haversineKm } from './lib/geo'
@@ -64,6 +64,17 @@ interface AppState {
       honesty convention (doc §58). */
   tithiDemoMode: boolean
 
+  // Second Product Extension slices
+  /** Optional "why I saved this" intent per place — plain Save stays one tap;
+      the intent only enriches Tonight / What-Next suggestions. */
+  saveIntents: Record<string, SaveIntent>
+  /** Puja Diary — private local journal, never synced anywhere. */
+  diary: DiaryEntry[]
+  /** Locally queued "information looks wrong" reports (user_reports shape).
+      Transmitted only when a backend is configured; otherwise honest
+      "recorded — not transmitted". */
+  reports: LocalReport[]
+
   toggleSaved: (id: string) => void
   toggleVisited: (id: string) => void
   addStop: (day: PlanDay, stop: PlanStop) => void
@@ -94,6 +105,12 @@ interface AppState {
   setSelectedCity: (c: City) => void
   setSosActive: (v: boolean) => void
   setTithiDemoMode: (v: boolean) => void
+  setSaveIntent: (placeId: string, intent: SaveIntent) => void
+  clearSaveIntent: (placeId: string) => void
+  addDiary: (d: Omit<DiaryEntry, 'id' | 'createdAt'>) => void
+  updateDiary: (id: string, patch: Partial<Omit<DiaryEntry, 'id' | 'createdAt'>>) => void
+  removeDiary: (id: string) => void
+  addReport: (r: Omit<LocalReport, 'id' | 'created_at'>) => void
 }
 
 const emptyPlanner: Record<PlanDay, PlanStop[]> = {
@@ -142,6 +159,9 @@ export const useApp = create<AppState>()(
       checkins: [],
       featureFlags: { ...DEFAULT_FLAGS },
       blockedUsers: [],
+      saveIntents: {},
+      diary: [],
+      reports: [],
 
       toggleSaved: (id) =>
         set((s) => ({ saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
@@ -215,14 +235,31 @@ export const useApp = create<AppState>()(
       setSelectedCity: (selectedCity) => set({ selectedCity }),
       setSosActive: (sosActive) => set({ sosActive }),
       setTithiDemoMode: (tithiDemoMode) => set({ tithiDemoMode }),
+      setSaveIntent: (placeId, intent) =>
+        set((s) => ({ saveIntents: { ...s.saveIntents, [placeId]: intent } })),
+      clearSaveIntent: (placeId) =>
+        set((s) => {
+          const { [placeId]: _gone, ...rest } = s.saveIntents
+          return { saveIntents: rest }
+        }),
+      addDiary: (d) =>
+        set((s) => ({ diary: [{ ...d, id: 'diary-' + Date.now(), createdAt: new Date().toISOString() }, ...s.diary] })),
+      updateDiary: (id, patch) =>
+        set((s) => ({ diary: s.diary.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
+      removeDiary: (id) => set((s) => ({ diary: s.diary.filter((e) => e.id !== id) })),
+      addReport: (r) =>
+        set((s) => ({ reports: [{ ...r, id: 'rep-' + Date.now(), created_at: new Date().toISOString() }, ...s.reports] })),
     }),
     {
       name: 'pujo-sahayak',
-      version: 4,
+      version: 5,
       // v2 added reviews, trustedContacts, selectedCity, sosActive. Existing
       // installs persisted without these; provide safe defaults.
       // v3 adds the checkins log (Scorecard) — additive, defaults to empty.
       // v4 adds featureFlags and blockedUsers — additive, defaults from config.
+      // v5 adds saveIntents, diary, reports (Second Product Extension) and
+      // re-merges featureFlags so installs frozen at the old 5-key record
+      // gain the new extension flags at their compile-time defaults.
       migrate: (persisted, oldVersion) => {
         const p = persisted as Partial<AppState> | undefined
         if (!p) return {} as unknown as AppState
@@ -239,7 +276,11 @@ export const useApp = create<AppState>()(
         if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
         if (!Array.isArray(p.checkins)) p.checkins = []
         if (!p.featureFlags) p.featureFlags = { ...DEFAULT_FLAGS }
+        else p.featureFlags = { ...DEFAULT_FLAGS, ...p.featureFlags }
         if (!Array.isArray(p.blockedUsers)) p.blockedUsers = []
+        if (!p.saveIntents) p.saveIntents = {}
+        if (!Array.isArray(p.diary)) p.diary = []
+        if (!Array.isArray(p.reports)) p.reports = []
         return p as AppState
       },
     },

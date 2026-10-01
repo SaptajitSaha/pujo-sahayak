@@ -126,6 +126,26 @@ export const STRINGS: Dict = {
   sharePlan: { en: 'Share Plan', bn: 'পরিকল্পনা শেয়ার করুন', hi: 'योजना साझा करें' },
   planThisDay: { en: 'Plan this day', bn: 'এই দিনটি সাজান', hi: 'इस दिन की योजना बनाएं' },
   todayTithi: { en: 'Today', bn: 'আজ', hi: 'आज' },
+
+  // ── Second Product Extension ──
+  bestTimeTitle: { en: 'Best time to visit', bn: 'যাওয়ার সেরা সময়', hi: 'जाने का सबसे अच्छा समय' },
+  bestTimeSub: { en: 'Modelled from opening hours & typical crowd patterns — verify on-site', bn: 'খোলার সময় ও ভীড়ের ধারা থেকে আনুমানিক — জায়গায় নিশ্চিত করুন', hi: 'खोलने के समय और भीड़ से अनुमानित — स्थल पर पुष्टि करें' },
+  tonightTitle: { en: 'Tonight', bn: 'আজ সন্ধ্যে', hi: 'आज शाम' },
+  whatNextTitle: { en: 'What should I do next?', bn: 'এরপর কী করব?', hi: 'अगले क्या करूँ?' },
+  whatNextEmpty: { en: 'Nothing planned yet — save a pandal or add it to your plan and suggestions appear here.', bn: 'এখনও কিছু পরিকল্পনা নেই — একটি প্যান্ডেল সেভ করুন বা পরিকল্পনায় যোগ করুন।', hi: 'अभी कुछ योजना नहीं — एक पंडाल सहेजें या योजना में जोड़ें।' },
+  nextAction: { en: 'Next?', bn: 'পর?', hi: 'आगे?' },
+  saveIntentTitle: { en: 'Why are you saving this?', bn: 'কেন সেভ করছেন?', hi: 'क्यों सहेज रहे हैं?' },
+  saveIntentSkip: { en: 'Just save', bn: 'শুধু সেভ', hi: 'बस सहेजें' },
+  intentTonight: { en: 'Tonight', bn: 'আজ সন্ধ্যে', hi: 'आज शाम' },
+  intentOnSaptami: { en: 'On Saptami', bn: 'সপ্তমীতে', hi: 'सप्तमी को' },
+  intentWithFriends: { en: 'With friends', bn: 'বন্ধুদের সাথে', hi: 'दोस्तों के साथ' },
+  intentForPhotography: { en: 'For photography', bn: 'ছবি তুলতে', hi: 'फ़ोटोग्राफ़ी के लिए' },
+  intentFoodTrip: { en: 'Food trip', bn: 'খাবারের trip', hi: 'खाने की यात्रा' },
+  intentVisitLater: { en: 'Visit later', bn: 'পরে আসব', hi: 'बाद में जाएँ' },
+  pulseOfficial: { en: 'Official', bn: 'সরকারি', hi: 'आधिकारिक' },
+  pulseVisitor: { en: 'Visitor estimate', bn: 'দর্শকের মতামত', hi: 'आगंतु अनुमान' },
+  pulseModelled: { en: 'Modelled', bn: 'আনুমানিক', hi: 'अनुमानित' },
+  done: { en: 'Done', bn: 'হল', hi: 'पूर्ण' },
 }
 
 export function useT() {

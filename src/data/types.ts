@@ -322,3 +322,137 @@ export interface TrustedContact {
   name: string
   phone: string
 }
+
+// ─── Five-feature extension types ────────────────────────────────────────────
+
+/** Community live note — visitor-generated, time-limited observation. */
+export interface LiveNote {
+  id: string
+  place_id: string
+  author_id: string | null
+  text: string
+  created_at: string
+  expires_at: string
+  moderation_status: 'pending' | 'approved' | 'rejected' | 'expired'
+  helpful_count: number
+  reported_count: number
+}
+
+/** Official notice from a pandal authority or verified source. */
+export interface OfficialNotice {
+  id: string
+  place_id: string
+  source: string
+  text: string
+  created_at: string
+  updated_at: string
+  expires_at: string | null
+  verification_status: 'unverified' | 'verified' | 'official'
+}
+
+/** Authority alert from a registered provider (police, traffic, medical). */
+export interface AuthorityAlert {
+  id: string
+  provider_id: string | null
+  place_id: string | null
+  alert_type: 'emergency' | 'traffic' | 'closure' | 'safety' | 'medical' | 'operational'
+  text: string
+  created_at: string
+  expires_at: string | null
+}
+
+/** Authority provider configuration. */
+export interface AuthorityProvider {
+  id: string
+  name: string
+  provider_type: 'police' | 'traffic' | 'medical' | 'pandal_ops' | 'government'
+  api_url: string | null
+  is_active: boolean
+  created_at: string
+}
+
+/** Social matching preference profile. */
+export interface SocialPreference {
+  user_id: string
+  interests: string[]
+  preferred_areas: string[]
+  preferred_time: string
+  crowd_preference: string
+  language_preference: string
+  outing_style: string
+  planned_tithi: string | null
+  visibility: 'public' | 'hidden'
+  display_name: string | null
+}
+
+/** A match card shown to the user (never exposes exact location). */
+export interface MatchCard {
+  userId: string
+  displayName: string
+  interests: string[]
+  plannedArea: string
+  plannedTithi: string | null
+  matchScore: number
+}
+
+/** Marketplace product. */
+export interface MarketplaceProduct {
+  id: string
+  seller_id: string | null
+  name: string
+  category: 'clothing' | 'accessories' | 'puja_essentials' | 'handmade' | 'experiences' | 'partner_offers'
+  price: number
+  description: string | null
+  images: string[]
+  availability: 'in_stock' | 'out_of_stock' | 'limited'
+  area: string | null
+  partner_status: 'independent' | 'partner' | 'verified'
+  is_demo: boolean
+  created_at: string
+}
+
+/** Marketplace order. */
+export interface MarketplaceOrder {
+  id: string
+  product_id: string | null
+  buyer_id: string | null
+  status: 'initiated' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled'
+  amount: number
+  created_at: string
+  updated_at: string
+}
+
+/** Payment transaction record. */
+export interface Transaction {
+  id: string
+  user_id: string | null
+  order_id: string | null
+  type: 'purchase' | 'refund' | 'subscription' | 'donation'
+  amount: number
+  currency: string
+  status: 'pending' | 'completed' | 'failed' | 'refunded' | 'demo_completed'
+  provider_txn_id: string | null
+  is_demo: boolean
+  created_at: string
+}
+
+/** Stored payment method (tokenized only — never raw card data). */
+export interface PaymentMethod {
+  id: string
+  user_id: string
+  type: 'upi' | 'card' | 'netbanking' | 'wallet'
+  last4: string | null
+  is_default: boolean
+  created_at: string
+}
+
+/** User-generated report for moderation. */
+export interface UserReport {
+  id: string
+  reporter_id: string | null
+  target_type: 'live_note' | 'product' | 'user' | 'order'
+  target_id: string
+  reason: string
+  status: 'open' | 'reviewed' | 'actioned' | 'dismissed'
+  created_at: string
+}

@@ -6,6 +6,7 @@ import type {
 import { placeById } from './data/demo'
 import { haversineKm } from './lib/geo'
 import type { Checkin } from './lib/scorecard'
+import { DEFAULT_FLAGS, type FeatureFlag } from './config/features'
 
 export const PLAN_DAYS: PlanDay[] = ['panchami', 'shashthi', 'saptami', 'ashtami', 'navami', 'dashami']
 
@@ -48,6 +49,10 @@ interface AppState {
       (see PandalDetail). Nothing is invented; the badges/counts are derived from
       this array alone. */
   checkins: Checkin[]
+  /** Runtime feature-flag overrides; merged with compile-time defaults. */
+  featureFlags: Record<FeatureFlag, boolean>
+  /** Blocked user IDs for social matching safety (local only). */
+  blockedUsers: string[]
   /** Year-round demo mode for the Home "Today: <tithi>" chip. When on,
       the chip renders as if today were Ashtami so reviewers and diaspora
       users outside the 2026 puja window still see the flow. Default off —
@@ -77,6 +82,9 @@ interface AppState {
   addReview: (r: Omit<UserReview, 'id' | 'createdAt'>) => void
   removeReview: (id: string) => void
   addCheckin: (c: Checkin) => void
+  setFeatureFlag: (flag: FeatureFlag, value: boolean) => void
+  blockUser: (userId: string) => void
+  unblockUser: (userId: string) => void
   setTrustedContacts: (c: TrustedContact[]) => void
   setSelectedCity: (c: City) => void
   setSosActive: (v: boolean) => void
@@ -127,6 +135,8 @@ export const useApp = create<AppState>()(
       sosActive: false,
       tithiDemoMode: false,
       checkins: [],
+      featureFlags: { ...DEFAULT_FLAGS },
+      blockedUsers: [],
 
       toggleSaved: (id) =>
         set((s) => ({ saved: s.saved.includes(id) ? s.saved.filter((x) => x !== id) : [...s.saved, id] })),
@@ -190,6 +200,12 @@ export const useApp = create<AppState>()(
             ? s
             : { checkins: [...s.checkins, c] }
         )),
+      setFeatureFlag: (flag, value) =>
+        set((s) => ({ featureFlags: { ...s.featureFlags, [flag]: value } })),
+      blockUser: (userId) =>
+        set((s) => (s.blockedUsers.includes(userId) ? s : { blockedUsers: [...s.blockedUsers, userId] })),
+      unblockUser: (userId) =>
+        set((s) => ({ blockedUsers: s.blockedUsers.filter((x) => x !== userId) })),
       setTrustedContacts: (trustedContacts) => set({ trustedContacts }),
       setSelectedCity: (selectedCity) => set({ selectedCity }),
       setSosActive: (sosActive) => set({ sosActive }),
@@ -197,10 +213,11 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'pujo-sahayak',
-      version: 3,
+      version: 4,
       // v2 added reviews, trustedContacts, selectedCity, sosActive. Existing
       // installs persisted without these; provide safe defaults.
       // v3 adds the checkins log (Scorecard) — additive, defaults to empty.
+      // v4 adds featureFlags and blockedUsers — additive, defaults from config.
       migrate: (persisted, oldVersion) => {
         const p = persisted as Partial<AppState> | undefined
         if (!p) return {} as unknown as AppState
@@ -216,6 +233,8 @@ export const useApp = create<AppState>()(
         if (p.sosActive === undefined) p.sosActive = false
         if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
         if (!Array.isArray(p.checkins)) p.checkins = []
+        if (!p.featureFlags) p.featureFlags = { ...DEFAULT_FLAGS }
+        if (!Array.isArray(p.blockedUsers)) p.blockedUsers = []
         return p as AppState
       },
     },

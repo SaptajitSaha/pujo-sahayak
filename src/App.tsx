@@ -1,6 +1,7 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { CloudOff } from 'lucide-react'
 import { AmbientBackground, BottomNav, MayaFab, useScrollIdlePause } from './components/ui'
 import { useApp } from './store'
 import { describeCurrentLocation } from './lib/geo'
@@ -36,6 +37,9 @@ const loaders = {
   Tithi: () => import('./pages/Tithi'),
   Phrasebook: () => import('./pages/Phrasebook'),
   ShareTarget: () => import('./pages/ShareTarget'),
+  Auth: () => import('./pages/Auth'),
+  SocialMatch: () => import('./pages/SocialMatch'),
+  Marketplace: () => import('./pages/Marketplace'),
 }
 
 const Explore = lazy(loaders.Explore)
@@ -62,6 +66,9 @@ const ArtistDetail = lazy(loaders.ArtistDetail)
 const Tithi = lazy(loaders.Tithi)
 const Phrasebook = lazy(loaders.Phrasebook)
 const ShareTarget = lazy(loaders.ShareTarget)
+const Auth = lazy(loaders.Auth)
+const SocialMatch = lazy(loaders.SocialMatch)
+const Marketplace = lazy(loaders.Marketplace)
 
 /** Fire every route's chunk download + parse in staggered waves. Called from
     main.tsx right after the app mounts so it runs during the inline CSS boot
@@ -98,6 +105,30 @@ function RouteFallback() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
       <span className="h-8 w-8 animate-spin rounded-full border-2 border-vermilion/30 border-t-vermilion" />
+    </div>
+  )
+}
+
+/** Top-of-screen indicator when the device loses connectivity, so the Supabase-
+    backed sections (live notes, notices, orders) don't look broken — content is
+    served from cache and any queued writes sync on reconnect. */
+function OfflineBanner() {
+  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && navigator.onLine === false)
+  useEffect(() => {
+    const on = () => setOffline(false)
+    const off = () => setOffline(true)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
+  if (!offline) return null
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-0 top-0 z-[70] flex items-center justify-center gap-1.5 bg-night/90 px-4 py-1.5 text-center text-[11px] font-medium text-on-image"
+      style={{ paddingTop: 'calc(0.375rem + env(safe-area-inset-top))' }}
+    >
+      <CloudOff size={13} /> Offline — showing saved data; changes will sync when you reconnect.
     </div>
   )
 }
@@ -151,6 +182,7 @@ export default function App() {
   return (
     <MotionConfig reducedMotion="user">
       <AmbientBackground />
+      <OfflineBanner />
       <Suspense fallback={<RouteFallback />}>
         <Shell />
       </Suspense>
@@ -188,6 +220,9 @@ function Shell() {
       <Route path="/tithi" element={<Tithi />} />
       <Route path="/phrasebook" element={<Phrasebook />} />
       <Route path="/share-target" element={<ShareTarget />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/social" element={<SocialMatch />} />
+      <Route path="/marketplace" element={<Marketplace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

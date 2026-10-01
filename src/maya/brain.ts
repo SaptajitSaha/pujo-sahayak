@@ -10,6 +10,13 @@
 
 import { events, pandals, places, restaurants, safetyPoints, shopping } from '../data/demo'
 import type { Place } from '../data/types'
+import type { LiveNote, OfficialNotice } from '../data/types'
+
+/** Live, place-specific signals handed to the brain by the orchestrator. */
+export interface LiveContext {
+  notices: OfficialNotice[]
+  notes: LiveNote[]
+}
 
 export interface MayaReply {
   text: string
@@ -109,9 +116,25 @@ const fmtPlaces = (list: Place[], cap = 3) =>
 
 // ─── LOCAL BRAIN ─────────────────────────────────────────────────────────────
 
-export function answer(qRaw: string, ctx?: Place | null): MayaReply {
+export function answer(qRaw: string, ctx?: Place | null, live?: LiveContext | null): MayaReply {
   const q = qRaw.toLowerCase().trim()
   if (!q) return NO_DATA
+
+  // ── "What's happening here?" — trust-hierarchy answer ────────────────
+  // Official notices first, then visitor notes; every line is labelled by its
+  // source so community chatter never masquerades as authority. Uses only live
+  // signals that actually exist — when there are none, Maya says so.
+  if (ctx && ctx.type === 'pandal' && has(q, "what's happening", 'what is happening', 'happening here', 'right now', 'current', 'latest', 'any update', 'status now', 'crowd right now')) {
+    const notices = live?.notices ?? []
+    const notes = live?.notes ?? []
+    if (notices.length === 0 && notes.length === 0) {
+      return { text: `No live updates for ${ctx.name} right now. Whatever visitors or the committee post will show up on the pandal page first.`, chips: ['What is the theme?', 'Where can I eat nearby?'] }
+    }
+    const parts: string[] = []
+    if (notices.length) parts.push(`Official: ${notices.slice(0, 2).map((n) => `“${n.text}” (${n.source})`).join(' ')}`)
+    if (notes.length) parts.push(`From visitors (not official): ${notes.slice(0, 2).map((n) => `“${n.text}”`).join(' ')}`)
+    return { text: `Here's the latest at ${ctx.name}. ${parts.join('. ')}.`, chips: ['Is it crowded?', 'Where can I eat nearby?'] }
+  }
 
   // ── Greetings / identity / small talk ─────────────────────────────────
   if (has(q, 'hi ', 'hello', 'hey ', 'namaskar', 'namaste', 'subho', 'শুভ', 'good morning', 'good evening') && q.length < 24) {

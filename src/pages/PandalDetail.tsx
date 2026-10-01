@@ -4,11 +4,14 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
   BadgeCheck, Bookmark, BookmarkCheck, CalendarCheck, Check, ChevronRight, Camera,
-  MapPin, Route as RouteIcon, Share2, ShieldCheck, Sparkles, TrainFront, Truck,
+  MapPin, Route as RouteIcon, Share2, ShieldCheck, Sparkles, TrainFront, Truck, Users,
 } from 'lucide-react'
 import { Button, Card, EASE, Img, Lightbox, MayaMark, Page, Rail, Reveal, SectionHeader, Stars, CrowdTag, Chip, type LightboxItem } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { PandalPulse } from '../components/PandalPulse'
+import { OfficialNotices } from '../components/OfficialNotices'
+import { LiveNotes } from '../components/LiveNotes'
+import { demoProductsNear } from '../services/marketplace.mock'
 import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
 import { useApp } from '../store'
 import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
@@ -28,6 +31,7 @@ export default function PandalDetail() {
   const checkins = useApp((s) => s.checkins)
   const addCheckin = useApp((s) => s.addCheckin)
   const track = useApp((s) => s.track)
+  const flags = useApp((s) => s.featureFlags)
   const [photoState, setPhotoState] = useState<'idle' | 'checking' | 'ok'>('idle')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -125,6 +129,10 @@ export default function PandalDetail() {
     if (!place) return []
     return meetups.filter((m) => haversineKm(m.lat, m.lng, place.lat, place.lng) < 4).slice(0, 2)
   }, [place])
+
+  // Nearby marketplace picks for this pandal's area (demo catalog, clearly
+  // labeled in the card). Only surfaced when the marketplace flag is on.
+  const nearProducts = useMemo(() => (place ? demoProductsNear(place.area) : []), [place])
 
   // Logistics — parking, metro timetable, blood banks. Sorted by proximity
   // to this pandal (haversine km) with the pandal's own id boosted to the
@@ -289,6 +297,44 @@ export default function PandalDetail() {
 
         {/* Pandal Pulse — six at-a-glance status tiles, derived/modelled on-device. */}
         <PandalPulse place={place} />
+
+        {/* Trust hierarchy: Official Notices (top) → Visitor Notes (bottom) */}
+        {flags.ENABLE_AUTHORITY_INTEGRATION && (
+          <OfficialNotices placeId={place.id} />
+        )}
+        {flags.ENABLE_LIVE_NOTES && (
+          <LiveNotes placeId={place.id} />
+        )}
+
+        {/* Trust hierarchy continued: nearby marketplace + social plan teaser */}
+        {flags.ENABLE_MARKETPLACE && nearProducts.length > 0 && (
+          <section className="mt-5">
+            <SectionHeader title="Nearby in the Marketplace" action={t('viewAll')} onAction={() => nav('/marketplace')} />
+            <Rail>
+              {nearProducts.map((p) => (
+                <button key={p.id} onClick={() => nav('/marketplace')} className="w-40 shrink-0 text-left">
+                  <Card className="overflow-hidden p-0">
+                    <div className="h-20 w-full" style={{ backgroundImage: 'linear-gradient(135deg, #4a1230, #963a5c)' }} />
+                    <div className="p-2">
+                      <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{p.name}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-vermilion">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
+                      {p.is_demo && <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Demo</span>}
+                    </div>
+                  </Card>
+                </button>
+              ))}
+            </Rail>
+          </section>
+        )}
+        {flags.ENABLE_SOCIAL_MATCHING && (
+          <button onClick={() => nav('/social')} className="mt-4 w-full text-left">
+            <Card className="flex items-center gap-3 border border-maya/20 p-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-maya/15 text-maya"><Users size={16} /></span>
+              <span className="flex-1 text-sm font-medium text-maya">People planning to visit {place.name}…</span>
+              <ChevronRight size={16} className="text-maya" />
+            </Card>
+          </button>
+        )}
 
         {/* Info tiles */}
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">

@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, Calendar, BookOpen } from 'lucide-react'
+import { Bell, Search as SearchIcon, Ticket, Flame, MapPin, ChevronDown, Calendar, BookOpen, Users, Megaphone } from 'lucide-react'
 import { Card, EASE, Img, Page, Rail, Reveal, SectionHeader, ThemeToggle } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
 import { offers, sponsored, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn } from '../data/demo'
 import { useApp } from '../store'
+import { useProducts } from '../services/marketplace'
+import { useAuthorityAlerts } from '../services/authority'
 import { useT } from '../i18n'
 import type { Place } from '../data/types'
 
@@ -20,11 +22,17 @@ export default function Home() {
   const setSosActive = useApp((s) => s.setSosActive)
   const selectedCity = useApp((s) => s.selectedCity)
   const tithiDemoMode = useApp((s) => s.tithiDemoMode)
+  const flags = useApp((s) => s.featureFlags)
 
   // City-aware datasets — every rail on Home scopes to the selected city.
   const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
   const cityRestaurants = useMemo(() => restaurantsIn(selectedCity), [selectedCity])
   const cityEvents = useMemo(() => eventsIn(selectedCity), [selectedCity])
+
+  // Cross-feature data (only fetched when the flag is on). Both hooks return
+  // empty without a Supabase backend, so nothing is invented on Home.
+  const { data: marketProducts = [] } = useProducts(undefined, undefined)
+  const { data: alerts = [] } = useAuthorityAlerts()
 
   // Ad slabs are on-device-interactive: tapping one copies its coupon code
   // (clipboard + toast) — the honest equivalent of "acting on" a hoarding
@@ -175,6 +183,23 @@ export default function Home() {
           </span>
           <ChevronDown size={16} className="shrink-0 -rotate-90 text-vermilion" />
         </motion.button>
+      )}
+
+      {/* Official alerts banner — urgent notices from an active authority.
+          Renders nothing when no live feed is connected (honest, no fake alerts). */}
+      {flags.ENABLE_AUTHORITY_INTEGRATION && alerts.length > 0 && (
+        <Reveal>
+          <button onClick={() => nav('/safety')} className="mt-2 w-full text-left">
+            <Card className="flex items-center gap-2.5 border border-gold/40 bg-gold/10 p-3">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gold text-white"><Megaphone size={16} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-gold-dark">Official alert</p>
+                <p className="truncate text-sm text-ink">{alerts[0].text}</p>
+              </div>
+              <ChevronDown size={16} className="shrink-0 -rotate-90 text-gold-dark" />
+            </Card>
+          </button>
+        </Reveal>
       )}
 
       {/* Explore Spotlight — animated coverflow carousel (city-scoped,
@@ -328,6 +353,50 @@ export default function Home() {
           </Rail>
         </section>
       </Reveal>
+
+      {/* Marketplace rail — appears when the marketplace feature is enabled,
+          alongside the mall-ads Shopping rail. Links into the /marketplace page.
+          Products are the service's demo catalog (clearly labeled), never a
+          fabricated live store. */}
+      {flags.ENABLE_MARKETPLACE && marketProducts.length > 0 && (
+        <Reveal>
+          <section className="mt-5">
+            <SectionHeader title="Marketplace" action={t('viewAll')} onAction={() => nav('/marketplace')} />
+            <Rail>
+              {marketProducts.slice(0, 6).map((p) => (
+                <button key={p.id} onClick={() => nav('/marketplace')} className="w-40 shrink-0 text-left">
+                  <Card className="overflow-hidden p-0">
+                    <div className="h-24 w-full" style={{ backgroundImage: 'linear-gradient(135deg, #4a1230, #963a5c)' }} />
+                    <div className="p-2">
+                      <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{p.name}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-vermilion">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
+                      {p.is_demo && <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Demo</span>}
+                    </div>
+                  </Card>
+                </button>
+              ))}
+            </Rail>
+          </section>
+        </Reveal>
+      )}
+
+      {/* Social matching teaser — activity-based companions, not dating. */}
+      {flags.ENABLE_SOCIAL_MATCHING && (
+        <Reveal>
+          <section className="mt-5">
+            <button onClick={() => nav('/social')} className="w-full text-left active:scale-[0.99]">
+              <Card className="flex items-center gap-3 border border-maya/20 p-3.5">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-maya/15 text-maya"><Users size={18} /></span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">Find your puja vibe</p>
+                  <p className="text-[11px] text-ink-soft">Meet people planning similar pandal hops, food crawls and walks.</p>
+                </div>
+                <ChevronDown size={16} className="shrink-0 -rotate-90 text-maya" />
+              </Card>
+            </button>
+          </section>
+        </Reveal>
+      )}
 
       {/* Puja tools — quick entries for the Tithi calendar and the Bengali
           Phrasebook. Diaspora users (Delhi / Siliguri / Howrah) lean on these

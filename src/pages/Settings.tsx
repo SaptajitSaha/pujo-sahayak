@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import {
-  ArrowRight, Bell, CircleHelp, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, Sparkles as SparkleRow, User,
+  ArrowRight, Bell, CircleHelp, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, Sparkles as SparkleRow, User, FlaskConical,
 } from 'lucide-react'
 import { BackHeader, Card, Chip, Logo, Page } from '../components/ui'
+import { AuthorityPanel } from '../components/AuthorityPanel'
 import { CITIES } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
 import type { City, Lang, Theme } from '../data/types'
+import type { FeatureFlag } from '../config/features'
 
 export default function Settings() {
   const t = useT()
@@ -27,6 +29,8 @@ export default function Settings() {
   const setSelectedCity = useApp((s) => s.setSelectedCity)
   const tithiDemoMode = useApp((s) => s.tithiDemoMode)
   const setTithiDemoMode = useApp((s) => s.setTithiDemoMode)
+  const featureFlags = useApp((s) => s.featureFlags)
+  const setFeatureFlag = useApp((s) => s.setFeatureFlag)
 
   const [contactName, setContactName] = useState(trustedContacts[0]?.name ?? '')
   const [contactPhone, setContactPhone] = useState(trustedContacts[0]?.phone ?? '')
@@ -190,6 +194,33 @@ export default function Settings() {
         </Card>
 
         <Row icon={SparkleRow} label={premium ? 'Premium — active (demo)' : t('premiumMember')} onClick={() => { setPremium(!premium); note(premium ? 'Switched back to Free Plan (demo).' : 'Premium unlocked locally — demo only, no payment.')}} />
+
+        {/* Developer: feature flag toggles */}
+        <Card className="mt-4 p-3.5">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><FlaskConical size={15} /></span>
+            <span className="flex-1 text-sm font-medium">Feature Flags (Developer)</span>
+          </div>
+          <p className="mt-1.5 text-[10px] text-faint">Toggle experimental features. Disabled features hide all UI + block routes.</p>
+          <div className="mt-2.5 space-y-2">
+            {(Object.entries(featureFlags) as [FeatureFlag, boolean][]).map(([flag, value]) => (
+              <label key={flag} className="flex items-center justify-between text-sm">
+                <span className="text-ink-soft">{flag.replace('ENABLE_', '').split('_').join(' ').toLowerCase()}</span>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  onChange={(e) => setFeatureFlag(flag, e.target.checked)}
+                  className="h-5 w-5 accent-[#7c3aed]"
+                  aria-label={`Toggle ${flag}`}
+                />
+              </label>
+            ))}
+          </div>
+        </Card>
+
+        {/* Authority integration panel — providers + demo report form */}
+        {featureFlags.ENABLE_AUTHORITY_INTEGRATION && <AuthorityPanel />}
+
         <Row icon={Info} label="About Pujo Sahayak" onClick={() => note('v0.1 demo build • See the Puja. Understand the story.')} />
         <Row icon={CircleHelp} label="Help & Support" onClick={() => note('Support inbox arrives with the backend.')} />
       </div>

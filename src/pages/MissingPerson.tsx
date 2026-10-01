@@ -6,6 +6,9 @@ import { Button, Card, Chip, Img, Page } from '../components/ui'
 import { pandals } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
+import { supabase } from '../lib/supabase'
+import { getUserId } from '../lib/auth'
+import { useAuthorityProviders } from '../services/authority'
 
 const STEPS = ['Person', 'Details', 'Location', 'Submit'] as const
 
@@ -13,24 +16,45 @@ export default function MissingPerson() {
   const t = useT()
   const nav = useNavigate()
   const reportMissing = useApp((s) => s.reportMissing)
+  const { data: providers = [] } = useAuthorityProviders()
+  const anyActive = providers.some((p) => p.is_active)
   const [step, setStep] = useState(0)
   const [personType, setPersonType] = useState<'child' | 'adult' | 'elderly'>('adult')
   const [name, setName] = useState('')
   const [details, setDetails] = useState('')
   const [placeId, setPlaceId] = useState('')
   const [photo, setPhoto] = useState<string | undefined>()
-  const [done, setDone] = useState(false)
+  const [done, setDone] = useState<null | 'local' | 'sent'>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const addReport = reportMissing
   const canNext = step === 0 ? Boolean(personType) : step === 1 ? name.trim().length > 1 : true
 
-  const submit = () => {
-    addReport({
+  const submit = async () => {
+    const report = {
       id: `mp-${Date.now()}`, personType, name, details, lastSeenPlaceId: placeId || undefined,
       photoDataUrl: photo, createdAt: new Date().toISOString(),
-    })
-    setDone(true)
+    }
+    // 1. Always save locally (survives via Zustand persist).
+    addReport(report)
+    // 2. Persist to the server only when Supabase is configured AND a real
+    //    authority provider is active — never fabricate a live transmission.
+    if (supabase && anyActive) {
+      try {
+        const userId = await getUserId()
+        await supabase.from('user_reports').insert({
+          reporter_id: userId,
+          target_type: 'missing_person',
+          target_id: report.id,
+          reason: `${report.personType}: ${report.name} — ${report.details || 'no further details'} (last seen: ${pandals.find((p) => p.id === placeId)?.name ?? 'unknown'})`,
+        })
+        setDone('sent')
+        return
+      } catch {
+        // Server write failed — the local copy still stands; be honest about it.
+      }
+    }
+    setDone('local')
   }
 
   if (done) {
@@ -38,11 +62,11 @@ export default function MissingPerson() {
       <Page>
         <Card className="mt-10 p-6 text-center">
           <CheckCircle2 size={40} className="mx-auto text-emerald-600" />
-          <h1 className="mt-3 text-lg font-semibold">Report saved on this device</h1>
+          <h1 className="mt-3 text-lg font-semibold">{done === 'sent' ? 'Report sent to the help desk' : 'Report saved on this device'}</h1>
           <p className="mt-2 text-sm text-ink-soft">
-            In the production system this report would route to the nearest authorised help desk and
-            operator — never to a public feed. That integration is partner-dependent, so nothing has
-            been sent anywhere yet.
+            {done === 'sent'
+              ? 'Your report was routed to the nearest authorised help desk. It was never posted to a public feed.'
+              : 'In the production system this report would route to the nearest authorised help desk and operator — never to a public feed. That integration is partner-dependent, so nothing has been sent anywhere yet.'}
           </p>
           <p className="mt-2 text-xs text-faint">If this is urgent right now, call 112.</p>
           <Button className="mt-4" onClick={() => nav('/safety')}>Back to Safety Center</Button>

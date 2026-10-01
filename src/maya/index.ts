@@ -2,11 +2,24 @@
 // One entry point for the chatbot. Off-topic gate → LLM (if enabled) → offline
 // brain fallback. Never returns null; Maya always answers something.
 
-import { answer, isOffTopic, OFF_TOPIC_REPLY, type MayaReply } from './brain'
+import { answer, isOffTopic, OFF_TOPIC_REPLY, type LiveContext, type MayaReply } from './brain'
 import { askLLM, type ChatTurn } from './llm'
+import { fetchOfficialNotices } from '../services/authority'
+import { fetchLiveNotes } from '../services/liveNotes'
 import type { Place } from '../data/types'
 
 export type { MayaReply, ChatTurn }
+
+/** Best-effort live context for a pandal. Any failure yields empty signals —
+    Maya still answers from the static dataset, and never invents updates. */
+async function loadLiveContext(placeId: string): Promise<LiveContext> {
+  try {
+    const [notices, notes] = await Promise.all([fetchOfficialNotices(placeId), fetchLiveNotes(placeId)])
+    return { notices, notes }
+  } catch {
+    return { notices: [], notes: [] }
+  }
+}
 
 export async function askMaya(
   q: string,
@@ -26,5 +39,7 @@ export async function askMaya(
     // fall through to offline brain on any failure
   }
 
-  return answer(q, ctx ?? null)
+  // Offline brain — enrich with live notices/notes when a pandal is in context.
+  const live = ctx?.type === 'pandal' ? await loadLiveContext(ctx.id) : null
+  return answer(q, ctx ?? null, live)
 }

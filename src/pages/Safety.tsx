@@ -1,11 +1,50 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useReducedMotion, motion } from 'framer-motion'
-import { AlertTriangle, Cross, Flame, PhoneCall, Search, ShieldQuestion, Users, Siren } from 'lucide-react'
+import { AlertTriangle, Cross, Flame, PhoneCall, Search, ShieldQuestion, Users, Siren, Megaphone } from 'lucide-react'
 import { Card, Page } from '../components/ui'
 import { safetyPoints } from '../data/demo'
 import { useApp } from '../store'
 import { useT } from '../i18n'
+import { useAuthorityAlerts, isStale } from '../services/authority'
+import { relativeTime } from '../services/liveNotes'
+import type { AuthorityAlert } from '../data/types'
+
+const ALERT_COLOR: Record<AuthorityAlert['alert_type'], string> = {
+  emergency: 'text-red-300', traffic: 'text-blue-300', closure: 'text-amber-300',
+  safety: 'text-gold-bright', medical: 'text-emerald-300', operational: 'text-violet-300',
+}
+
+/** Live official alerts from active authority providers. Renders nothing when
+    no backend/feed is connected — we never fabricate an emergency. */
+function OfficialAlerts() {
+  const { data: alerts = [] } = useAuthorityAlerts()
+  if (alerts.length === 0) return null
+  return (
+    <section className="mt-6">
+      <h2 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-gold-bright">
+        <Megaphone size={14} /> Official alerts
+      </h2>
+      <Card className="divide-y divide-white/10 !bg-white/5 !text-on-image">
+        {alerts.map((a) => {
+          const stale = isStale(a.expires_at)
+          return (
+            <div key={a.id} className={`flex items-start gap-3 p-3.5 ${stale ? 'opacity-50' : ''}`}>
+              <ShieldQuestion size={16} className={`mt-0.5 shrink-0 ${ALERT_COLOR[a.alert_type]}`} />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-on-image">{a.text}</p>
+                <p className="mt-0.5 text-[11px] text-on-image/60">
+                  {relativeTime(a.created_at)}
+                  {stale && ' · Expired'}
+                </p>
+              </div>
+            </div>
+          )
+        })}
+      </Card>
+    </section>
+  )
+}
 
 const KIND_ICON = { police: PhoneCall, medical: Cross, helpdesk: ShieldQuestion, lostfound: Search, fire: Flame }
 const KIND_COLOR = { police: 'bg-blue-600', medical: 'bg-emerald-600', helpdesk: 'bg-violet-600', lostfound: 'bg-amber-500', fire: 'bg-pink-600' }
@@ -111,6 +150,7 @@ export default function Safety() {
   const reduceMotion = useApp((s) => s.reduceMotion)
   const systemReduce = useReducedMotion()
   const reduced = reduceMotion || systemReduce === true
+  const flags = useApp((s) => s.featureFlags)
   const trustedContacts = useApp((s) => s.trustedContacts)
   const currentAddress = useApp((s) => s.currentAddress)
   const setSosActive = useApp((s) => s.setSosActive)
@@ -166,6 +206,9 @@ export default function Safety() {
         <PhoneCall size={18} /> {t('call112')}
       </a>
 
+      {/* Live official alerts from active authority providers (flag-gated) */}
+      {flags.ENABLE_AUTHORITY_INTEGRATION && <OfficialAlerts />}
+
       {/* Nearby help points */}
       <section className="mt-6">
         <h2 className="mb-2 text-sm font-semibold text-gold-bright">{t('nearbyHelp')}</h2>
@@ -206,8 +249,10 @@ export default function Safety() {
       </div>
 
       <p className="mt-6 text-center text-[10px] leading-relaxed text-on-image/40">
-        Missing-person reports and SOS state are stored only on this device in the demo build. Authority
-        integration (help desks, control rooms) is partner-dependent and deliberately not simulated.
+        SOS state is stored on this device. Missing-person reports save locally and, when a live
+        authority backend is connected, are also routed to the nearest help desk — never to a public
+        feed. Authority integration (help desks, control rooms) is partner-dependent and is not
+        simulated when no provider is active.
       </p>
     </Page>
   )

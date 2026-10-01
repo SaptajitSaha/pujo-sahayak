@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
-  Flame, HandHeart, Lock, MapPin, Palette, Phone, Share2, Siren, Settings as SettingsIcon, Sparkles, Users,
+  Flame, HandHeart, Lock, LogIn, MapPin, Palette, Phone, Share2, Siren, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
 import { Button, Card, Img, Page, SectionHeader } from '../components/ui'
+import { Wallet } from '../components/Wallet'
+import { MyOrders } from '../components/MyOrders'
 import { walks } from '../data/demo'
 import { useApp } from '../store'
 import { evaluateBadges, scorecardSummary } from '../lib/scorecard'
+import { useAuth, useUserId } from '../lib/auth'
 import { useT } from '../i18n'
 
 export default function Profile() {
@@ -18,7 +21,10 @@ export default function Profile() {
   const joined = useApp((s) => s.joinedMeetups)
   const premium = useApp((s) => s.premium)
   const checkins = useApp((s) => s.checkins)
+  const flags = useApp((s) => s.featureFlags)
   const [copied, setCopied] = useState(false)
+  const { isAuthenticated, user } = useAuth()
+  const userId = useUserId()
 
   // Everything below is derived only from the user's own GPS-verified check-ins.
   const summary = scorecardSummary(checkins)
@@ -47,8 +53,8 @@ export default function Profile() {
       <div className="mt-4 flex items-center gap-3">
         <Img palette={{ from: '#8E5A2E', to: '#4A2A12' }} alt="Your avatar" className="h-14 w-14 rounded-full" />
         <div>
-          <p className="text-base font-semibold">You</p>
-          <p className="text-xs text-faint">Kolkata</p>
+          <p className="text-base font-semibold">{isAuthenticated ? user?.email?.split('@')[0] : 'You'}</p>
+          <p className="text-xs text-faint">{isAuthenticated ? 'Signed in' : 'Kolkata'}</p>
           <span className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${premium ? 'bg-gold text-white' : 'bg-ivory-deep text-gold'}`}>
             <BadgeCheck size={11} /> {premium ? 'Premium Member' : 'Free Plan'}
           </span>
@@ -120,6 +126,10 @@ export default function Profile() {
         </Card>
       </section>
 
+      {/* Cross-feature sections — each independently flag-gated. */}
+      {flags.ENABLE_MARKETPLACE && <MyOrders />}
+      {flags.ENABLE_WALLET && <Wallet userId={userId} />}
+
       {/* Premium CTA */}
       <button onClick={() => nav('/profile/settings')} className="mt-4 w-full text-left">
         <Card className="flex items-center gap-3 bg-gradient-to-r from-night to-night-soft p-3.5 text-on-image">
@@ -154,6 +164,7 @@ export default function Profile() {
       <div className="mt-5 space-y-2">
         {[
           { icon: CalendarCheck, label: t('allVisits'), to: '/favorites' },
+          { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
           { icon: CreditCard, label: 'Payments & Subscriptions', to: '/profile/settings' },
           { icon: HandHeart, label: 'Donate', to: '/profile/settings' },
           { icon: Palette, label: t('appearance'), to: '/profile/settings' },

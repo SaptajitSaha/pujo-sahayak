@@ -13,7 +13,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, TrainFront, Clock, ArrowRightLeft, Search, MapPin, Info, CircleCheck,
 } from 'lucide-react'
-import { Card, Chip, Page, Reveal, SectionHeader } from '../components/ui'
+import { Card, Chip, CollapsibleList, Page, Reveal, SectionHeader } from '../components/ui'
+import MetroNetworkMap from '../components/MetroNetworkMap'
 import {
   metroLines, metroServiceAdvisories, metroStations, type MetroStation,
 } from '../data/transport'
@@ -27,6 +28,7 @@ export default function MetroGuide() {
   const nav = useNavigate()
   const bn = useApp((s) => s.lang) === 'bn'
   const track = useApp((s) => s.track)
+  const flags = useApp((s) => s.featureFlags)
   const [params, setParams] = useSearchParams()
   // Resume support: a deep link from the "Continue where you left off" card
   // arrives as ?line=<id>&q=<station>, so reopening lands on the exact view the
@@ -93,6 +95,11 @@ export default function MetroGuide() {
         </div>
         <span className="mt-1 shrink-0 rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] font-medium text-faint">{bn ? 'নমুনা' : 'Sample data'}</span>
       </header>
+
+      {/* Whole-system view: the real network (vendored OSM geometry) tracing
+          itself in, line by line. Own flag so the map can ship independently
+          of the strip-map reference below. */}
+      {flags.ENABLE_METRO_MAP && <MetroNetworkMap bn={bn} />}
 
       {/* Line selector — colour-coded chips. */}
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -213,7 +220,13 @@ export default function MetroGuide() {
             />
           </div>
           <div className="space-y-1.5">
-            {filteredStations.map((s) => <StationRow key={s.name} s={s} onGo={() => openDirections(s.name)} />)}
+            <CollapsibleList
+              items={filteredStations}
+              preview={6}
+              renderItem={(s) => <StationRow key={s.name} s={s} onGo={() => openDirections(s.name)} />}
+              expandLabel={(total) => (bn ? `সব ${total}টি স্টেশন দেখুন` : `View all ${total} stations`)}
+              collapseLabel={bn ? 'কম দেখুন' : 'Show less'}
+            />
             {filteredStations.length === 0 && <p className="py-4 text-center text-sm text-faint">No station matches “{query}”.</p>}
           </div>
         </section>

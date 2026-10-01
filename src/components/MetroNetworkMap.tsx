@@ -3,7 +3,10 @@
 // drawn as an SVG diagram that traces itself once, line by line (a "metro train"
 // running out along each route), then dots the stations as each line reaches them.
 //
-// Geometry is REAL (data/metroNetwork.ts, vendored from OpenStreetMap) and the
+// This is the map PANEL shown on its own subpage (/transport/metro/map); the
+// Metro guide links to that page rather than embedding the diagram inline.
+//
+// Geometry is REAL core + transcribed extensions (data/metroNetwork.ts) and the
 // projection is pure/tested (lib/metroMap.ts). This component only draws.
 //
 // Motion doctrine (see perf notes in index.css): ONE-SHOT only — everything
@@ -16,14 +19,13 @@
 // dashoffset and framer animates it to 0 — no measure-then-rerender race.
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Info, Maximize2, Minimize2 } from 'lucide-react'
-import { Card } from './ui'
+import { Info } from 'lucide-react'
 import { useApp } from '../store'
 import { labelPlacements, polylineLength, projectNetwork, METRO_MAP_CANVAS, type LayoutMap } from '../lib/metroMap'
 import { metroNetLines, metroNetStations, metroNetColors, METRO_NET_ATTRIBUTION } from '../data/metroNetwork'
 
-// Fixed diagram canvas (shared with the tests); the SVG scales to the card via
-// viewBox so this is purely the internal coordinate space the labels live in.
+// Fixed diagram canvas (shared with the tests); the SVG scales to its container
+// via viewBox, and +/− zoom scales it past the viewport for reading the labels.
 const { width: W, height: H } = METRO_MAP_CANVAS
 
 // One-shot timeline: each line starts after the previous is nearly done.
@@ -33,10 +35,9 @@ const START = 0.25
 export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
   const reduce = useApp((s) => s.reduceMotion)
   const [zoom, setZoom] = useState(1)
-  const [full, setFull] = useState(false)
 
   const map: LayoutMap = useMemo(
-    () => projectNetwork({ lines: metroNetLines, stations: metroNetStations }, { width: W, height: H }),
+    () => projectNetwork({ lines: metroNetLines, stations: metroNetStations }, METRO_MAP_CANVAS),
     [],
   )
 
@@ -90,26 +91,28 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
   const dotDelay = (id: string) => (instant ? 0 : plan.at.get(id) ?? 0)
 
   return (
-    <Card className="mt-3 overflow-hidden p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold">{bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}</h2>
-          <p className="mt-0.5 text-xs text-ink-soft">
-            {bn
-              ? `${metroNetColors.length} লাইন · ${metroNetStations.length} স্টেশন`
-              : `${metroNetColors.length} lines · ${metroNetStations.length} stations`}
-          </p>
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs text-ink-soft">
+          {bn
+            ? `${metroNetColors.length} লাইন · ${metroNetStations.length} স্টেশন`
+            : `${metroNetColors.length} lines · ${metroNetStations.length} stations`}
+        </p>
+        {/* Zoom: fit-width at 100%; +/− scales the diagram past the viewport and
+            the container pans natively (compositor-only, no libraries). */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(2)))}
+            aria-label={bn ? 'ছোট করুন' : 'Zoom out'}
+            className="rounded-full border border-white/50 px-3 py-1 text-sm font-medium text-ink-soft transition-colors hover:text-ink dark:border-white/15"
+          >−</button>
+          <span className="w-10 text-center text-xs tabular-nums text-ink-soft">{Math.round(zoom * 100)}%</span>
+          <button
+            onClick={() => setZoom((z) => Math.min(3, +(z + 0.5).toFixed(2)))}
+            aria-label={bn ? 'বড় করুন' : 'Zoom in'}
+            className="rounded-full border border-white/50 px-3 py-1 text-sm font-medium text-ink-soft transition-colors hover:text-ink dark:border-white/15"
+          >+</button>
         </div>
-        {/* Full-screen viewer: on a phone the diagram scales to ~320px and the
-            labels shrink away — this shows it at real size with native pan,
-            and +/− zoom via CSS transform (compositor-only, no libraries). */}
-        <button
-          onClick={() => { setFull(true); setZoom(1) }}
-          aria-label={bn ? 'বড় করে দেখুন' : 'View full screen'}
-          className="shrink-0 rounded-full border border-white/50 p-1.5 text-ink-soft transition-colors hover:text-ink dark:border-white/15"
-        >
-          <Maximize2 size={14} />
-        </button>
       </div>
 
       <figure
@@ -117,13 +120,16 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
         aria-label={`Schematic network map of the Kolkata Metro: ${metroNetLines
           .map((l) => `${l.name} with ${l.stationIds.length} stations`)
           .join('; ')}. Interchanges: Noapara, Esplanade, Kavi Subhash, Salt Lake Sector V, Biman Bandar.`}
-        className="mt-2"
+        className="no-scrollbar mt-2 overflow-x-auto"
+        style={{ touchAction: 'pan-x pan-y' }}
       >
-        <MapSvg map={map} labels={labels} instant={instant} dotDelay={dotDelay} plan={plan} />
+        <div style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
+          <MapSvg map={map} labels={labels} instant={instant} dotDelay={dotDelay} plan={plan} />
+        </div>
       </figure>
 
       {/* Legend — one swatch per line colour (branches share their parent's). */}
-      <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+      <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
         {legendLines.map((l) => (
           <li key={l.color} className="flex items-center gap-1.5 text-[11px] text-ink-soft">
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: l.color }} aria-hidden />
@@ -141,39 +147,13 @@ export default function MetroNetworkMap({ bn = false }: { bn?: boolean }) {
           {' '}{METRO_NET_ATTRIBUTION}.
         </span>
       </p>
-
-      {full && (
-        <div className="fixed inset-0 z-50 bg-ivory/97 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}>
-          <div className="flex items-center justify-between gap-3 border-b border-white/40 px-4 py-3 dark:border-white/10">
-            <span className="text-sm font-semibold">{bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}</span>
-            <div className="flex items-center gap-2">
-              <button onClick={() => setZoom((z) => Math.max(1, +(z - 0.5).toFixed(2)))} aria-label="Zoom out"
-                className="rounded-full border border-white/50 px-3 py-1 text-sm font-medium text-ink-soft dark:border-white/15">−</button>
-              <span className="w-10 text-center text-xs tabular-nums text-ink-soft">{Math.round(zoom * 100)}%</span>
-              <button onClick={() => setZoom((z) => Math.min(3, +(z + 0.5).toFixed(2)))} aria-label="Zoom in"
-                className="rounded-full border border-white/50 px-3 py-1 text-sm font-medium text-ink-soft dark:border-white/15">+</button>
-              <button onClick={() => setFull(false)} aria-label={bn ? 'বন্ধ করুন' : 'Close'}
-                className="ml-1 rounded-full bg-ink px-3 py-1.5 text-xs font-medium text-on-image">
-                <Minimize2 size={14} className="inline" />
-              </button>
-            </div>
-          </div>
-          <div className="h-[calc(100dvh-53px)] overflow-auto" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-x pan-y' }}>
-            <div style={{ width: W * zoom, height: H * zoom }}>
-              {/* Viewer: fully drawn (the trace already ran behind the card),
-                  every name labelled — that is the point of zooming in. */}
-              <MapSvg map={map} labels={labels} instant dotDelay={() => 0} plan={plan} />
-            </div>
-          </div>
-        </div>
-      )}
-    </Card>
+    </div>
   )
 }
 
-/** The diagram itself — shared by the card and the full-screen viewer. In the
- *  viewer everything is already drawn (instant). Labels always show; their
- *  collision-free positions come pre-computed from labelPlacements. */
+/** The diagram itself. Labels always show; their collision-free positions come
+ *  pre-computed from labelPlacements, and the halo is sized in viewBox units so
+ *  it scales with the diagram (matching the layout's reserved box). */
 function MapSvg({
   map, labels, instant, dotDelay, plan,
 }: {

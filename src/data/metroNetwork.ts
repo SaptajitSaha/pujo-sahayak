@@ -162,11 +162,11 @@ export const metroNetLines: MetroNetLine[] = [
     stationIds: ['thakurpukur', 'iim', 'diamond-park'],
   },
   {
-    id: 'orange', name: 'Orange Line · Line 2', short: 'Line 2', color: '#EA580C',
+    id: 'orange', name: 'Orange Line · Line 4', short: 'Line 4', color: '#EA580C',
     stationIds: ['kavi-subhash', 'satyajit-roy', 'jyotirindra-nandi', 'kavi-sukanta', 'hemanta-mukhopadhyay', 'vip-bazar', 'ritwik-ghatak', 'barun-sengupta', 'beleghata', 'gour-kishor-ghosh', 'salt-lake-sector-v', 'technopolis', 'bidhan-nagar', 'sub-cbd-1', 'cbd-1', 'kalakshetra', 'new-town', 'convention-centre', 'sub-cbd-2', 'titumir', 'biman-bandar'],
   },
   {
-    id: 'yellow', name: 'Yellow Line · Airport', short: 'Line 6', color: '#B45309',
+    id: 'yellow', name: 'Yellow Line · Airport', short: 'Airport', color: '#B45309',
     stationIds: ['noapara', 'dum-dum-road', 'jessore-road', 'biman-bandar', 'birati', 'madhyamgram', 'new-barrackpore', 'michael-nagar', 'hridaypur', 'barasat'],
   },
   {

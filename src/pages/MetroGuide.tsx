@@ -12,12 +12,13 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, TrainFront, Clock, ArrowRightLeft, Search, MapPin, Info, CircleCheck,
+  Map as MapIcon, ChevronRight,
 } from 'lucide-react'
 import { Card, Chip, CollapsibleList, Page, Reveal, SectionHeader } from '../components/ui'
-import MetroNetworkMap from '../components/MetroNetworkMap'
 import {
   metroLines, metroServiceAdvisories, metroStations, type MetroStation,
 } from '../data/transport'
+import { metroNetColors, metroNetStations } from '../data/metroNetwork'
 import { metroETAs, pandals } from '../data/demo'
 import { useApp } from '../store'
 
@@ -96,10 +97,26 @@ export default function MetroGuide() {
         <span className="mt-1 shrink-0 rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] font-medium text-faint">{bn ? 'নমুনা' : 'Sample data'}</span>
       </header>
 
-      {/* Whole-system view: the real network (vendored OSM geometry) tracing
-          itself in, line by line. Own flag so the map can ship independently
-          of the strip-map reference below. */}
-      {flags.ENABLE_METRO_MAP && <MetroNetworkMap bn={bn} />}
+      {/* Whole-system view lives on its own subpage — the guide just offers the
+          entry point, so the diagram gets a full screen instead of a card.
+          Own flag so the map can ship independently of the strip-map reference. */}
+      {flags.ENABLE_METRO_MAP && (
+        <button
+          onClick={() => nav('/transport/metro/map')}
+          className="glass mt-3 flex w-full items-center gap-3 overflow-hidden rounded-card p-4 text-left transition-transform active:scale-[0.985]"
+        >
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-500/15 text-sky-600 dark:text-sky-400"><MapIcon size={22} /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{bn ? 'মেট্রো নেটওয়ার্ক মানচিত্র' : 'Metro network map'}</span>
+            <span className={`mt-0.5 block text-xs text-ink-soft ${bn ? 'bn' : ''}`}>
+              {bn
+                ? `${metroNetColors.length} লাইন · ${metroNetStations.length} স্টেশন · অ্যানিমেটেড`
+                : `${metroNetColors.length} lines · ${metroNetStations.length} stations · animated`}
+            </span>
+          </span>
+          <ChevronRight size={18} className="shrink-0 text-faint" aria-hidden />
+        </button>
+      )}
 
       {/* Line selector — colour-coded chips. */}
       <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">

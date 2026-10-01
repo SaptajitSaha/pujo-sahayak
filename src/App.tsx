@@ -41,6 +41,7 @@ const loaders = {
   SocialMatch: () => import('./pages/SocialMatch'),
   Marketplace: () => import('./pages/Marketplace'),
   MetroGuide: () => import('./pages/MetroGuide'),
+  MetroMap: () => import('./pages/MetroMap'),
   ServiceDirectory: () => import('./pages/ServiceDirectory'),
   Passport: () => import('./pages/Passport'),
   Diary: () => import('./pages/Diary'),
@@ -74,6 +75,7 @@ const Auth = lazy(loaders.Auth)
 const SocialMatch = lazy(loaders.SocialMatch)
 const Marketplace = lazy(loaders.Marketplace)
 const MetroGuide = lazy(loaders.MetroGuide)
+const MetroMap = lazy(loaders.MetroMap)
 const ServiceDirectory = lazy(loaders.ServiceDirectory)
 const Passport = lazy(loaders.Passport)
 const Diary = lazy(loaders.Diary)
@@ -236,6 +238,7 @@ function Shell() {
       <Route path="/social" element={<SocialMatch />} />
       <Route path="/marketplace" element={<Marketplace />} />
       <Route path="/transport/metro" element={<MetroGuide />} />
+      <Route path="/transport/metro/map" element={<MetroMap />} />
       <Route path="/services/:cat" element={<ServiceDirectory />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

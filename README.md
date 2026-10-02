@@ -22,14 +22,9 @@ trilingual, and grounded in *real* Kolkata pandals and restaurants.
 
 <table align="center">
   <tr>
-    <td align="center"><img src="assets/screens/phone-home.png" width="248" alt="Home" /></td>
-    <td align="center"><img src="assets/screens/phone-explore.png" width="248" alt="Explore" /></td>
-    <td align="center"><img src="assets/screens/phone-pandal.png" width="248" alt="Pandal detail" /></td>
-  </tr>
-  <tr>
-    <td align="center"><sub><b>Home</b> — nearby spotlight & rails</sub></td>
-    <td align="center"><sub><b>Explore</b> — filter, list & map</sub></td>
-    <td align="center"><sub><b>Pandal</b> — theme, crowd, metro</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-home.png" width="210" alt="Home" /><br /><sub><b>Home</b> — nearby spotlight &amp; rails</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-explore.png" width="210" alt="Explore" /><br /><sub><b>Explore</b> — filter, list &amp; map</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-pandal.png" width="210" alt="Pandal detail" /><br /><sub><b>Pandal</b> — theme, crowd, metro</sub></td>
   </tr>
 </table>
 
@@ -77,20 +72,22 @@ trilingual, and grounded in *real* Kolkata pandals and restaurants.
 
 ## 📱 Screens
 
-<table>
+<table align="center">
   <tr>
-    <td align="center"><img src="assets/screens/phone-planner.png" width="200" alt="Planner" /><br /><sub><b>Planner</b></sub></td>
-    <td align="center"><img src="assets/screens/phone-favorites.png" width="200" alt="Favorites" /><br /><sub><b>Favorites</b></sub></td>
-    <td align="center"><img src="assets/screens/phone-meets.png" width="200" alt="Meetups" /><br /><sub><b>Meetups</b></sub></td>
-    <td align="center"><img src="assets/screens/phone-location.png" width="200" alt="Location" /><br /><sub><b>Location picker</b></sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-planner.png" width="210" alt="Planner" /><br /><sub><b>Planner</b> — day-by-day itinerary</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-favorites.png" width="210" alt="Favorites" /><br /><sub><b>Favorites</b> — saved &amp; visited</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-meets.png" width="210" alt="Meetups" /><br /><sub><b>Meetups</b> — plans near you</sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="assets/screens/phone-categories.png" width="200" alt="Categories" /><br /><sub><b>Categories</b></sub></td>
-    <td align="center"><img src="assets/screens/phone-notifications.png" width="200" alt="Notifications" /><br /><sub><b>Notifications</b></sub></td>
-    <td colspan="2" align="center" valign="middle"><sub>…and more: <b>Maya</b> assistant, <b>Trip map</b>,
-    <b>Safety</b>, <b>Missing person</b>, <b>Settings</b>, <b>Beyond Puja</b>.</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-categories.png" width="210" alt="Categories" /><br /><sub><b>Categories</b> — food, shopping, events</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-location.png" width="210" alt="Location picker" /><br /><sub><b>Location</b> — area &amp; pin picker</sub></td>
+    <td align="center" valign="top"><img src="assets/screens/phone-notifications.png" width="210" alt="Notifications" /><br /><sub><b>Notifications</b> — alerts &amp; deep links</sub></td>
   </tr>
 </table>
+
+Also in the app: **Maya** assistant, **Trip map**, **Safety** hub, **Missing
+person**, **Settings**, **Beyond Puja** — screenshots not captured here, so this
+row stays a text list rather than an empty placeholder tile.
 
 ## 🧱 Tech stack
 

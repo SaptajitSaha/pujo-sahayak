@@ -2,15 +2,63 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MapPin, Plus, Share2, Users, X } from 'lucide-react'
+import { MapPin, Plus, Share2, Trash2, Users, X } from 'lucide-react'
 import { Button, Card, Chip, Img, Page } from '../components/ui'
 import { meetups, placeById, safetyPoints } from '../data/demo'
 import { useApp } from '../store'
 import { haversineKm } from '../lib/geo'
+import { isUpcoming } from '../lib/meetupDate'
 import { suggestMeetingPoint } from '../lib/meetingPoint'
 import { useT } from '../i18n'
 import { DEMO_USER } from '../data/demo'
-import type { Meetup } from '../data/types'
+import type { LocalMeetup, Meetup } from '../data/types'
+
+/** ISO 'YYYY-MM-DD' + 'HH:MM' from the create form → a readable label. Falls
+    back to the raw values rather than printing "Invalid Date". */
+function humanWhen(date: string, time: string): string {
+  const at = new Date(`${date}T${time}`)
+  if (Number.isNaN(at.getTime())) return `${date} ${time}`
+  return `${at.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })} • ${at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`
+}
+
+/** A meetup the user created. No attendee counts and no coordinates it does not
+    have: everything on this card is something the filer actually entered. */
+function UserMeetupCard({ m, onDelete }: { m: LocalMeetup; onDelete: () => void }) {
+  return (
+    <Card className="p-3">
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-semibold">{m.title}</h3>
+          <p className="text-xs text-ink-soft">{humanWhen(m.date, m.time)}</p>
+          <p className="flex items-center gap-1 text-[11px] text-faint">
+            <MapPin size={10} /> {m.location}
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-ivory-deep px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ink-soft">
+          Yours
+        </span>
+      </div>
+      {m.description && <p className="mt-1.5 line-clamp-2 text-[11px] text-ink-soft">{m.description}</p>}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {m.interests.map((i) => <span key={i} className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">{i}</span>)}
+        <span className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">up to {m.maxParticipants}</span>
+        {m.visibility === 'restricted' && <span className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">restricted</span>}
+      </div>
+      <div className="mt-2.5 flex items-center gap-2">
+        {/* Directions only when a real spot was chosen — a typed location has no
+            coordinates, and plotting a guess would be a fabricated position. */}
+        {m.lat !== undefined && m.lng !== undefined && (
+          <Button size="sm" variant="outline" onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${m.lat},${m.lng}`, '_blank', 'noopener,noreferrer')}>
+            <MapPin size={13} /> Directions
+          </Button>
+        )}
+        <button onClick={onDelete} aria-label={`Delete ${m.title}`} className="ml-auto flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-faint hover:text-vermilion">
+          <Trash2 size={13} /> Delete
+        </button>
+      </div>
+    </Card>
+  )
+}
 
 export default function Meets() {
   const t = useT()
@@ -22,12 +70,18 @@ export default function Meets() {
   useEffect(() => { if (openMeet) sheetRef.current?.focus() }, [openMeet])
   const joined = useApp((s) => s.joinedMeetups)
   const toggleMeetup = useApp((s) => s.toggleMeetup)
+  const userMeetups = useApp((s) => s.userMeetups)
+  const removeMeetup = useApp((s) => s.removeMeetup)
   const saved = useApp((s) => s.saved)
   const flags = useApp((s) => s.featureFlags)
 
+  // Seeded meetups are a curated sample of the puja week, so their dates are
+  // static labels. Once one has passed it must stop being offered as upcoming.
+  const upcoming = useMemo(() => meetups.filter((m) => isUpcoming(m.date, m.time)), [])
+
   const list = useMemo(() => {
     if (filter === 'nearby') {
-      return [...meetups].sort(
+      return [...upcoming].sort(
         (a, b) =>
           haversineKm(DEMO_USER.lat, DEMO_USER.lng, a.lat, a.lng) -
           haversineKm(DEMO_USER.lat, DEMO_USER.lng, b.lat, b.lng),
@@ -37,10 +91,10 @@ export default function Meets() {
       const myInterests: Set<string> = new Set(
         saved.map((id) => placeById(id)?.type).map((ty) => (ty === 'restaurant' ? 'Food' : 'Pandal hopping')),
       )
-      return meetups.filter((m) => m.interests.some((i) => myInterests.has(i)))
+      return upcoming.filter((m) => m.interests.some((i) => myInterests.has(i)))
     }
-    return meetups
-  }, [filter, saved])
+    return upcoming
+  }, [filter, saved, upcoming])
 
   return (
     <Page>
@@ -55,7 +109,24 @@ export default function Meets() {
         ))}
       </div>
 
-      <div className="mt-4 space-y-3">
+      {/* Meetups the user created are shown apart from the curated examples —
+          one is real data on this device, the other is a sample layout. */}
+      {userMeetups.length > 0 && (
+        <section className="mt-4">
+          <h2 className="mb-2 text-sm font-semibold">Yours · stored on this device</h2>
+          <div className="space-y-3">
+            {userMeetups.map((m) => (
+              <UserMeetupCard key={m.id} m={m} onDelete={() => removeMeetup(m.id)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="mt-4 flex items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold">Sample meetups</h2>
+        <span className="text-[10px] text-faint">Illustrative plans, not live bookings</span>
+      </div>
+      <div className="mt-2 space-y-3">
         {list.map((m) => {
           const isJoined = joined.includes(m.id)
           const full = m.attendees + (isJoined ? 1 : 0) >= m.maxParticipants
@@ -87,7 +158,10 @@ export default function Meets() {
                   {[0, 1, 2].slice(0, Math.min(3, m.attendees)).map((i) => (
                     <span key={i} className="h-5 w-5 rounded-full border border-card" style={{ background: `linear-gradient(135deg, ${m.palette.from}, ${m.palette.to})` }} />
                   ))}
-                  {m.attendees} going
+                  {/* Attendee counts and these avatar dots are seeded layout
+                      values, so they are labelled — a count that reads as live
+                      people is the kind of claim this app never makes. */}
+                  {m.attendees} going · sample
                 </span>
                 <Button size="sm" variant={isJoined ? 'dark' : 'primary'} onClick={(e) => { e.stopPropagation(); toggleMeetup(m.id) }} disabled={!isJoined && full}>
                   {isJoined ? t('joined') : full ? 'Full' : t('join')}
@@ -96,6 +170,13 @@ export default function Meets() {
             </Card>
           )
         })}
+        {list.length === 0 && (
+          <Card className="p-5 text-center text-sm text-faint">
+            {upcoming.length === 0
+              ? 'The sample meetups for the 2026 puja week have all passed. Create your own with the button below.'
+              : 'No sample meetup matches this filter. Try “All”.'}
+          </Card>
+        )}
       </div>
 
       <Button className="mt-5 w-full" onClick={() => nav('/meets/create')}>

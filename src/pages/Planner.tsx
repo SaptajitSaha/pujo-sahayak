@@ -19,11 +19,9 @@ const fmt = (hhmm: string) => {
 }
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1)
 
-// Bolo/2026 defaults: a Puja evening out is ~4 hours; each pandal averages
-// 45 min darshan + photos. Overridable only if the user has already planned a
-// very long day — the button then keeps everything and just reorders.
+// Bolo/2026 defaults: a Puja evening out is ~4 hours. Overrunning it is now
+// reported in the reorder preview instead of being "fixed" by deleting stops.
 const DEFAULT_BUDGET_MIN = 240
-const DEFAULT_AVG_DWELL_MIN = 45
 
 export default function Planner() {
   const t = useT()
@@ -39,6 +37,8 @@ export default function Planner() {
   })
   const [picker, setPicker] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  /** A proposed reorder, shown for confirmation before it touches the plan. */
+  const [preview, setPreview] = useState<{ stops: PlanStop[]; totalMin: number; overBy: number } | null>(null)
 
   // Keyboard dismissal for the place-picker sheet: it closes on outside-click
   // and via the X button, but Escape is the affordance keyboard and screen-
@@ -82,23 +82,35 @@ export default function Planner() {
 
   const stops = planner[day]
 
-  const handleOptimize = () => {
-    // Prefer the user's current geolocation; fall back to first stop's lat/lng
-    // so the algorithm still has a valid start when offline.
+  /**
+   * Reordering preview — applied only when the user confirms.
+   *
+   * The route starts from the day's FIRST stop: no geolocation is read here,
+   * whatever the old comment beside the button claimed. `budgetMin` is set
+   * unreachably high on purpose, because optimizeRoute's documented behaviour
+   * when a day overruns its budget is to DROP the farthest stops — and this
+   * button used to write that reduced list straight into the user's plan,
+   * deleting their stops on a single tap. Every stop is kept and the overrun is
+   * reported instead, in the user's words, before anything changes.
+   */
+  const buildPreview = () => {
     const first = placeById(stops[0]?.placeId)
-    const start = first ?? { lat: 22.5626, lng: 88.3630, name: 'Kolkata' } // Kolkata central
+    const start = first ?? { lat: 22.5626, lng: 88.3630 } // Kolkata central
     const input = stops.map((s) => placeById(s.placeId)).filter((p): p is NonNullable<typeof p> => !!p)
+    if (input.length < 2) return
+    // Each stop keeps its own dwell; the average is what the shared route
+    // projector accepts, and the totals below are recomputed per stop.
+    const totalDwell = stops.reduce((sum, s) => sum + s.durationMin, 0)
     const result = optimizeRoute(input, {
-      startLat: start.lat,
-      startLng: start.lng,
-      budgetMin: DEFAULT_BUDGET_MIN,
-      avgDwellMin: DEFAULT_AVG_DWELL_MIN,
+      startLat: start.lat, startLng: start.lng,
+      budgetMin: Number.MAX_SAFE_INTEGER,
+      avgDwellMin: Math.round(totalDwell / stops.length),
     })
     const existing = new Map<string, PlanStop>(stops.map((s) => [s.placeId, s]))
     const reordered: PlanStop[] = result.ordered.map((p, i) => {
       const prev = existing.get(p.id)!
       // Re-project start times from the optimised sequence — each hop adds
-      // (travel + 3 min overhead); dwell carries over unchanged.
+      // (travel + 3 min overhead); the stop's own duration carries over.
       const legMin = result.legs[i]?.min ?? 0
       const prevTime = i === 0 ? prev.time : reordered[i - 1].time
       const [h, m] = prevTime.split(':').map(Number)
@@ -107,11 +119,30 @@ export default function Planner() {
       const nm = Math.round((base % 60) / 5) * 5
       return { ...prev, time: `${String(nh).padStart(2, '0')}:${String(nm % 60).padStart(2, '0')}` }
     })
-    reorderStops(day, reordered)
-    if (result.dropped.length) {
-      setToast(`Cut ${result.dropped.length} stop${result.dropped.length > 1 ? 's' : ''} to fit ${Math.round(DEFAULT_BUDGET_MIN / 60)} h`)
-      setTimeout(() => setToast(null), 3500)
-    }
+    const finishBase = (() => {
+      const t = reordered[reordered.length - 1]
+      const [h, m] = t.time.split(':').map(Number)
+      return h * 60 + m + t.durationMin
+    })()
+    const startBase = (() => {
+      const [h, m] = reordered[0].time.split(':').map(Number)
+      return h * 60 + m
+    })()
+    setPreview({
+      stops: reordered,
+      // Travel + dwell over the whole day, from straight-line distances —
+      // stated as an estimate wherever it is shown.
+      totalMin: finishBase - startBase,
+      overBy: Math.max(0, (finishBase - startBase) - DEFAULT_BUDGET_MIN),
+    })
+  }
+
+  const applyPreview = () => {
+    if (!preview) return
+    reorderStops(day, preview.stops)
+    setPreview(null)
+    setToast('Reordered on this device — nothing was removed')
+    setTimeout(() => setToast(null), 2500)
   }
 
   const handleExportIcs = () => {
@@ -189,7 +220,7 @@ export default function Planner() {
             <div key={stop.placeId}>
               {prev && travel !== null && (
                 <div className="ml-5 border-l-2 border-dashed border-ink/15 py-1.5 pl-4 text-[11px] text-faint">
-                  🚶 {travel.toFixed(1)} km · ~{Math.max(5, Math.round(travel * 4))} min travel
+                  🚶 {travel.toFixed(1)} km · ~{Math.max(5, Math.round(travel * 4))} min · straight-line estimate
                 </div>
               )}
               <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}>
@@ -220,12 +251,41 @@ export default function Planner() {
         </Button>
         <Button
           className="flex-1" disabled={stops.length < 2}
-          onClick={handleOptimize}
-          title="Reorders stops by distance — 2-opt polish over the walking route"
+          onClick={buildPreview}
+          title="Reorders stops by straight-line distance — nothing is removed, and you confirm before it applies"
         >
           <Sparkles size={15} /> {t('optimizeRoute')}
         </Button>
       </div>
+
+      {/* Reorder preview — the plan is untouched until Apply. */}
+      {preview && (
+        <Card className="mt-3 p-3.5" role="group" aria-label="Reorder preview">
+          <p className="text-sm font-semibold">Reorder {preview.stops.length} stops on {day}?</p>
+          <ol className="mt-2 space-y-1 text-[13px] text-ink-soft">
+            {preview.stops.map((s, i) => (
+              <li key={s.placeId} className="flex gap-2">
+                <span className="w-4 shrink-0 text-right text-faint">{i + 1}.</span>
+                <span className="min-w-0 flex-1 truncate">{placeById(s.placeId)?.name ?? s.placeId}</span>
+                <span className="shrink-0 text-[11px] text-faint tabular-nums">{fmt(s.time)}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="mt-2 text-[11px] leading-relaxed text-faint">
+            Runs ~{Math.floor(preview.totalMin / 60)} h {preview.totalMin % 60} min from the first stop’s
+            time, including each stop’s own duration. Straight-line distances only — no traffic, queue or
+            road data, so treat it as a rough estimate.
+            {preview.overBy > 0 && (
+              <b> That is ~{Math.round(preview.overBy / 5) * 5} min past a {DEFAULT_BUDGET_MIN / 60} h evening. </b>
+            )}
+            {preview.stops.length === stops.length ? 'No stop is removed.' : ''}
+          </p>
+          <div className="mt-2.5 flex gap-2">
+            <Button size="sm" variant="outline" className="flex-1" onClick={() => setPreview(null)}>Keep current order</Button>
+            <Button size="sm" className="flex-1" onClick={applyPreview}>Apply reorder</Button>
+          </div>
+        </Card>
+      )}
       {stops.length > 0 && (
         <div className="mt-2 grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={handleExportIcs}>

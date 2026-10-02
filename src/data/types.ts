@@ -113,6 +113,30 @@ export interface Meetup {
   cityId?: City
 }
 
+/**
+ * A meetup the user created in this build. Deliberately not a `Meetup`: there is
+ * no backend to host one, so it carries no sample attendee count and no
+ * invented coordinates — `lat`/`lng` exist only when the spot came from a real
+ * seeded safety point, and nothing pretends the plan is visible to anyone else.
+ */
+export interface LocalMeetup {
+  id: string
+  title: string
+  /** ISO 'YYYY-MM-DD' from the date input, so it stays comparable over time. */
+  date: string
+  /** 24-hour 'HH:MM' from the time input. */
+  time: string
+  location: string
+  description: string
+  interests: string[]
+  maxParticipants: number
+  visibility: 'public' | 'restricted'
+  palette: Palette
+  lat?: number
+  lng?: number
+  createdAt: string
+}
+
 export interface Offer {
   id: string
   brand: string

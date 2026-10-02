@@ -28,6 +28,7 @@ import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
 import { evaluateCheckIn, tithiForTs } from '../lib/scorecard'
 import { makeShareCard, shareCardFile } from '../lib/shareCard'
 import { useT } from '../i18n'
+import type { PlanDay } from '../data/types'
 
 export default function PandalDetail() {
   const { id = '' } = useParams()
@@ -39,6 +40,7 @@ export default function PandalDetail() {
   const toggleSaved = useApp((s) => s.toggleSaved)
   const toggleVisited = useApp((s) => s.toggleVisited)
   const saveIntents = useApp((s) => s.saveIntents)
+  const planner = useApp((s) => s.planner)
   const checkins = useApp((s) => s.checkins)
   const addCheckin = useApp((s) => s.addCheckin)
   const track = useApp((s) => s.track)
@@ -254,7 +256,14 @@ export default function PandalDetail() {
           <Button variant={isVisited ? 'dark' : 'outline'} size="sm" className="flex-1" onClick={() => toggleVisited(place.id)}>
             <CalendarCheck size={14} /> {isVisited ? 'Visited ✓' : t('visited')}
           </Button>
-          <Button size="sm" className="flex-1" onClick={() => nav('/trip/saptami')}>
+          <Button size="sm" className="flex-1" onClick={() => {
+            // Same rule as the place cards: "Route" only means the day's route
+            // when this pandal is actually on a plan; otherwise give directions
+            // to the place itself instead of an unrelated empty itinerary.
+            const day = (Object.keys(planner) as PlanDay[]).find((d) => planner[d].some((s) => s.placeId === place.id))
+            if (day) { nav(`/trip/${day}`); return }
+            window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.area} Kolkata`)}`, '_blank', 'noopener,noreferrer')
+          }}>
             <RouteIcon size={14} /> {t('route')}
           </Button>
         </div>

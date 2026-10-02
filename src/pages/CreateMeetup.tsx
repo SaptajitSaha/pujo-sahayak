@@ -7,11 +7,16 @@ import { useApp } from '../store'
 import { suggestMeetingPoint } from '../lib/meetingPoint'
 import { useT } from '../i18n'
 
+/** A surface colour for the created card's tile — a design token, not a claim
+ *  about real content (the demo catalogues carry their own palettes). */
+const MEETUP_PALETTE = { from: '#5B2A86', to: '#2A1440' }
+
 export default function CreateMeetup() {
   const t = useT()
   const nav = useNavigate()
   const flags = useApp((s) => s.featureFlags)
   const saved = useApp((s) => s.saved)
+  const addMeetup = useApp((s) => s.addMeetup)
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
@@ -20,8 +25,35 @@ export default function CreateMeetup() {
   const [picked, setPicked] = useState<string[]>([])
   const [max, setMax] = useState(10)
   const [restricted, setRestricted] = useState(false)
+  // Coordinates only exist when the spot came from a real seeded safety point.
+  // A hand-typed location gets no lat/lng — inventing numbers for it would feed
+  // a fake position into the map, the distance and the directions link.
+  const [spotCoords, setSpotCoords] = useState<{ lat: number; lng: number } | null>(null)
 
-  const valid = title.trim() && date && time && location.trim()
+  const valid = Boolean(title.trim() && date && time && location.trim())
+
+  /**
+   * Submit persists the meetup locally and returns to the list, which is what
+   * the footnote has always claimed ("stored locally in this demo"). Before,
+   * the button only navigated and the form was silently discarded.
+   */
+  const submit = () => {
+    if (!valid) return
+    addMeetup({
+      title: title.trim(),
+      date,
+      time,
+      location: location.trim(),
+      description: description.trim(),
+      interests: picked,
+      maxParticipants: Math.min(50, Math.max(2, Math.round(max) || 2)),
+      visibility: restricted ? 'restricted' : 'public',
+      palette: MEETUP_PALETTE,
+      lat: spotCoords?.lat,
+      lng: spotCoords?.lng,
+    })
+    nav('/meets')
+  }
 
   // "Suggest a spot": a real, staffed safety point near the middle of the places
   // you've saved (your likely areas). Fills the location box as a starting point —
@@ -29,7 +61,10 @@ export default function CreateMeetup() {
   const suggestSpot = () => {
     const origins = [DEMO_USER, ...saved.map((id) => placeById(id)).filter(Boolean).map((p) => ({ lat: p!.lat, lng: p!.lng }))]
     const s = suggestMeetingPoint(origins, safetyPoints.map((sp) => ({ id: sp.id, name: sp.name, detail: sp.detail, lat: sp.lat, lng: sp.lng })))
-    if (s) setLocation(`Meet near ${s.spot.name}${s.spot.detail ? `, ${s.spot.detail}` : ''}`)
+    if (s) {
+      setLocation(`Meet near ${s.spot.name}${s.spot.detail ? `, ${s.spot.detail}` : ''}`)
+      setSpotCoords({ lat: s.spot.lat, lng: s.spot.lng })
+    }
   }
 
   return (
@@ -52,7 +87,7 @@ export default function CreateMeetup() {
           </Field>
         </div>
         <Field label="Location">
-          <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Meet near Gariahat metro exit 2"
+          <input value={location} onChange={(e) => { setLocation(e.target.value); setSpotCoords(null) }} placeholder="Meet near Gariahat metro exit 2"
             className="w-full rounded-lg border border-ink/10 bg-ivory px-3 py-2.5 text-sm outline-none focus:border-vermilion/50" />
           {flags.ENABLE_SMART_MEETING && (
             <button type="button" onClick={suggestSpot} className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-vermilion">
@@ -94,11 +129,13 @@ export default function CreateMeetup() {
         </div>
       </Card>
 
-      <Button className="mt-4 w-full" disabled={!valid} onClick={() => nav('/meets')}>
+      <Button className="mt-4 w-full" disabled={!valid} onClick={submit}>
         {t('createMeetup')}
       </Button>
       <p className="mt-2 text-center text-[10px] text-faint">
-        Meetups you create are stored locally in this demo — host info, reporting and moderation come with the backend.
+        Saved on this device only — the meetup appears under “Yours” on the Meetups
+        screen. No one else can see it: hosting, reporting and moderation come with
+        the backend, which is not connected.
       </p>
     </Page>
   )

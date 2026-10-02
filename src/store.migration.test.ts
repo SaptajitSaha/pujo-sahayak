@@ -42,3 +42,24 @@ describe('migrateState — featureFlags re-merge (persist v6)', () => {
     }
   })
 })
+
+describe('migrateState — userMeetups default (persist v7)', () => {
+  it('gives an older record the empty meetup list CreateMeetup now writes to', () => {
+    const out = migrateState({ saved: ['pandal-baghbazar'] }, 6)
+    expect(Array.isArray(out.userMeetups)).toBe(true)
+    expect(out.userMeetups).toHaveLength(0)
+  })
+
+  it('keeps meetups the user already created, and existing flags overrides', () => {
+    const mine = [{ id: 'um-1', title: 'T', date: '2026-10-12', time: '19:00', location: 'Gariahat', description: '', interests: [], maxParticipants: 8, visibility: 'public', palette: { from: '#000', to: '#111' }, createdAt: '2026-10-01T00:00:00.000Z' }]
+    const out = migrateState({ userMeetups: mine, featureFlags: { ENABLE_PREMIUM: false } }, 6)
+    expect(out.userMeetups).toHaveLength(1)
+    expect(out.userMeetups[0].id).toBe('um-1')
+    expect(out.featureFlags.ENABLE_PREMIUM).toBe(false)
+  })
+
+  it('repairs a record whose userMeetups is not an array', () => {
+    const out = migrateState({ userMeetups: null }, 6)
+    expect(out.userMeetups).toEqual([])
+  })
+})

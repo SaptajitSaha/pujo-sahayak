@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type {
-  AppNotification, City, DiaryEntry, Lang, LocalReport, MissingPersonReport, PlanDay, PlanStop, SavedAddress, SaveIntent, Theme, TrustedContact, UserReview,
+  AppNotification, City, DiaryEntry, Lang, LocalMeetup, LocalReport, MissingPersonReport, PlanDay, PlanStop, SavedAddress, SaveIntent, Theme, TrustedContact, UserReview,
 } from './data/types'
 import { placeById } from './data/demo'
 import { haversineKm } from './lib/geo'
@@ -28,6 +28,8 @@ interface AppState {
   visited: string[]
   planner: Record<PlanDay, PlanStop[]>
   joinedMeetups: string[]
+  /** Meetups created on this device by CreateMeetup — local only, never shared. */
+  userMeetups: LocalMeetup[]
   missingReports: MissingPersonReport[]
   lang: Lang
   theme: Theme
@@ -82,6 +84,9 @@ interface AppState {
   reorderStops: (day: PlanDay, stops: PlanStop[]) => void
   optimizeDay: (day: PlanDay) => void
   toggleMeetup: (id: string) => void
+  /** Persist a meetup the user created; returns nothing — it is local state. */
+  addMeetup: (m: Omit<LocalMeetup, 'id' | 'createdAt'>) => void
+  removeMeetup: (id: string) => void
   reportMissing: (r: MissingPersonReport) => void
   /** Sensitive local data: the filer must be able to erase it. */
   removeMissingReport: (id: string) => void
@@ -161,6 +166,9 @@ export function migrateState(persisted: unknown, oldVersion: number): AppState {
   if (!p.saveIntents) p.saveIntents = {}
   if (!Array.isArray(p.diary)) p.diary = []
   if (!Array.isArray(p.reports)) p.reports = []
+  // v7: CreateMeetup now really persists (its copy always promised it did while
+  // the submit button only navigated away). Additive, defaults to empty.
+  if (!Array.isArray(p.userMeetups)) p.userMeetups = []
   return p as AppState
 }
 
@@ -171,6 +179,7 @@ export const useApp = create<AppState>()(
       visited: [],
       planner: emptyPlanner,
       joinedMeetups: [],
+      userMeetups: [],
       missingReports: [],
       lang: 'en',
       theme: 'system',
@@ -232,6 +241,17 @@ export const useApp = create<AppState>()(
             ? s.joinedMeetups.filter((x) => x !== id)
             : [...s.joinedMeetups, id],
         })),
+      /** Keep the newest first; ids are date-stamped so re-opens don't collide. */
+      addMeetup: (m) =>
+        set((s) => ({
+          userMeetups: [{ ...m, id: 'um-' + Date.now(), createdAt: new Date().toISOString() }, ...s.userMeetups],
+        })),
+      removeMeetup: (id) =>
+        set((s) => ({
+          userMeetups: s.userMeetups.filter((m) => m.id !== id),
+          // A meetup you delete cannot still be "joined" — drop that too.
+          joinedMeetups: s.joinedMeetups.filter((x) => x !== id),
+        })),
       reportMissing: (r) => set((s) => ({ missingReports: [r, ...s.missingReports] })),
       removeMissingReport: (id) => set((s) => ({ missingReports: s.missingReports.filter((r) => r.id !== id) })),
       setLang: (lang) => set({ lang }),
@@ -285,7 +305,7 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'pujo-sahayak',
-      version: 6,
+      version: 7,
       // v2 added reviews, trustedContacts, selectedCity, sosActive. Existing
       // installs persisted without these; provide safe defaults.
       // v3 adds the checkins log (Scorecard) — additive, defaults to empty.
@@ -299,6 +319,8 @@ export const useApp = create<AppState>()(
       // (ENABLE_METRO_MAP, ENABLE_PREMIUM). Re-running migrate re-applies the
       // { ...DEFAULT_FLAGS, ...stored } merge so existing installs pick up the
       // missing keys at their compile-time defaults without losing user edits.
+      // v7 adds userMeetups (CreateMeetup persistence) — additive, defaults to
+      // an empty list.
       migrate: migrateState,
     },
   ),

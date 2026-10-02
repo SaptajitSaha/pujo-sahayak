@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Route as RouteIcon } from 'lucide-react'
-import type { Place } from '../data/types'
+import type { PlanDay, Place } from '../data/types'
 import { crowdLabel, useT } from '../i18n'
+import { useApp } from '../store'
 import { costForTwo, formatInr } from '../lib/price'
 import { Card, Chip, CrowdTag, Img, Stars } from './ui'
 
@@ -9,11 +10,25 @@ export function placeHref(p: Place) {
   return p.type === 'pandal' ? `/pandal/${p.id}` : `/restaurant/${p.id}`
 }
 
+/** The plan day this place is already scheduled on, if any — the Route button
+    can only mean "the day's route" when the place actually has one. */
+function plannedDayOf(planner: Record<PlanDay, { placeId: string }[]>, id: string): PlanDay | null {
+  for (const day of Object.keys(planner) as PlanDay[]) {
+    if (planner[day].some((s) => s.placeId === id)) return day
+  }
+  return null
+}
+
 /** Full-width directory card — the Explore list pattern from the mockups. */
 export function PlaceCard({ place }: { place: Place }) {
   const t = useT()
   const nav = useNavigate()
+  const planner = useApp((s) => s.planner)
   const cost = costForTwo(place)
+  // A place on the plan routes to that plan day's trip map. A place that is not
+  // on any plan used to be sent to /trip/saptami anyway — an empty, unrelated
+  // itinerary presented as "the route" to wherever you tapped.
+  const plannedDay = plannedDayOf(planner, place.id)
   return (
     <Card className="p-3">
       <div className="flex gap-3">
@@ -56,10 +71,12 @@ export function PlaceCard({ place }: { place: Place }) {
           {t('viewDetails')}
         </button>
         <button
-          onClick={() => nav(`/trip/saptami`)}
+          onClick={() => plannedDay
+            ? nav(`/trip/${plannedDay}`)
+            : window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.name} ${place.area} Kolkata`)}`, '_blank', 'noopener,noreferrer')}
           className="flex flex-1 items-center justify-center gap-1 rounded-full grad-brand py-1.5 text-xs font-medium text-white"
         >
-          <RouteIcon size={12} /> {t('route')}
+          <RouteIcon size={12} /> {plannedDay ? t('route') : 'Directions'}
         </button>
       </div>
     </Card>

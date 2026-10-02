@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="assets/screens/phone-home.png"><img src="assets/screens/phone-home.png" alt="Pujo Sahayak home screen showing pandal discovery" width="420" /></a>
+  <a href="assets/screens/readme/pujo-sahayak-showcase.jpg"><img src="assets/screens/readme/pujo-sahayak-showcase.jpg" alt="Pujo Sahayak shown in three iPhone-style mockups: Home, Explore, and Pandal detail" width="100%" /></a>
 </p>
 
 > **Project status:** This is a demo/prototype. Some ratings, crowd levels, opening times, reviews, event and meetup details, distances, and commerce information are sample data. Backend-dependent features need a configured Supabase project. Check the labels in the app before relying on time-sensitive information.
@@ -18,19 +18,14 @@
 ## Explore the app
 
 <details>
-<summary>View more app screens</summary>
+<summary>Open fresh app screenshots</summary>
 
-<p align="center">
-  <a href="assets/screens/phone-explore.png"><img src="assets/screens/phone-explore.png" alt="Explore pandals in list and map views" width="230" /></a>
-  <a href="assets/screens/phone-pandal.png"><img src="assets/screens/phone-pandal.png" alt="Pandal detail page" width="230" /></a>
-  <a href="assets/screens/phone-planner.png"><img src="assets/screens/phone-planner.png" alt="Day-by-day Puja planner" width="230" /></a>
-</p>
+These screens were captured from the running app at a 430 px mobile viewport. The hero above combines the real Home, Explore, and Pandal detail captures with device frames.
 
-<p align="center">
-  <a href="assets/screens/phone-categories.png"><img src="assets/screens/phone-categories.png" alt="Categories and local services" width="230" /></a>
-  <a href="assets/screens/phone-favorites.png"><img src="assets/screens/phone-favorites.png" alt="Saved and visited places" width="230" /></a>
-  <a href="assets/screens/phone-meets.png"><img src="assets/screens/phone-meets.png" alt="Community meetup screen" width="230" /></a>
-</p>
+- [Home](assets/screens/readme/home.jpg)
+- [Explore](assets/screens/readme/explore.jpg)
+- [Pandal detail](assets/screens/readme/pandal.jpg)
+- [Categories](assets/screens/readme/categories.jpg)
 
 </details>
 

@@ -132,6 +132,36 @@ const SEED_NOTIFICATIONS: AppNotification[] = [
   { id: 'n5', kind: 'update', title: 'Maya can now answer crowd questions', body: 'Ask “what’s the crowd right now?” on any pandal page.', time: '2d ago', read: true, href: '/maya' },
 ]
 
+/**
+ * Persist migration (see the `version` note in the persist options below).
+ * Exported so the featureFlags re-merge — the source of a real bug where newly
+ * added flags never reached existing installs — is unit-testable in isolation.
+ * Idempotent: safe to run on an already-current record.
+ */
+export function migrateState(persisted: unknown, oldVersion: number): AppState {
+  const p = persisted as Partial<AppState> | undefined
+  if (!p) return {} as unknown as AppState
+  if (oldVersion < 1 && Array.isArray(p.notifications)) {
+    p.notifications = p.notifications.map((n) => {
+      const seed = SEED_NOTIFICATIONS.find((s) => s.id === n.id)
+      return seed ? { ...n, href: seed.href } : n
+    })
+  }
+  if (!p.reviews) p.reviews = []
+  if (!p.trustedContacts) p.trustedContacts = []
+  if (!p.selectedCity) p.selectedCity = 'kolkata'
+  if (p.sosActive === undefined) p.sosActive = false
+  if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
+  if (!Array.isArray(p.checkins)) p.checkins = []
+  if (!p.featureFlags) p.featureFlags = { ...DEFAULT_FLAGS }
+  else p.featureFlags = { ...DEFAULT_FLAGS, ...p.featureFlags }
+  if (!Array.isArray(p.blockedUsers)) p.blockedUsers = []
+  if (!p.saveIntents) p.saveIntents = {}
+  if (!Array.isArray(p.diary)) p.diary = []
+  if (!Array.isArray(p.reports)) p.reports = []
+  return p as AppState
+}
+
 export const useApp = create<AppState>()(
   persist(
     (set, get) => ({
@@ -252,7 +282,7 @@ export const useApp = create<AppState>()(
     }),
     {
       name: 'pujo-sahayak',
-      version: 5,
+      version: 6,
       // v2 added reviews, trustedContacts, selectedCity, sosActive. Existing
       // installs persisted without these; provide safe defaults.
       // v3 adds the checkins log (Scorecard) — additive, defaults to empty.
@@ -260,29 +290,13 @@ export const useApp = create<AppState>()(
       // v5 adds saveIntents, diary, reports (Second Product Extension) and
       // re-merges featureFlags so installs frozen at the old 5-key record
       // gain the new extension flags at their compile-time defaults.
-      migrate: (persisted, oldVersion) => {
-        const p = persisted as Partial<AppState> | undefined
-        if (!p) return {} as unknown as AppState
-        if (oldVersion < 1 && Array.isArray(p.notifications)) {
-          p.notifications = p.notifications.map((n) => {
-            const seed = SEED_NOTIFICATIONS.find((s) => s.id === n.id)
-            return seed ? { ...n, href: seed.href } : n
-          })
-        }
-        if (!p.reviews) p.reviews = []
-        if (!p.trustedContacts) p.trustedContacts = []
-        if (!p.selectedCity) p.selectedCity = 'kolkata'
-        if (p.sosActive === undefined) p.sosActive = false
-        if (p.tithiDemoMode === undefined) p.tithiDemoMode = false
-        if (!Array.isArray(p.checkins)) p.checkins = []
-        if (!p.featureFlags) p.featureFlags = { ...DEFAULT_FLAGS }
-        else p.featureFlags = { ...DEFAULT_FLAGS, ...p.featureFlags }
-        if (!Array.isArray(p.blockedUsers)) p.blockedUsers = []
-        if (!p.saveIntents) p.saveIntents = {}
-        if (!Array.isArray(p.diary)) p.diary = []
-        if (!Array.isArray(p.reports)) p.reports = []
-        return p as AppState
-      },
+      // v6 re-merges featureFlags again: zustand persist shallow-merges the
+      // top-level state, so a stored featureFlags object is replaced wholesale
+      // and never gains flags added to DEFAULT_FLAGS after it was written
+      // (ENABLE_METRO_MAP, ENABLE_PREMIUM). Re-running migrate re-applies the
+      // { ...DEFAULT_FLAGS, ...stored } merge so existing installs pick up the
+      // missing keys at their compile-time defaults without losing user edits.
+      migrate: migrateState,
     },
   ),
 )

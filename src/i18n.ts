@@ -260,7 +260,6 @@ export const STRINGS: Dict = {
   notesHelpfulFailed: { en: "Couldn't record that — try again.", bn: 'টা নথিভুক্ত করা যায়নি — আবার চেষ্টা করুন।', hi: 'वह दर्ज नहीं हो सका — फिर कोशिश करें।' },
 
   // ── Premium & demo-commerce chrome ──
-  paymentsSubs: { en: 'Payments & Subscriptions', bn: 'পেমেন্ট ও সাবস্ক্রিপশন', hi: 'भुगतान और सदस्यता' },
   commerceDemoNote: { en: 'Payments, donations & premium are UI concepts in this build — no transaction is processed.', bn: 'এই বিল্ডে পেমেন্ট, দান ও প্রিমিয়াম কেবল UI ধারণা — কোনো লেনদেন হয় না।', hi: 'इस बिल्ड में भुगतान, दान व प्रीमियम केवल UI अवधारणाएं हैं — कोई लेन-देन नहीं होता।' },
   premiumFreePlan: { en: 'Free Plan', bn: 'ফ্রি পরিকল্পনা', hi: 'निःशुल्क योजना' },
   premiumActive: { en: 'Premium Member', bn: 'প্রিমিয়াম সদস্য', hi: 'प्रीमियम सदस्य' },

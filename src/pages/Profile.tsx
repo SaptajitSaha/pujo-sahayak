@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
-  Flame, Lock, LogIn, MapPin, Notebook, Palette, Phone, Share2, Siren, Stamp, Settings as SettingsIcon, Sparkles, Users,
+  ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight,
+  Flame, Lock, LogIn, MapPin, Notebook, Phone, Share2, Siren, Stamp, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
 import { Avatar, Button, Card, Page, SectionHeader } from '../components/ui'
 import { Wallet } from '../components/Wallet'
@@ -47,7 +47,6 @@ export default function Profile() {
     <Page>
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">{t('profile')}</h1>
-        <button aria-label="Settings" onClick={() => nav('/profile/settings')} className="text-ink-soft"><SettingsIcon size={18} /></button>
       </header>
 
       {/* Identity */}
@@ -135,18 +134,21 @@ export default function Profile() {
       {flags.ENABLE_MARKETPLACE && <MyOrders />}
       {flags.ENABLE_WALLET && <Wallet userId={userId} />}
 
-      {/* Premium CTA — dedicated upgrade screen when the surface is enabled;
-          falls back to Settings (which also hosts the demo toggle) when off. */}
-      <button onClick={() => nav(flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings')} className="mt-4 w-full text-left">
-        <Card className="flex items-center gap-3 bg-gradient-to-r from-night to-night-soft p-3.5 text-on-image">
-          <span className="rounded-full bg-gold/20 p-2 text-gold-bright"><Sparkles size={16} /></span>
-          <div className="flex-1">
-            <p className="text-sm font-semibold">{premium ? t('premiumActive') : t('upgrade')}</p>
-            <p className="text-[11px] text-on-image/60">{premium ? t('premiumManage') : t('upgradeSub')}</p>
-          </div>
-          <ChevronRight size={16} className="text-gold-bright" />
-        </Card>
-      </button>
+      {/* Premium — the single entry point to the plan surface. Hidden entirely
+          when the flag is off (a disabled feature shows no UI), so there is no
+          fallback link into Settings. */}
+      {flags.ENABLE_PREMIUM && (
+        <button onClick={() => nav('/premium')} className="mt-4 w-full text-left">
+          <Card className="flex items-center gap-3 bg-gradient-to-r from-night to-night-soft p-3.5 text-on-image">
+            <span className="rounded-full bg-gold/20 p-2 text-gold-bright"><Sparkles size={16} /></span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold">{premium ? t('premiumActive') : t('upgrade')}</p>
+              <p className="text-[11px] text-on-image/60">{premium ? t('premiumManage') : t('upgradeSub')}</p>
+            </div>
+            <ChevronRight size={16} className="text-gold-bright" />
+          </Card>
+        </button>
+      )}
 
       {/* Emergency shortcuts — never buried (doc §31) */}
       <section className="mt-5">
@@ -166,15 +168,16 @@ export default function Profile() {
         </div>
       </section>
 
-      {/* Rows */}
+      {/* Rows — one entry per destination. Appearance, language, city, safety
+          circle and plan management live inside Settings / Premium, so nothing
+          here duplicates them (the Payments row and the Appearance row that
+          pointed at Settings were both removed). */}
       <div className="mt-5 space-y-2">
         {[
           { icon: CalendarCheck, label: t('allVisits'), to: '/favorites' },
           ...(flags.ENABLE_PUJA_PASSPORT ? [{ icon: Stamp, label: t('passport'), to: '/passport' }] : []),
           ...(flags.ENABLE_PUJA_DIARY ? [{ icon: Notebook, label: t('diary'), to: '/diary' }] : []),
           { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
-          { icon: CreditCard, label: t('paymentsSubs'), to: flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings' },
-          { icon: Palette, label: t('appearance'), to: '/profile/settings' },
           { icon: SettingsIcon, label: t('settings'), to: '/profile/settings' },
         ].map(({ icon: Icon, label, to }) => (
           <button key={label} onClick={() => nav(to)} className="w-full">

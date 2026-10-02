@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
-  ArrowRight, Bell, CircleHelp, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, Sparkles as SparkleRow, User, FlaskConical,
+  ArrowRight, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, FlaskConical,
 } from 'lucide-react'
 import { BackHeader, Card, Chip, Logo, Page } from '../components/ui'
 import { AuthorityPanel } from '../components/AuthorityPanel'
@@ -13,7 +12,6 @@ import type { FeatureFlag } from '../config/features'
 
 export default function Settings() {
   const t = useT()
-  const nav = useNavigate()
   const [toast, setToast] = useState<string | null>(null)
   const lang = useApp((s) => s.lang)
   const setLang = useApp((s) => s.setLang)
@@ -23,7 +21,6 @@ export default function Settings() {
   const setReduceMotion = useApp((s) => s.setReduceMotion)
   const appLogo = useApp((s) => s.appLogo)
   const setAppLogo = useApp((s) => s.setAppLogo)
-  const premium = useApp((s) => s.premium)
   const trustedContacts = useApp((s) => s.trustedContacts)
   const setTrustedContacts = useApp((s) => s.setTrustedContacts)
   const selectedCity = useApp((s) => s.selectedCity)
@@ -59,7 +56,7 @@ export default function Settings() {
   const removeContact = (id: string) => setTrustedContacts(trustedContacts.filter((c) => c.id !== id))
   const clearContact = () => { setTrustedContacts([]); setContactName(''); setContactPhone(''); note('Trusted contact removed.') }
 
-  const Row = ({ icon: Icon, label, value, onClick }: { icon: typeof User; label: string; value?: string; onClick?: () => void }) => (
+  const Row = ({ icon: Icon, label, value, onClick }: { icon: typeof Info; label: string; value?: string; onClick?: () => void }) => (
     <button onClick={onClick} className="w-full text-left">
       <Card className="flex items-center gap-3 p-3.5">
         <span className="rounded-full bg-ivory-deep p-2 text-ink-soft"><Icon size={15} /></span>
@@ -74,11 +71,12 @@ export default function Settings() {
     <Page>
       <BackHeader title={t('settings')} />
 
+      {/* Preferences only. Account/sign-in, Help (Safety Center) and Premium are
+          reached from Profile; Notifications has its own page off the Home bell
+          — duplicating them here as stubs contradicted working features. */}
       <div className="space-y-2">
-        <Row icon={User} label="Account" onClick={() => note('Accounts & phone-OTP login arrive with the backend.')} />
         <Row icon={Shield} label="Privacy" onClick={() => note('Location & photo data stay on this device in the demo.')} />
         <Row icon={Lock} label="Security" onClick={() => note('Security options arrive with the backend.')} />
-        <Row icon={Bell} label="Notifications" onClick={() => note('Crowd & puja alerts arrive with the backend.')} />
 
         {/* City — swaps the dataset across Explore, Home, Search, Categories,
             Planner, TripMap, PandalDetail, RestaurantDetail. Siliguri / Howrah
@@ -221,8 +219,6 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Row icon={SparkleRow} label={premium ? 'Premium — active' : t('premiumMember')} onClick={() => nav('/premium')} />
-
         {/* Developer: feature flag toggles */}
         <Card className="mt-4 p-3.5">
           <div className="flex items-center gap-3">
@@ -250,7 +246,6 @@ export default function Settings() {
         {featureFlags.ENABLE_AUTHORITY_INTEGRATION && <AuthorityPanel />}
 
         <Row icon={Info} label="About Pujo Sahayak" onClick={() => note('v0.1 demo build • See the Puja. Understand the story.')} />
-        <Row icon={CircleHelp} label="Help & Support" onClick={() => note('Support inbox arrives with the backend.')} />
       </div>
 
       {toast && (

@@ -189,7 +189,14 @@ export interface MissingPersonReport {
   name: string
   details: string
   lastSeenPlaceId?: string
-  photoDataUrl?: string
+  /**
+   * Whether a photo was attached while filing — deliberately a flag, not the
+   * image. The old `photoDataUrl` field stored a `URL.createObjectURL()` blob
+   * URL, which is session-scoped dead weight after a reload, and a base64 copy
+   * of a face is the most sensitive thing this app could keep indefinitely.
+   * The photo is previewed during filing and never persisted.
+   */
+  photoAttached?: boolean
   createdAt: string
 }
 

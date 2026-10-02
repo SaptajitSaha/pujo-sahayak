@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -35,7 +35,7 @@ export default function Home() {
   const visited = useApp((s) => s.visited)
   const checkins = useApp((s) => s.checkins)
 
-  // City-aware datasets â€” every rail on Home scopes to the selected city.
+  // City-aware datasets — every rail on Home scopes to the selected city.
   const cityPandals = useMemo(() => pandalsIn(selectedCity), [selectedCity])
   const cityRestaurants = useMemo(() => restaurantsIn(selectedCity), [selectedCity])
   const cityEvents = useMemo(() => eventsIn(selectedCity), [selectedCity])
@@ -46,7 +46,7 @@ export default function Home() {
   const { data: alerts = [] } = useAuthorityAlerts()
 
   // Ad slabs are on-device-interactive: tapping one copies its coupon code
-  // (clipboard + toast) â€” the honest equivalent of "acting on" a hoarding
+  // (clipboard + toast) — the honest equivalent of "acting on" a hoarding
   // without a backend. Same pattern as the share/copy affordances elsewhere.
   const [homeToast, setHomeToast] = useState<string | null>(null)
   const copyAndToast = async (text: string, msg: string) => {
@@ -54,7 +54,7 @@ export default function Home() {
       await navigator.clipboard.writeText(text)
       setHomeToast(msg)
     } catch {
-      setHomeToast(`${text} â€” copy not supported on this device`)
+      setHomeToast(`${text} — copy not supported on this device`)
     }
     setTimeout(() => setHomeToast(null), 2200)
   }
@@ -67,16 +67,17 @@ export default function Home() {
   // pre-puja. Honesty: the chip shows a small "demo" tag when on the fake
   // path so nothing pretends to be live calendar data.
   const todayTithi = useMemo(() => {
-    // Kolkata's calendar day decides the tithi — the device clock and the UTC
-    // date both disagree with it for hours at a time (00:00–05:30 IST is still
-    // "yesterday" in UTC). Same source the check-in scorecard uses.
+    // Kolkata's calendar day decides the tithi. The device clock and the UTC
+    // date (`toISOString()`) both disagree with it for hours at a time —
+    // 00:00–05:30 IST is still "yesterday" in UTC — so this reads the same
+    // single source the check-in scorecard uses.
     const planDay = planDayForInstant(Date.now())
     if (planDay) return { th: tithis.find((x) => x.planDay === planDay) ?? null, demo: false }
     if (tithiDemoMode) return { th: tithis.find((x) => x.planDay === 'ashtami') ?? null, demo: true }
     return { th: null as null | (typeof tithis)[number], demo: false }
   }, [tithiDemoMode])
 
-  // â”€â”€ Tonight + What-next (Second Product Extension) â”€â”€
+  // ── Tonight + What-next (Second Product Extension) ──
   // Both compose only facts already on-device: today's tithi, tonight's plan,
   // saved places + intents, GPS check-ins and real distances. Nothing new.
   const [whatNextOpen, setWhatNextOpen] = useState(false)
@@ -99,7 +100,7 @@ export default function Home() {
 
   return (
     <Page>
-      {/* Persistent SOS dismiss â€” visible on every opening of Home until the
+      {/* Persistent SOS dismiss — visible on every opening of Home until the
           user taps "I'm safe", so the flag survives a backgrounding + reopen.
           Zustand persist keeps it in localStorage across reloads. */}
       {sosActive && (
@@ -110,7 +111,8 @@ export default function Home() {
         >
           <p className="text-sm font-semibold text-red-700 dark:text-red-400">SOS is active</p>
           <p className="mt-0.5 text-[11px] text-ink-soft">
-            Your last share went out. Tap below once you're safe â€” the banner clears.
+            The app opened a share sheet or the dialer for you — it cannot confirm a message reached
+            anyone. Tap below once you're safe to clear this.
           </p>
           <button
             onClick={() => setSosActive(false)}
@@ -120,7 +122,7 @@ export default function Home() {
           </button>
         </motion.div>
       )}
-      {/* Greeting â€” staged entrance */}
+      {/* Greeting — staged entrance */}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -185,8 +187,8 @@ export default function Home() {
         <SearchIcon size={16} /> {t('searchPlaceholder')}
       </motion.button>
 
-      {/* Today chip â€” real-calendar-aware; only renders inside the actual 2026
-          puja window (Oct 3 â€“ Oct 8). Never fakes a "today" outside those dates. */}
+      {/* Today chip — real-calendar-aware; only renders inside the actual 2026
+          puja window (Oct 3 – Oct 8). Never fakes a "today" outside those dates. */}
       {todayTithi.th && (
         <motion.button
           initial={{ opacity: 0, y: 6 }}
@@ -207,7 +209,7 @@ export default function Home() {
                   <span className="rounded-full bg-ink/10 px-1.5 py-0.5 text-[9px] normal-case tracking-normal text-ink-soft">demo</span>
                 )}
               </span>
-              <span className="block truncate text-sm font-semibold">{todayTithi.th.name} Â· <span className="bn">{todayTithi.th.nameBn}</span></span>
+              <span className="block truncate text-sm font-semibold">{todayTithi.th.name} · <span className="bn">{todayTithi.th.nameBn}</span></span>
               <span className="block truncate text-[11px] text-ink-soft">{todayTithi.th.window}</span>
             </span>
           </span>
@@ -215,7 +217,7 @@ export default function Home() {
         </motion.button>
       )}
 
-      {/* Official alerts banner â€” urgent notices from an active authority.
+      {/* Official alerts banner — urgent notices from an active authority.
           Renders nothing when no live feed is connected (honest, no fake alerts). */}
       {flags.ENABLE_AUTHORITY_INTEGRATION && alerts.length > 0 && (
         <Reveal>
@@ -232,7 +234,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Explore Spotlight â€” animated coverflow carousel (city-scoped,
+      {/* Explore Spotlight — animated coverflow carousel (city-scoped,
           hidden when the selected city has no seeded pandals) */}
       {cityPandals.length > 0 && (
         <Reveal>
@@ -243,7 +245,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Nearby Restaurants â€” city-scoped; hidden when the selected city has
+      {/* Nearby Restaurants — city-scoped; hidden when the selected city has
           no seeded restaurants (e.g. multi-city demo cities) so the rail
           never renders as an empty header + blank strip. */}
       {cityRestaurants.length > 0 && (
@@ -257,7 +259,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Continue where you left off (doc Â§6) â€” promoted from further down the
+      {/* Continue where you left off (doc §6) — promoted from further down the
           feed into the slot the sponsored Tanting card used to hold: resuming
           an in-progress session beats trending discovery, and it is the only
           card here that is about *this* user. Renders nothing when no session
@@ -280,7 +282,7 @@ export default function Home() {
                   {(session.sublabel || session.detail) && (
                     <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-xs text-ink-soft">
                       {session.sublabel && <span className="font-medium">{session.sublabel}</span>}
-                      {session.sublabel && session.detail && <span className="text-faint">Â·</span>}
+                      {session.sublabel && session.detail && <span className="text-faint">·</span>}
                       {session.detail && <span>{session.detail}</span>}
                     </p>
                   )}
@@ -298,7 +300,7 @@ export default function Home() {
        </Reveal>
       )}
 
-      {/* Tonight Dashboard â€” contextual evening card (inside the puja window,
+      {/* Tonight Dashboard — contextual evening card (inside the puja window,
           or under tithiDemoMode). Composes plan + weather + one next-step. */}
       {flags.ENABLE_TONIGHT && tonightDay && todayTithi.th && (
         <Reveal>
@@ -329,12 +331,12 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Offers â€” small advertisement tablets, not product cards. Each slab is
+      {/* Offers — small advertisement tablets, not product cards. Each slab is
           a single full-bleed visual with the brand + headline overlaid on a
           dark scrim and a coupon code as a tactile CTA pill. Deliberately
           no <SectionHeader> above: a hoarding on a road doesn't announce
           itself with a "deals here" caption. Tiny "Ad" tag on every slab
-          keeps honesty intact (doc Â§58 â€” no native content pretending to
+          keeps honesty intact (doc §58 — no native content pretending to
           be organic). */}
       <Reveal>
         <section className="mt-6">
@@ -372,7 +374,7 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Events / local experiences â€” the off-season bridge (doc Â§36).
+      {/* Events / local experiences — the off-season bridge (doc §36).
           City-scoped, same empty-rail guard as restaurants above. */}
       {cityEvents.length > 0 && (
         <Reveal>
@@ -388,7 +390,7 @@ export default function Home() {
                 </Img>
                 <div className="flex-1 p-2.5">
                   <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{e.name}</h3>
-                  <p className="mt-0.5 text-[11px] text-ink-soft">{e.date} â€¢ {e.time}</p>
+                  <p className="mt-0.5 text-[11px] text-ink-soft">{e.date} • {e.time}</p>
                   <p className="truncate text-[11px] text-faint">{e.venue}</p>
                 </div>
               </Card>
@@ -398,7 +400,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Shopping â€” best-selling Durga Puja sale picks from Kolkata malls.
+      {/* Shopping — best-selling Durga Puja sale picks from Kolkata malls.
           Currently demo (`shopping` in data/demo.ts); production replaces it
           with an aggregated feed from mall partners (online + in-store). */}
       <Reveal>
@@ -410,7 +412,7 @@ export default function Home() {
               <Card key={s.id} className="flex w-44 shrink-0 flex-col">
                 <Img palette={s.palette} alt={s.name} className="h-28 shrink-0">
                   <span className="absolute left-2 top-2 rounded-full bg-gold-bright px-1.5 py-0.5 text-[10px] font-bold text-night">
-                    âˆ’{s.discountPct}%
+                    −{s.discountPct}%
                   </span>
                   {s.tag && (
                     <span className="absolute right-2 top-2 rounded-full bg-night/70 px-1.5 py-0.5 text-[9px] font-medium text-gold-bright">
@@ -423,10 +425,10 @@ export default function Home() {
                   <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug">{s.name}</h3>
                   <p className="mt-1 flex items-baseline gap-1.5">
                     <span className="text-sm font-semibold text-ink tabular-nums">
-                      â‚¹{s.price.toLocaleString('en-IN')}
+                      ₹{s.price.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[11px] text-faint line-through tabular-nums">
-                      â‚¹{s.originalPrice.toLocaleString('en-IN')}
+                      ₹{s.originalPrice.toLocaleString('en-IN')}
                     </span>
                   </p>
                   <p className="mt-0.5 truncate text-[10px] text-faint">{s.area}</p>
@@ -437,7 +439,7 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Marketplace rail â€” appears when the marketplace feature is enabled,
+      {/* Marketplace rail — appears when the marketplace feature is enabled,
           alongside the mall-ads Shopping rail. Links into the /marketplace page.
           Products are the service's demo catalog (clearly labeled), never a
           fabricated live store. */}
@@ -455,7 +457,7 @@ export default function Home() {
                     <Img palette={productPalette(p)} src={productImage(p)} alt={p.name} className="h-24" />
                     <div className="p-2">
                       <p className="line-clamp-2 text-[12px] font-semibold leading-snug">{p.name}</p>
-                      <p className="mt-1 text-[11px] font-semibold text-vermilion tabular-nums">{p.price > 0 ? `â‚¹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-vermilion tabular-nums">{p.price > 0 ? `₹${p.price.toLocaleString('en-IN')}` : 'Free offer'}</p>
                       {p.is_demo && <span className="mt-1 inline-block rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-amber-700">Demo</span>}
                     </div>
                   </Card>
@@ -466,7 +468,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Social matching teaser â€” activity-based companions, not dating. */}
+      {/* Social matching teaser — activity-based companions, not dating. */}
       {flags.ENABLE_SOCIAL_MATCHING && (
         <Reveal>
           <section className="mt-7">
@@ -484,7 +486,7 @@ export default function Home() {
         </Reveal>
       )}
 
-      {/* Puja tools â€” quick entries for the Tithi calendar and the Bengali
+      {/* Puja tools — quick entries for the Tithi calendar and the Bengali
           Phrasebook. Diaspora users (Delhi / Siliguri / Howrah) lean on these
           the most. Sits above Curated walks because a user checking "what day
           is it?" is in the planning stage, not the on-the-road stage. */}
@@ -514,7 +516,7 @@ export default function Home() {
         </section>
       </Reveal>
 
-      {/* Curated walks â€” themed pandal trails (photography, food, family).
+      {/* Curated walks — themed pandal trails (photography, food, family).
           Tapping a card opens /walks where the full stop-by-stop itinerary is
           shown with an "Add to Planner" CTA that pre-loads that walk. */}
       <Reveal>
@@ -526,7 +528,7 @@ export default function Home() {
                 <Card className="overflow-hidden p-0">
                   <Img palette={w.palette} alt={w.title} className="h-24 w-full" />
                   <div className="p-3">
-                    <p className="text-[10px] uppercase tracking-wide text-faint">{w.stops.length} stops Â· {Math.round(w.totalDurationMin / 60 * 10) / 10} h</p>
+                    <p className="text-[10px] uppercase tracking-wide text-faint">{w.stops.length} stops · {Math.round(w.totalDurationMin / 60 * 10) / 10} h</p>
                     <h3 className="mt-0.5 text-sm font-semibold leading-snug">{w.title}</h3>
                     <p className="mt-1 line-clamp-2 text-[11px] text-faint">{w.description}</p>
                   </div>
@@ -539,11 +541,11 @@ export default function Home() {
 
       {/* "Continue where you left off" moved up to the slot the sponsored
           Tanting card held, just under Nearby Restaurants.
-          Trending pandals rail was removed â€” the Explore Spotlight coverflow
+          Trending pandals rail was removed — the Explore Spotlight coverflow
           at the top of Home already surfaces trending pandals, this second
           rail added scroll weight without adding information. */}
 
-      {/* Copy-coupon confirmation â€” portal'd to body: the Page wrapper is
+      {/* Copy-coupon confirmation — portal'd to body: the Page wrapper is
           transformed, which would capture position:fixed. */}
       {homeToast && createPortal(
         <div
@@ -561,7 +563,7 @@ export default function Home() {
   )
 }
 
-/** Relative-time label for the resume card ("just now", "5 min ago", â€¦). */
+/** Relative-time label for the resume card ("just now", "5 min ago", …). */
 function timeAgo(at: number): string {
   const s = Math.max(0, Math.floor((Date.now() - at) / 1000))
   if (s < 45) return 'just now'
@@ -571,5 +573,5 @@ function timeAgo(at: number): string {
   if (h < 24) return `${h} hr ago`
   const d = Math.floor(h / 24)
   return d === 1 ? 'yesterday' : `${d} days ago`
-
 }
+

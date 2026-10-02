@@ -83,6 +83,8 @@ interface AppState {
   optimizeDay: (day: PlanDay) => void
   toggleMeetup: (id: string) => void
   reportMissing: (r: MissingPersonReport) => void
+  /** Sensitive local data: the filer must be able to erase it. */
+  removeMissingReport: (id: string) => void
   setLang: (l: Lang) => void
   setTheme: (t: Theme) => void
   setReduceMotion: (v: boolean) => void
@@ -231,6 +233,7 @@ export const useApp = create<AppState>()(
             : [...s.joinedMeetups, id],
         })),
       reportMissing: (r) => set((s) => ({ missingReports: [r, ...s.missingReports] })),
+      removeMissingReport: (id) => set((s) => ({ missingReports: s.missingReports.filter((r) => r.id !== id) })),
       setLang: (lang) => set({ lang }),
       setTheme: (theme) => set({ theme }),
       setReduceMotion: (reduceMotion) => set({ reduceMotion }),

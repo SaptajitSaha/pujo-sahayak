@@ -155,29 +155,39 @@ export default function Safety() {
   const trustedContacts = useApp((s) => s.trustedContacts)
   const currentAddress = useApp((s) => s.currentAddress)
   const setSosActive = useApp((s) => s.setSosActive)
+  const missingReports = useApp((s) => s.missingReports)
+  const removeMissingReport = useApp((s) => s.removeMissingReport)
   const [lostNote, setLostNote] = useState<string | null>(null)
   const [circleNote, setCircleNote] = useState<string | null>(null)
+  const [sosNote, setSosNote] = useState<string | null>(null)
 
   const triggerSos = () => {
-    // 1. Set the "active" flag so Home shows the "I'm safe" dismiss banner
-    //    until the user clears it (survives reload via Zustand persist).
+    // 1. Arm the banner first, so there is always a way to say "I'm safe" —
+    //    including when the share sheet is cancelled a second later.
     setSosActive(true)
-    // 2. Compose a share message with the last known address + a maps deep link.
-    //    Names the whole circle so everyone on the share sheet knows who it's for.
+    // 2. Compose the share text. The address here is the one saved in the app,
+    //    not a GPS fix, so the message says so — the old wording called it
+    //    "my current location", which is exactly the wrong thing to tell someone
+    //    coming to help. Use "Share my location now" below for a live fix.
     const mapsLink = 'https://maps.google.com/?q=' + encodeURIComponent(currentAddress || 'Kolkata')
     const circle = trustedContacts.map((c) => `${c.name} (${c.phone})`).join(', ')
     const body =
-      `SOS from Pujo Sahayak. I need help at ${currentAddress || 'my current location'}.` +
-      (circle ? ` Circle: ${circle}.` : '') +
-      ` Map: ${mapsLink}`
-    // 3. Try Web Share (native share sheet on Android) — fall back to tel:112.
+      `SOS from Pujo Sahayak. I need help at my SAVED address: ${currentAddress || 'Kolkata'} — ` +
+      `this may not be where I actually am. Circle: ${circle || 'none saved'}. Map: ${mapsLink}`
+    // 3. Open the share sheet, or fall back to the dialer. Neither outcome is
+    //    ever reported as a delivered message: the Web Share API gives the page
+    //    no receipt, so the note states what the app actually did.
     if (navigator.share) {
-      navigator.share({ title: 'SOS — Pujo Sahayak', text: body }).catch(() => {
-        // user cancelled — dial 112 instead
-        window.location.href = 'tel:112'
-      })
+      navigator.share({ title: 'SOS — Pujo Sahayak', text: body })
+        .then(() => setSosNote('Share sheet opened with the message — nothing is sent until you pick an app there. The app cannot confirm delivery.'))
+        .catch(() => {
+          // Cancelled in the sheet: the dialer is the fallback, not a success.
+          window.location.href = 'tel:112'
+          setSosNote('Share cancelled — your circle was NOT messaged. Opening the 112 dialer instead.')
+        })
     } else {
       window.location.href = 'tel:112'
+      setSosNote('This device has no share sheet, so nothing was sent to your circle. Opening the 112 dialer.')
     }
   }
 
@@ -212,9 +222,15 @@ export default function Safety() {
       <div className="mt-5">
         <SosButton onTrigger={triggerSos} reduced={reduced} />
         <p className="mt-1.5 text-center text-[10px] text-on-image/50">
-          Shares your last known address + a map link with your trusted contact via the system share sheet.
+          Shares your saved address + a map link through the system share sheet — the app cannot confirm
+          anything reaches a person, so it never claims that it did.
           {trustedContacts.length === 0 && ' Add one in Settings → Trusted contact.'}
         </p>
+        {sosNote && (
+          <p role="status" className="mt-2 rounded-card border border-gold-bright/40 bg-gold-bright/10 px-3 py-2 text-center text-xs text-on-image">
+            {sosNote}
+          </p>
+        )}
       </div>
 
       {/* Direct dial fallback — always visible so users know 112 is one tap away */}
@@ -310,11 +326,42 @@ export default function Safety() {
         </p>
       )}
 
+      {/* Reports filed here are sensitive local data — they must be reviewable
+          and erasable, not written-and-forgotten in localStorage. */}
+      {missingReports.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-2 text-sm font-semibold text-gold-bright">Saved on this device</h2>
+          <Card className="divide-y divide-white/10 !bg-white/5 !text-on-image">
+            {missingReports.map((r) => (
+              <div key={r.id} className="flex items-start gap-3 p-3.5">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-on-image">{r.name}</p>
+                  <p className="text-[11px] capitalize text-on-image/60">
+                    {r.personType} · {new Date(r.createdAt).toLocaleString()}
+                    {r.photoAttached ? ' · photo previewed only, not stored' : ''}
+                  </p>
+                </div>
+                <button
+                  onClick={() => removeMissingReport(r.id)}
+                  aria-label={`Delete the saved report for ${r.name}`}
+                  className="shrink-0 rounded-full border border-white/25 px-3 py-1 text-xs text-on-image/80"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </Card>
+          <p className="mt-1 text-[10px] text-on-image/40">
+            Deleting removes the record from this device only. Anything already typed into a share sheet
+            or sent by message is outside the app's control.
+          </p>
+        </section>
+      )}
+
       <p className="mt-6 text-center text-[10px] leading-relaxed text-on-image/40">
-        SOS state is stored on this device. Missing-person reports save locally and, when a live
-        authority backend is connected, are also routed to the nearest help desk — never to a public
-        feed. Authority integration (help desks, control rooms) is partner-dependent and is not
-        simulated when no provider is active.
+        SOS state and missing-person reports are stored on this device. Filing a report never forwards
+        it to a help desk: no authority integration is connected in this build, and nothing is simulated
+        in its place. Reports are kept out of any public feed.
       </p>
     </Page>
   )

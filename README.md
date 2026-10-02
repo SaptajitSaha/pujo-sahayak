@@ -1,219 +1,131 @@
-<div align="center">
+# <img src="public/favicon.png" alt="" width="36" align="center" /> Pujo Sahayak · পূজা সহায়ক
 
-<img src="public/favicon.svg" width="88" alt="Pujo Sahayak logo" />
+**A mobile-first guide to discovering Durga Puja in Kolkata.** Explore pandals and food, shape an itinerary, find your way around, and reach practical safety tools from one installable web app.
 
-# Pujo Sahayak · পূজা সহায়ক
+<p>
+  <img src="https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=1a1a1a" alt="React 18" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript&logoColor=white" alt="TypeScript 5.7" />
+  <img src="https://img.shields.io/badge/Vite-6-646cff?logo=vite&logoColor=white" alt="Vite 6" />
+  <img src="https://img.shields.io/badge/PWA-installable-6d35c5" alt="Installable PWA" />
+</p>
 
-**Your companion for Durga Puja in Kolkata — pandals, food, routes, safety and a
-guiding light, all in your pocket.**
+<p align="center">
+  <a href="assets/screens/phone-home.png"><img src="assets/screens/phone-home.png" alt="Pujo Sahayak home screen showing pandal discovery" width="420" /></a>
+</p>
 
-A mobile-first, installable **PWA** built with React + Vite. Offline-friendly,
-trilingual, and grounded in *real* Kolkata pandals and restaurants.
+> **Project status:** This is a demo/prototype. Some ratings, crowd levels, opening times, reviews, event and meetup details, distances, and commerce information are sample data. Backend-dependent features need a configured Supabase project. Check the labels in the app before relying on time-sensitive information.
 
-[![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=1a1a1a)](https://react.dev)
-[![Vite](https://img.shields.io/badge/Vite-6-646cff?logo=vite&logoColor=white)](https://vitejs.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![Tailwind](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&logoColor=1a1a1a)](https://tailwindcss.com)
-[![PWA](https://img.shields.io/badge/PWA-installable-5b0fad)](https://vite-pwa-org.netlify.app)
+## Explore the app
 
-</div>
+<details>
+<summary>View more app screens</summary>
 
----
+<p align="center">
+  <a href="assets/screens/phone-explore.png"><img src="assets/screens/phone-explore.png" alt="Explore pandals in list and map views" width="230" /></a>
+  <a href="assets/screens/phone-pandal.png"><img src="assets/screens/phone-pandal.png" alt="Pandal detail page" width="230" /></a>
+  <a href="assets/screens/phone-planner.png"><img src="assets/screens/phone-planner.png" alt="Day-by-day Puja planner" width="230" /></a>
+</p>
 
-<table align="center">
-  <tr>
-    <td align="center" valign="top"><img src="assets/screens/phone-home.png" width="210" alt="Home" /><br /><sub><b>Home</b> — nearby spotlight &amp; rails</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-explore.png" width="210" alt="Explore" /><br /><sub><b>Explore</b> — filter, list &amp; map</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-pandal.png" width="210" alt="Pandal detail" /><br /><sub><b>Pandal</b> — theme, crowd, metro</sub></td>
-  </tr>
-</table>
+<p align="center">
+  <a href="assets/screens/phone-categories.png"><img src="assets/screens/phone-categories.png" alt="Categories and local services" width="230" /></a>
+  <a href="assets/screens/phone-favorites.png"><img src="assets/screens/phone-favorites.png" alt="Saved and visited places" width="230" /></a>
+  <a href="assets/screens/phone-meets.png"><img src="assets/screens/phone-meets.png" alt="Community meetup screen" width="230" /></a>
+</p>
 
----
+</details>
 
-## ✨ What it does
+## What you can do
 
-- **Pandal & restaurant discovery** — curated, real Kolkata spots with themes,
-  live crowd levels, ratings, distances and nearest metro stations.
-- **Maya, your guide-light** — an in-app assistant for "which pandal should I
-  not miss?", food recs and day-by-day planning.
-- **Trip planner & route maps** — build an itinerary across the days of Puja and
-  see it on an interactive map.
-- **Day-of weather** — real Open-Meteo forecasts (no key, no tracking) on the
-  planner and the tithi timeline; cached for offline and clearly flagged when
-  stale — never a fabricated forecast.
-- **Pandal-hopping scorecard** — GPS-verified on-site check-ins build your
-  streak, badges and pandals-seen, all computed on your device. No location,
-  no check-in.
-- **Best Time To Visit & Pandal Pulse** — a modelled hour-by-hour crowd window
-  and freshness/provenance labels ("Official · 8 min ago" / "Visitor estimate" /
-  "modelled — illustrative") so you always know how much to trust a number.
-- **Tonight & "What should I do next?"** — a time-aware evening dashboard and a
-  top-3 next-step engine scored from your real plan, saves and distances.
-- **Save with intent · Story mode · History · Look Closer · Photo guide ·
-  Accessibility** — richer pandal pages, every derived surface honestly labelled.
-- **Safety Circle & Smart Meeting Point** — a local circle of up to 5 trusted
-  contacts with tap-to-share (no live tracking) and a suggested meeting point
-  built from real known spots.
-- **Season & memory layer** — Puja Mode countdown, a GPS-earned **Puja Passport**
-  (`/passport`), a private on-device **Puja Diary** (`/diary`), live **Personal
-  Statistics** and an **AI-free Puja Recap**, all computed from your own activity.
-- **Festival notices & info reports** — official notices shown on each pandal
-  they apply to (with an expired state), and a "report incorrect info" queue
-  kept on-device until a backend is connected.
-- **Meetups** — create and join plans so no one wanders the crowds alone.
-- **Safety** — a dedicated hub with a missing-person flow and help-desk / medical
-  camp info surfaced on every pandal card.
-- **Real location, honestly handled** — device geolocation with Nominatim
-  reverse-geocoding for addresses; graceful coordinate-only fallback when
-  offline or permission is denied. It never invents an address.
-- **Trilingual chrome** — English · বাংলা · हिन्दी, plus light/dark themes.
-- **Installable & offline-friendly** — service worker, app shell, and a
-  reduced-motion mode that respects your system preference.
+- **Discover:** browse pandals and restaurants, filter places, and view them on a map.
+- **Plan:** organize stops by Puja day, review approximate travel legs, and export or share an itinerary.
+- **Get oriented:** view Kolkata Metro information, place details, and day-of weather forecasts.
+- **Stay prepared:** open the safety hub, manage trusted contacts, share a location through the device share sheet, and find emergency calling options.
+- **Keep your own record:** save places and track local check-ins, badges, and Puja memories.
+- **Ask Maya:** use the in-app guide, which can run with its offline response layer; an optional language-model integration is also available.
+- **Choose your experience:** switch between English, বাংলা, and हिन्दी, and select light or dark appearance.
 
-## 📱 Screens
+Some community and commerce screens are demos or depend on backend/provider setup. The app labels sample or modeled information; it does not provide guaranteed live crowd, traffic, emergency dispatch, or payment services.
 
-<table align="center">
-  <tr>
-    <td align="center" valign="top"><img src="assets/screens/phone-planner.png" width="210" alt="Planner" /><br /><sub><b>Planner</b> — day-by-day itinerary</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-favorites.png" width="210" alt="Favorites" /><br /><sub><b>Favorites</b> — saved &amp; visited</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-meets.png" width="210" alt="Meetups" /><br /><sub><b>Meetups</b> — plans near you</sub></td>
-  </tr>
-  <tr>
-    <td align="center" valign="top"><img src="assets/screens/phone-categories.png" width="210" alt="Categories" /><br /><sub><b>Categories</b> — food, shopping, events</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-location.png" width="210" alt="Location picker" /><br /><sub><b>Location</b> — area &amp; pin picker</sub></td>
-    <td align="center" valign="top"><img src="assets/screens/phone-notifications.png" width="210" alt="Notifications" /><br /><sub><b>Notifications</b> — alerts &amp; deep links</sub></td>
-  </tr>
-</table>
+## Run locally
 
-Also in the app: **Maya** assistant, **Trip map**, **Safety** hub, **Missing
-person**, **Settings**, **Beyond Puja** — screenshots not captured here, so this
-row stays a text list rather than an empty placeholder tile.
+### Requirements
 
-## 🧱 Tech stack
+- Node.js and npm
 
-| Concern | Choice |
-| --- | --- |
-| Framework | React 18 + TypeScript |
-| Build / dev | Vite 6 (code-split routes, lazy loading) |
-| Styling | Tailwind CSS v4 (`@theme` design tokens) |
-| State | Zustand 5 with `persist` (versioned migrations) |
-| Motion | Framer Motion 11 (scroll reveals, fluid gradients) |
-| Maps | Leaflet + OpenStreetMap · optional Google Maps (key-gated) |
-| Icons | lucide-react |
-| Delivery | `vite-plugin-pwa` — installable, offline app shell |
-| Geocoding | Browser Geolocation + Nominatim (OSM) reverse geocode |
-
-## 🚀 Getting started
+### Start the app
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/SaptajitSaha/pujo-sahayak.git
+cd pujo-sahayak
 npm install
-
-# 2. Start the dev server
 npm run dev
-
-# 3. Production build + local preview
-npm run build
-npm run preview
 ```
 
-Then open the printed local URL (mobile viewport recommended) — or run a Lighthouse
-audit to see the PWA score.
+Open the local URL printed by Vite. The app can be explored without Supabase; backend-connected features remain unavailable until configured.
 
-### Optional: Google Maps for the pin picker
+### Environment variables
 
-By default the drop-a-pin address picker uses the free **Leaflet + OpenStreetMap**
-tiles — no key, no billing, works out of the box. If you have a Google Maps key and
-prefer it for that one screen, add a `.env.local`:
+Copy `.env.example` to `.env.local` and add only the values you need:
 
 ```bash
-# .env.local  (never committed — see .env.example)
-VITE_GOOGLE_MAPS_KEY=your_key_here
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-The app automatically switches the pin picker to Google Maps when the key is
-present, and falls back to OSM when it isn't. Trip/Explore maps always stay on
-Leaflet.
+Optional integrations:
 
-## 🌿 Design notes
+| Variable | Purpose |
+| --- | --- |
+| `VITE_FLAG_<FEATURE>` | Build-time feature defaults; see `src/config/features.ts` |
+| `VITE_OPENAI_KEY` | Optional Maya model integration |
+| `VITE_OPENAI_MODEL` | Optional model override |
+| `VITE_GOOGLE_MAPS_KEY` | Use Google Maps in the location pin picker instead of the default OpenStreetMap map |
 
-- **Ambient background** — two full-height gradient blobs drift on mirrored
-  vertical sweeps behind a glassmorphic UI.
-- **Fluid brand gradient** — a purple → pink → blue ramp animates across the
-  active nav pill and primary CTAs.
-- **Motion with a brake** — every scroll reveal, count-up and rail honours
-  `prefers-reduced-motion` (and an in-app toggle), rendering content instantly.
+Create `.env.local` for local development and never commit it. `VITE_*` values are included in the client-side app bundle; do not put a private production API key in the frontend. Use a server-side proxy for production model access. Keep Supabase service-role and scheduler secrets server-side; the browser should use only the anon key.
 
-## 🔌 Backend integration (optional)
+## Supabase setup
 
-Five community features — **Live Notes**, **Social Matching**, **Marketplace**,
-**Wallet / Payments** and **Authority Integration** — are built on **Supabase**
-(Postgres + Auth + Realtime + Edge Functions). The whole app still runs with **no
-backend at all**: every service falls back to clearly-labelled demo data (or an
-honest empty state) when Supabase is unconfigured, and nothing is ever fabricated
-as live.
+Supabase is optional. To enable its Auth, database, and community integrations:
 
-```bash
-# .env.local — leave unset to stay in the local/demo mode
-VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+1. Create a Supabase project and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env.local`.
+2. Apply the SQL migrations in order: `supabase/migrations/001_initial_schema.sql`, then `supabase/migrations/002_moderation_and_commerce_boundaries.sql`.
+3. Configure any required Edge Function secrets in Supabase. Never expose service-role or scheduler secrets in the client.
+4. Set feature defaults as needed and restart the Vite server after changing environment values.
+
+The marketplace payment adapter is a mock and does not move real money. Authority feeds and other provider-dependent features require a real provider configuration; do not treat demo content as a live service.
+
+## Commands
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Vite development server |
+| `npm test` | Run the Vitest suite |
+| `npm run build` | Type-check and create the production build |
+| `npm run preview` | Serve the production build locally |
+
+## Project layout
+
+```text
+src/
+  components/   Shared UI and feature components
+  config/       Feature defaults and route guards
+  data/         Types and demo content
+  i18n/         Translation and locale helpers
+  lib/          App utilities and domain logic
+  pages/        Route-level screens
+  services/     Supabase and provider integrations
+  store/        Persisted client state
+  maya/         Maya assistant layers
+supabase/
+  functions/    Edge Functions
+  migrations/   Database schema and policy migrations
+assets/screens/ App screenshots used in this README
 ```
 
-- **Schema & RLS**: apply `supabase/migrations/001_initial_schema.sql`, then
-  `002_moderation_and_commerce_boundaries.sql`. Tables start **empty**; Row
-  Level Security lets anonymous users read published content while writes
-  require a signed-in session.
-- **Auth**: email magic-link via Supabase Auth. Browsing is public and works
-  signed-out; posting a note, saving preferences or ordering requires sign-in.
-- **Realtime**: `live_notes`, `official_notices` and `authority_alerts` are in the
-  realtime publication; sections subscribe passively (no always-on animation) and
-  stay readable offline via the query cache.
-- **Trust hierarchy, visibly enforced**: *Official* content renders with a gold
-  accent + shield; *Visitor* notes with a muted border + "Visitor" chip — so a
-  community observation is never mistaken for an authority notice.
-- **Moderation pipeline**: a new note is inserted as **pending** (a client can
-  never publish itself) and shows back to its author with an honest "Awaiting
-  moderation" chip. The scheduled Edge Function
-  (`supabase/functions/expire-notes`) calls the `run_note_moderation()` SQL
-  function every ~10 minutes: it expires notes past their TTL, rejects notes
-  reported 3+ times, rejects the queue of rate-limited authors (>5 notes/hour)
-  and publishes the rest. Reporting is one atomic, idempotent RPC
-  (`report_live_note`). The function answers only callers presenting the
-  `MODERATION_SCHEDULER_SECRET` header (`supabase secrets set
-  MODERATION_SCHEDULER_SECRET=...`) — the service-role key stays server-side.
+## Stack
 
-### Feature flags
+React 18 · TypeScript · Vite · Tailwind CSS 4 · Zustand · TanStack Query · React Router · Framer Motion · Leaflet/OpenStreetMap · Supabase (optional) · `vite-plugin-pwa`
 
-Every new surface is gated in `src/config/features.ts` (compile-time env defaults
-plus a runtime override under **Settings → Developer**). Turning a flag off hides
-its UI and blocks its route. Set any of `VITE_FLAG_LIVE_NOTES`, `VITE_FLAG_SOCIAL`,
-`VITE_FLAG_MARKETPLACE`, `VITE_FLAG_WALLET`, `VITE_FLAG_AUTHORITY` to `false`/`true`.
+## License
 
-The **Second Product Extension** adds eighteen more flags (`ENABLE_BEST_TIME`,
-`ENABLE_TONIGHT`, `ENABLE_WHAT_NEXT`, `ENABLE_SAVE_INTENT`, `ENABLE_SAFETY_CIRCLE`,
-`ENABLE_SMART_MEETING`, `ENABLE_STORY_MODE`, `ENABLE_LOOK_CLOSER`,
-`ENABLE_PANDAL_HISTORY`, `ENABLE_ACCESSIBILITY`, `ENABLE_PHOTO_GUIDE`,
-`ENABLE_PUJA_MODE`, `ENABLE_PUJA_PASSPORT`, `ENABLE_PUJA_DIARY`, `ENABLE_PUJA_STATS`,
-`ENABLE_PUJA_RECAP`, `ENABLE_FESTIVAL_NOTICES`, `ENABLE_INFO_REPORTS`) — on by
-default in the demo build, each overridable with `VITE_FLAG_<NAME>=false`.
-
-### Payment provider swap
-
-Payments go through a single `PaymentService` abstraction (`src/services/payment.ts`).
-Today it is backed by `MockPaymentAdapter` (`src/services/payment.mock.ts`) which
-**never moves real money** — every transaction is tagged `demo_completed` /
-`is_demo` and the UI shows a "DEMO — no real payment processed" banner. With a
-backend connected, no money value is ever accepted from the client: orders and
-transactions are created only by the `place_demo_order` /
-`confirm_demo_payment` / `refund_demo_payment` RPCs
-(`supabase/migrations/002_moderation_and_commerce_boundaries.sql`), which derive
-the amount from the trusted `marketplace_products` / `marketplace_orders` rows
-and fix the status; the direct client INSERT policies are dropped. To go live,
-implement `PaymentService` with a real gateway (e.g. Razorpay), tokenize cards on
-the provider side (raw card data is never stored), and replace those RPC bodies
-with server-side intent creation + webhook verification. No UI or order flow
-needs to change.
-
-## 📜 License
-
-Private project — all rights reserved.
+Private project. All rights reserved.

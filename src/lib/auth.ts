@@ -57,6 +57,31 @@ export async function signInWithEmail(email: string): Promise<string | null> {
   return error?.message ?? null
 }
 
+/**
+ * Sign in with email + password. Returns an error string, or null on success
+ * (the session is then picked up by useAuth's onAuthStateChange subscription).
+ * A direct API call — no email redirect — so it works the same in the WebView APK.
+ */
+export async function signInWithPassword(email: string, password: string): Promise<string | null> {
+  if (!supabase) return 'Supabase is not configured'
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password })
+  return error?.message ?? null
+}
+
+/**
+ * Create an email + password account. `signedIn` is true when Supabase returned
+ * a session immediately (email confirmation disabled); false when the user must
+ * confirm via email first, so the UI can show the right next step.
+ */
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+): Promise<{ error: string | null; signedIn: boolean }> {
+  if (!supabase) return { error: 'Supabase is not configured', signedIn: false }
+  const { data, error } = await supabase.auth.signUp({ email: email.trim(), password })
+  return { error: error?.message ?? null, signedIn: !!data.session }
+}
+
 /** Sign out. Always safe to call. */
 export async function signOut(): Promise<void> {
   if (!supabase) return

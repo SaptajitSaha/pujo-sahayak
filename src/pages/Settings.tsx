@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Bell, CircleHelp, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, Sparkles as SparkleRow, User, FlaskConical,
 } from 'lucide-react'
@@ -12,6 +13,7 @@ import type { FeatureFlag } from '../config/features'
 
 export default function Settings() {
   const t = useT()
+  const nav = useNavigate()
   const [toast, setToast] = useState<string | null>(null)
   const lang = useApp((s) => s.lang)
   const setLang = useApp((s) => s.setLang)
@@ -22,7 +24,6 @@ export default function Settings() {
   const appLogo = useApp((s) => s.appLogo)
   const setAppLogo = useApp((s) => s.setAppLogo)
   const premium = useApp((s) => s.premium)
-  const setPremium = useApp((s) => s.setPremium)
   const trustedContacts = useApp((s) => s.trustedContacts)
   const setTrustedContacts = useApp((s) => s.setTrustedContacts)
   const selectedCity = useApp((s) => s.selectedCity)
@@ -220,7 +221,7 @@ export default function Settings() {
           </div>
         </Card>
 
-        <Row icon={SparkleRow} label={premium ? 'Premium — active (demo)' : t('premiumMember')} onClick={() => { setPremium(!premium); note(premium ? 'Switched back to Free Plan (demo).' : 'Premium unlocked locally — demo only, no payment.')}} />
+        <Row icon={SparkleRow} label={premium ? 'Premium — active' : t('premiumMember')} onClick={() => nav('/premium')} />
 
         {/* Developer: feature flag toggles */}
         <Card className="mt-4 p-3.5">

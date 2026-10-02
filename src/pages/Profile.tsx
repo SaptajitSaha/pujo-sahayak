@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, BadgeCheck, Baby, Bookmark, CalendarCheck, ChevronRight, CreditCard,
-  Flame, HandHeart, Lock, LogIn, MapPin, Notebook, Palette, Phone, Share2, Siren, Stamp, Settings as SettingsIcon, Sparkles, Users,
+  Flame, Lock, LogIn, MapPin, Notebook, Palette, Phone, Share2, Siren, Stamp, Settings as SettingsIcon, Sparkles, Users,
 } from 'lucide-react'
 import { Avatar, Button, Card, Page, SectionHeader } from '../components/ui'
 import { Wallet } from '../components/Wallet'
@@ -173,8 +173,7 @@ export default function Profile() {
           ...(flags.ENABLE_PUJA_PASSPORT ? [{ icon: Stamp, label: t('passport'), to: '/passport' }] : []),
           ...(flags.ENABLE_PUJA_DIARY ? [{ icon: Notebook, label: t('diary'), to: '/diary' }] : []),
           { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
-          { icon: CreditCard, label: 'Payments & Subscriptions', to: '/profile/settings' },
-          { icon: HandHeart, label: 'Donate', to: '/profile/settings' },
+          { icon: CreditCard, label: 'Payments & Subscriptions', to: flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings' },
           { icon: Palette, label: t('appearance'), to: '/profile/settings' },
           { icon: SettingsIcon, label: t('settings'), to: '/profile/settings' },
         ].map(({ icon: Icon, label, to }) => (

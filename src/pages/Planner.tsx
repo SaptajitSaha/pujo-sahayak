@@ -195,7 +195,7 @@ export default function Planner() {
               <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}>
                 <Card className="flex items-center gap-3 p-3">
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-vermilion text-xs font-bold text-on-image">{i + 1}</span>
-                  <Img palette={p.palette} alt={p.name} className="h-12 w-12 shrink-0 rounded-lg" />
+                  <Img palette={p.palette} alt={p.name} className="h-12 w-12 shrink-0 rounded-lg" sizes="48px" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold">{p.name}</p>
                     <p className="text-xs text-faint">
@@ -275,7 +275,7 @@ export default function Planner() {
                 }}
                 className="flex w-full items-center gap-3 border-b border-ink/5 py-2.5 text-left"
               >
-                <Img palette={p.palette} alt={p.name} className="h-10 w-10 rounded-lg" />
+                <Img palette={p.palette} alt={p.name} className="h-10 w-10 rounded-lg" sizes="40px" />
                 <span className="flex-1">
                   <span className="block text-sm font-medium">{p.name}</span>
                   <span className="block text-xs text-faint">{cap(p.type)} · {p.area} · {p.distanceKm} km</span>

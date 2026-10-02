@@ -141,8 +141,8 @@ export default function Profile() {
         <Card className="flex items-center gap-3 bg-gradient-to-r from-night to-night-soft p-3.5 text-on-image">
           <span className="rounded-full bg-gold/20 p-2 text-gold-bright"><Sparkles size={16} /></span>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{premium ? "You're a Premium Member" : t('upgrade')}</p>
-            <p className="text-[11px] text-on-image/60">{premium ? 'Manage your plan' : t('upgradeSub')}</p>
+            <p className="text-sm font-semibold">{premium ? t('premiumActive') : t('upgrade')}</p>
+            <p className="text-[11px] text-on-image/60">{premium ? t('premiumManage') : t('upgradeSub')}</p>
           </div>
           <ChevronRight size={16} className="text-gold-bright" />
         </Card>
@@ -173,7 +173,7 @@ export default function Profile() {
           ...(flags.ENABLE_PUJA_PASSPORT ? [{ icon: Stamp, label: t('passport'), to: '/passport' }] : []),
           ...(flags.ENABLE_PUJA_DIARY ? [{ icon: Notebook, label: t('diary'), to: '/diary' }] : []),
           { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
-          { icon: CreditCard, label: 'Payments & Subscriptions', to: flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings' },
+          { icon: CreditCard, label: t('paymentsSubs'), to: flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings' },
           { icon: Palette, label: t('appearance'), to: '/profile/settings' },
           { icon: SettingsIcon, label: t('settings'), to: '/profile/settings' },
         ].map(({ icon: Icon, label, to }) => (
@@ -194,9 +194,7 @@ export default function Profile() {
         </button>
       </div>
 
-      <p className="mt-4 text-center text-[10px] text-faint">
-        Payments, donations & premium are UI concepts in this build — no transaction is processed.
-      </p>
+      <p className="mt-4 text-center text-[10px] text-faint">{t('commerceDemoNote')}</p>
     </Page>
   )
 }

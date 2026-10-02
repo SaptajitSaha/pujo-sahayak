@@ -2,7 +2,8 @@
 // One entry point for the chatbot. Off-topic gate → LLM (if enabled) → offline
 // brain fallback. Never returns null; Maya always answers something.
 
-import { answer, isOffTopic, OFF_TOPIC_REPLY, type LiveContext, type MayaReply, type UserActivity } from './brain'
+import { answer, type LiveContext, type MayaReply, type UserActivity } from './brain'
+import { isOffTopic, OFF_TOPIC_REPLY } from './topicGate'
 import { askLLM, type ChatTurn } from './llm'
 import { fetchOfficialNotices } from '../services/authority'
 import { fetchLiveNotes } from '../services/liveNotes'

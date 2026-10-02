@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { Package, ShoppingBag } from 'lucide-react'
 import { Button, Card, QueryError, SectionHeader } from '../components/ui'
 import { useAuth, useUserId } from '../lib/auth'
+import { useT } from '../i18n'
 import { useMyOrders } from '../services/marketplace'
 import { getPaymentService } from '../services/payment'
 import { useQueryClient } from '@tanstack/react-query'
@@ -66,15 +67,23 @@ export function MyOrders() {
 }
 
 function OrderCard({ order }: { order: MarketplaceOrder }) {
+  const t = useT()
   const qc = useQueryClient()
   const [paying, setPaying] = useState(false)
+  // Honest outcome of the last attempt — never implies success on a failure.
+  const [msg, setMsg] = useState<string | null>(null)
   const idx = FLOW.indexOf(order.status)
 
   const pay = async () => {
     setPaying(true)
+    setMsg(null)
     try {
       await getPaymentService().createPayment(order)
+      setMsg(t('payDemoRecorded'))
       qc.invalidateQueries({ queryKey: ['wallet-txns'] })
+      qc.invalidateQueries({ queryKey: ['marketplace-orders'] })
+    } catch (e) {
+      setMsg(`${t('payFailedPrefix')}: ${(e as Error).message}`)
     } finally {
       setTimeout(() => setPaying(false), 800)
     }
@@ -103,6 +112,7 @@ function OrderCard({ order }: { order: MarketplaceOrder }) {
         </div>
       )}
       <p className="mt-1.5 text-[10px] text-faint capitalize">Status: {order.status.replace('_', ' ')}</p>
+      {msg && <p role="status" className="mt-1 text-[10px] text-ink-soft">{msg}</p>}
     </Card>
   )
 }

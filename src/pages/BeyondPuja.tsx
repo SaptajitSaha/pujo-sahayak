@@ -45,7 +45,7 @@ export default function BeyondPuja() {
             {events.map((e) => (
               <button key={e.id} onClick={() => nav(`/search?q=${encodeURIComponent(e.name)}`)} className="w-full text-left">
                 <Card className="flex items-center gap-3 p-3 transition-transform hover:scale-[1.01]">
-                  <Img palette={e.palette} alt={e.name} className="h-12 w-12 rounded-lg" />
+                  <Img palette={e.palette} alt={e.name} className="h-12 w-12 rounded-lg" sizes="48px" />
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{e.name}</p>
                     <p className="text-xs text-faint">{e.date} • {e.time} • {e.venue}</p>

@@ -32,7 +32,7 @@ export function PandalHistory({ place, onOpen }: { place: Place; onOpen: (item: 
               onClick={() => onOpen({ title: `${e.year} — ${e.theme}`, sub: `Past edition of ${place.name}`, palette: e.palette })}
               className="flex items-center gap-2.5 text-left"
             >
-              <Img palette={e.palette} alt={`${e.year} theme`} className="h-10 w-10 shrink-0 rounded-md" />
+              <Img palette={e.palette} alt={`${e.year} theme`} className="h-10 w-10 shrink-0 rounded-md" sizes="40px" />
               <span className="min-w-0">
                 <p className="text-xs font-semibold text-ink">{e.year}</p>
                 <p className="truncate text-[11px] text-ink-soft">{e.theme}</p>

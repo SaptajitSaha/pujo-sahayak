@@ -15,10 +15,10 @@ import { useT } from '../i18n'
  * end-to-end without a billing backend. Keep the disclaimer truthful.
  */
 const PERKS = [
-  { icon: Sparkles, title: 'Smart outing plans', body: 'Best-time suggestions and a tighter day plan.' },
-  { icon: Users, title: 'Exclusive meetups', body: 'Priority visibility in the social matching circles.' },
-  { icon: Zap, title: 'Priority Maya', body: 'Fast-track answers during the busy puja days.' },
-]
+  { icon: Sparkles, title: 'perkSmartPlans', body: 'perkSmartPlansBody' },
+  { icon: Users, title: 'perkMeetups', body: 'perkMeetupsBody' },
+  { icon: Zap, title: 'perkMaya', body: 'perkMayaBody' },
+] as const
 
 export default function Premium() {
   const t = useT()
@@ -29,7 +29,7 @@ export default function Premium() {
   const toggle = () => {
     const next = !premium
     setPremium(next)
-    setNote(next ? 'Premium unlocked locally — demo only, no payment taken.' : 'Switched back to the Free Plan.')
+    setNote(next ? t('premiumUnlocked') : t('premiumReverted'))
     setTimeout(() => setNote(null), 2600)
   }
 
@@ -44,9 +44,9 @@ export default function Premium() {
             {premium ? <BadgeCheck size={20} /> : <Crown size={20} />}
           </span>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{premium ? 'Premium Member' : 'Free Plan'}</p>
+            <p className="text-sm font-semibold">{premium ? t('premiumActive') : t('premiumFreePlan')}</p>
             <p className="text-[11px] text-on-image/60">
-              {premium ? 'All premium perks are active.' : t('upgradeSub')}
+              {premium ? t('premiumActiveSub') : t('upgradeSub')}
             </p>
           </div>
         </Card>
@@ -54,17 +54,17 @@ export default function Premium() {
 
       {/* What Premium includes */}
       <section className="mt-5">
-        <h2 className="font-display mb-2.5 text-[17px] font-semibold leading-tight text-ink">What Premium includes</h2>
+        <h2 className="font-display mb-2.5 text-[17px] font-semibold leading-tight text-ink">{t('premiumIncludes')}</h2>
         <div className="space-y-2">
           {PERKS.map(({ icon: Icon, title, body }) => (
             <Card key={title} className="flex items-start gap-3 p-3.5">
               <span className="mt-0.5 rounded-full bg-gold/15 p-2 text-gold"><Icon size={16} /></span>
               <div className="flex-1">
                 <p className="flex items-center gap-1.5 text-sm font-semibold">
-                  {title}
+                  {t(title)}
                   {premium && <Check size={14} className="text-vermilion" />}
                 </p>
-                <p className="mt-0.5 text-[11px] leading-snug text-faint">{body}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-faint">{t(body)}</p>
               </div>
             </Card>
           ))}
@@ -74,16 +74,14 @@ export default function Premium() {
       {/* Action */}
       <div className="mt-5">
         <Button variant={premium ? 'outline' : 'primary'} className="w-full" onClick={toggle}>
-          {premium ? 'Switch back to Free' : t('premiumMember')}
+          {premium ? t('premiumSwitchFree') : t('premiumMember')}
         </Button>
         {note && (
           <p role="status" className="mt-2 text-center text-xs text-ink-soft">{note}</p>
         )}
       </div>
 
-      <p className="mt-4 text-center text-[10px] text-faint">
-        Premium is a UI concept in this build — no transaction is processed and nothing is charged.
-      </p>
+      <p className="mt-4 text-center text-[10px] text-faint">{t('premiumUiNote')}</p>
     </Page>
   )
 }

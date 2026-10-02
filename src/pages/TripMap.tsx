@@ -66,7 +66,7 @@ export default function TripMap() {
         {places.map((x, i) => (
           <Card key={i} className="flex items-center gap-3 p-3">
             <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-vermilion text-xs font-bold text-on-image">{i + 1}</span>
-            <Img palette={x.place!.palette} alt={x.place!.name} className="h-10 w-10 rounded-lg" />
+            <Img palette={x.place!.palette} alt={x.place!.name} className="h-10 w-10 rounded-lg" sizes="40px" />
             <button onClick={() => nav(x.place!.type === 'pandal' ? `/pandal/${x.place!.id}` : `/restaurant/${x.place!.id}`)} className="flex-1 text-left">
               <p className="text-sm font-semibold">{x.place!.name}</p>
               <p className="text-xs text-faint">{fmt(x.stop.time)} · {x.place!.area}</p>

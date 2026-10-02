@@ -2,7 +2,8 @@ import { lazy, Suspense, useEffect, useState } from 'react'
 import { MotionConfig } from 'framer-motion'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { CloudOff } from 'lucide-react'
-import { AmbientBackground, BottomNav, MayaFab, useScrollIdlePause } from './components/ui'
+import { AmbientBackground, BottomNav, MayaFab, useScrollIdlePause } from './components/chrome'
+import { FeatureGate } from './components/FeatureGate'
 import { useApp } from './store'
 import { describeCurrentLocation } from './lib/geo'
 // Home is eager for an instant first paint; every other route is code-split so
@@ -222,11 +223,16 @@ function Shell() {
       <Route path="/favorites" element={<Favorites />} />
       <Route path="/planner" element={<Planner />} />
       <Route path="/trip/:day" element={<TripMap />} />
+      {/* Flag-gated surfaces. FeatureGate is the route half of the project's
+          "a disabled feature hides its UI and blocks its route" rule — a
+          typed or stale deep link to a flagged page redirects home instead of
+          rendering it. Ungated pages stay reachable; the mapping lives in
+          src/config/routeGuards.ts (single source of truth, unit-tested). */}
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/settings" element={<Settings />} />
-      <Route path="/premium" element={<Premium />} />
-      <Route path="/passport" element={<Passport />} />
-      <Route path="/diary" element={<Diary />} />
+      <Route path="/premium" element={<FeatureGate path="/premium"><Premium /></FeatureGate>} />
+      <Route path="/passport" element={<FeatureGate path="/passport"><Passport /></FeatureGate>} />
+      <Route path="/diary" element={<FeatureGate path="/diary"><Diary /></FeatureGate>} />
       <Route path="/safety" element={<Safety />} />
       <Route path="/safety/missing-person" element={<MissingPerson />} />
       <Route path="/beyond-puja" element={<BeyondPuja />} />
@@ -238,10 +244,10 @@ function Shell() {
       <Route path="/phrasebook" element={<Phrasebook />} />
       <Route path="/share-target" element={<ShareTarget />} />
       <Route path="/auth" element={<Auth />} />
-      <Route path="/social" element={<SocialMatch />} />
-      <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/social" element={<FeatureGate path="/social"><SocialMatch /></FeatureGate>} />
+      <Route path="/marketplace" element={<FeatureGate path="/marketplace"><Marketplace /></FeatureGate>} />
       <Route path="/transport/metro" element={<MetroGuide />} />
-      <Route path="/transport/metro/map" element={<MetroMap />} />
+      <Route path="/transport/metro/map" element={<FeatureGate path="/transport/metro/map"><MetroMap /></FeatureGate>} />
       <Route path="/services/:cat" element={<ServiceDirectory />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -46,7 +46,10 @@ export function useProduct(id: string) {
   })
 }
 
-/** Create an order for a product (requires auth). */
+/** Create an order for a product (requires auth).
+ *  Goes through the place_demo_order RPC: the amount is read from the trusted
+ *  product row server-side and the status is fixed — a client can never
+ *  declare its own price or order state. */
 export function useCreateOrder() {
   const qc = useQueryClient()
   return useMutation({
@@ -54,12 +57,9 @@ export function useCreateOrder() {
       if (!supabase) throw new Error('Orders need a live backend — not available in demo')
       const userId = await getUserId()
       if (!userId) throw new Error('Sign in to place an order')
-      const { data, error } = await supabase
-        .from('marketplace_orders')
-        .insert({ product_id: product.id, buyer_id: userId, amount: product.price, status: 'initiated' })
-        .select()
-        .single()
+      const { data, error } = await supabase.rpc('place_demo_order', { p_product_id: product.id })
       if (error) throw error
+      if (!data) throw new Error('Order could not be created')
       return data as MarketplaceOrder
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ORDERS }),

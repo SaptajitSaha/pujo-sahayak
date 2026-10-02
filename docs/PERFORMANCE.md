@@ -113,6 +113,7 @@ Lucide is already tree-shaken to the used subset. Fonts are subset already.
 | Idea | Baseline → Result | Verdict | Why |
 |---|---|---|---|
 | Responsive images: generate `@480`/`@800` renditions (`scripts/make-renditions.ps1`, System.Drawing pipeline) + `srcset`/`sizes`/`decoding=async` in `<Img>`; spotlight made eager+`fetchpriority=high`; detail hero opts into `@800`/master via `priority` + `sizes="100vw"`. | Home images **3,767 KB → 942 KB** (−75%); Home **total transfer 5,137 KB → 2,314 KB** (−55%); 29 `@480` requests, 0 masters, 0 broken, console clean. | **kept** | Measured, exceeds noise, no visual regression (hero verified at 800 px ≥ 576 px displayed). |
+| Smaller tier for thumbnails (2026-10 review pass): `@288` added to the pipeline + `<Img>` srcset, and explicit `sizes` passed at known ≤64–128 px square surfaces (Meets, MayaScan, PandalHistory, BeyondPuja, TripMap, Planner, PandalDetail meetup/edition tiles). Also fixed the React-18 `fetchPriority` DOM warning — the attribute now reaches the DOM as lowercase `fetchpriority` with no console warning. | Home images **942 KB → 847 KB** (−10%) measured on the Vite **dev** server (30 requests: 24 × `@480`, 6 × `@288`, 0 masters; `srcset` present on 33/33 imgs; `fetchpriority="high"` on the LCP card). Dev-server caveat: same JPEG bytes, but dev serves no Brotli, so the figure is comparable to the 942 KB image line, not to the 2,314 KB total. Console re-check: zero React warnings. | **kept** | Measured across two runs (identical numbers after full scroll), beyond noise; visual identity unchanged (288 px ≥ 2× the 40–128 px boxes). |
 
 ### AFTER (Group A, production preview, verified bytes)
 
@@ -158,9 +159,9 @@ to measure the gain (brief §62/§63: no speculative optimization).
 - No WebP/AVIF: no encoder is available in this environment (no sharp/magick/
   cwebp). Resolution was the available, dominant lever; a modern-format pipeline
   would cut the remaining 942 KB a further ~25–35%.
-- `<Img>` uses one default `sizes` tuned for the dominant ~200–260 px card, so
-  tiny (40–72 px) thumbnails still pull `@480`. Per-surface `sizes` (or a
-  smaller `@288` tier) would shrink those further.
+- `<Img>` now defaults to one `sizes` tuned for the dominant ~200–260 px card and
+  takes an explicit per-surface `sizes` at the known small squares (pulling
+  `@288`); rails/cards without an explicit value still select `@480`.
 - LCP re-measurement + low-end-Android throttled runs still need a real device
   or a visible, throttled Lighthouse/DevTools session.
 - Repeat-visit path is already strong (SW precache shell + CacheFirst `/img/`),

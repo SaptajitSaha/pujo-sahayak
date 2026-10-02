@@ -142,7 +142,7 @@ export default function MayaScan() {
       {result && (
         <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="relative z-10 mx-4 mt-4">
           <Card className="flex items-center gap-3 bg-card p-3 text-ink">
-            <Img palette={result.palette} alt={result.name} className="h-14 w-14 rounded-lg" />
+            <Img palette={result.palette} alt={result.name} className="h-14 w-14 rounded-lg" sizes="56px" />
             <div className="flex-1">
               <p className="text-[10px] uppercase tracking-wide text-maya">Possible match · demo identification</p>
               <p className="text-sm font-semibold">{result.name}</p>

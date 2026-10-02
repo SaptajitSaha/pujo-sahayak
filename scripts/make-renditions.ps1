@@ -6,16 +6,17 @@
 # rail/card thumbnails, which is 4-9x more pixels than those surfaces display —
 # images alone were ~73% of the Home payload (docs/PERFORMANCE.md).
 #
-# This emits a `@480` and `@800` rendition next to every master (long edge,
-# preserved aspect, high-quality bicubic downsample, q80). The <Img> primitive
-# then advertises them via srcset/sizes so a phone picks 480 for a card and only
-# the large hero asks for 800/1024. A tier is skipped if the master is not
-# larger than it (never upscale). Re-run any time new masters are ingested.
+# This emits `@288` / `@480` / `@800` renditions next to every master (long
+# edge, preserved aspect, high-quality bicubic downsample, q80). The <Img>
+# primitive advertises them via srcset/sizes so a phone picks 288 for a square
+# thumb, 480 for a card and only the large hero asks for 800/1024. A tier is
+# skipped if the master is not larger than it (never upscale). Re-run any time
+# new masters are ingested.
 #
 # Usage:  powershell -File scripts\make-renditions.ps1
 
 param(
-  [int[]]$Tiers = @(480, 800),
+  [int[]]$Tiers = @(288, 480, 800),
   [long]$Quality = 80
 )
 

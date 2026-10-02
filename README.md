@@ -162,9 +162,10 @@ VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-- **Schema & RLS**: apply `supabase/migrations/001_initial_schema.sql`. Tables
-  start **empty**; Row Level Security lets anonymous users read published content
-  while writes require a signed-in session.
+- **Schema & RLS**: apply `supabase/migrations/001_initial_schema.sql`, then
+  `002_moderation_and_commerce_boundaries.sql`. Tables start **empty**; Row
+  Level Security lets anonymous users read published content while writes
+  require a signed-in session.
 - **Auth**: email magic-link via Supabase Auth. Browsing is public and works
   signed-out; posting a note, saving preferences or ordering requires sign-in.
 - **Realtime**: `live_notes`, `official_notices` and `authority_alerts` are in the
@@ -173,8 +174,16 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 - **Trust hierarchy, visibly enforced**: *Official* content renders with a gold
   accent + shield; *Visitor* notes with a muted border + "Visitor" chip — so a
   community observation is never mistaken for an authority notice.
-- **Auto-expiry & moderation**: `supabase/functions/expire-notes` retires stale
-  notes and auto-rejects over-reported ones; rate-limits posting.
+- **Moderation pipeline**: a new note is inserted as **pending** (a client can
+  never publish itself) and shows back to its author with an honest "Awaiting
+  moderation" chip. The scheduled Edge Function
+  (`supabase/functions/expire-notes`) calls the `run_note_moderation()` SQL
+  function every ~10 minutes: it expires notes past their TTL, rejects notes
+  reported 3+ times, rejects the queue of rate-limited authors (>5 notes/hour)
+  and publishes the rest. Reporting is one atomic, idempotent RPC
+  (`report_live_note`). The function answers only callers presenting the
+  `MODERATION_SCHEDULER_SECRET` header (`supabase secrets set
+  MODERATION_SCHEDULER_SECRET=...`) — the service-role key stays server-side.
 
 ### Feature flags
 
@@ -196,10 +205,17 @@ default in the demo build, each overridable with `VITE_FLAG_<NAME>=false`.
 Payments go through a single `PaymentService` abstraction (`src/services/payment.ts`).
 Today it is backed by `MockPaymentAdapter` (`src/services/payment.mock.ts`) which
 **never moves real money** — every transaction is tagged `demo_completed` /
-`is_demo` and the UI shows a "DEMO — no real payment processed" banner. To go live,
+`is_demo` and the UI shows a "DEMO — no real payment processed" banner. With a
+backend connected, no money value is ever accepted from the client: orders and
+transactions are created only by the `place_demo_order` /
+`confirm_demo_payment` / `refund_demo_payment` RPCs
+(`supabase/migrations/002_moderation_and_commerce_boundaries.sql`), which derive
+the amount from the trusted `marketplace_products` / `marketplace_orders` rows
+and fix the status; the direct client INSERT policies are dropped. To go live,
 implement `PaymentService` with a real gateway (e.g. Razorpay), tokenize cards on
-the provider side (raw card data is never stored), and return the new adapter from
-`getPaymentService()`. No UI or order flow needs to change.
+the provider side (raw card data is never stored), and replace those RPC bodies
+with server-side intent creation + webhook verification. No UI or order flow
+needs to change.
 
 ## 📜 License
 

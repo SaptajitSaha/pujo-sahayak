@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import {
@@ -18,10 +17,12 @@ import { OfficialNotices } from '../components/OfficialNotices'
 import { LiveNotes } from '../components/LiveNotes'
 import { SaveIntentSheet } from '../components/SaveIntentSheet'
 import { ReportInfoSheet } from '../components/ReportInfoSheet'
+import { ReviewSheet } from '../components/pandal/ReviewSheet'
+import { PandalLogistics } from '../components/pandal/PandalLogistics'
 import { useOfficialNotices } from '../services/authority'
 import { useLiveNotes } from '../services/liveNotes'
 import { demoProductsNear } from '../services/marketplace.mock'
-import { meetups, pandals, placeById, restaurants, parkingSpots, bloodBanks, metroETAs } from '../data/demo'
+import { meetups, pandals, placeById, restaurants } from '../data/demo'
 import { useApp } from '../store'
 import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
 import { tithiForTs, withinGeofence } from '../lib/scorecard'
@@ -78,15 +79,6 @@ export default function PandalDetail() {
   const addReview = useApp((s) => s.addReview)
   const [cardBusy, setCardBusy] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
-  // Focus the review sheet when it opens: the Escape handler lives on the
-  // overlay, so without this the key event never reaches it when the user
-  // opened the modal by clicking the "Rate this" chip (focus stays outside).
-  const dialogRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (reviewOpen) dialogRef.current?.focus()
-  }, [reviewOpen])
-  const [draftRating, setDraftRating] = useState(0)
-  const [draftText, setDraftText] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   // Shared lightbox — top-click photos and past-edition themes open here.
   const [zoom, setZoom] = useState<LightboxItem | null>(null)
@@ -94,11 +86,6 @@ export default function PandalDetail() {
   const [intentOpen, setIntentOpen] = useState(false)
   // "Report incorrect info" micro-flow (5b) — queues a local place_info report.
   const [reportOpen, setReportOpen] = useState(false)
-
-  // Opens an external walking/driving route for a named spot (parking ground,
-  // metro station). Plain Maps search URL — no key, no fake integration.
-  const openDirections = (name: string, area: string) =>
-    window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} ${area} Kolkata`)}`, '_blank', 'noopener,noreferrer')
 
   const onShareCard = async () => {
     if (!place) return
@@ -118,19 +105,17 @@ export default function PandalDetail() {
 
   const userReviews = place ? reviews.filter((r) => r.placeId === place.id) : []
 
-  const submitReview = () => {
-    if (!place || draftRating < 1) return
+  const submitReview = (rating: number, text: string) => {
+    if (!place || rating < 1) return
     addReview({
       placeId: place.id,
-      rating: draftRating,
+      rating,
       // Empty text is legitimate (rating-only review) — the card render
       // already guards with r.text.trim(), so persist the trimmed value as-is
       // instead of a stray space placeholder.
-      text: draftText.trim(),
+      text: text.trim(),
     })
     setReviewOpen(false)
-    setDraftRating(0)
-    setDraftText('')
     setToast('Thanks — review saved on this device')
     setTimeout(() => setToast(null), 2500)
   }
@@ -152,40 +137,8 @@ export default function PandalDetail() {
   // labeled in the card). Only surfaced when the marketplace flag is on.
   const nearProducts = useMemo(() => (place ? demoProductsNear(place.area) : []), [place])
 
-  // Logistics — parking, metro timetable, blood banks. Sorted by proximity
-  // to this pandal (haversine km) with the pandal's own id boosted to the
-  // front when present in the entity's nearestPandalIds hint list. All three
-  // arrays are seeded reference data — a "sample timetable / verify on-site"
-  // caption keeps the honesty convention the rest of the app follows.
-  const nearParking = useMemo(() => {
-    if (!place) return []
-    return [...parkingSpots]
-      .map((p) => ({
-        p,
-        km: haversineKm(place.lat, place.lng, p.lat, p.lng),
-        hinted: p.nearestPandalIds.includes(place.id),
-      }))
-      .sort((a, b) => (b.hinted ? 1 : 0) - (a.hinted ? 1 : 0) || a.km - b.km)
-      .slice(0, 3)
-  }, [place])
-  const nearMetro = useMemo(() => {
-    if (!place) return []
-    return [...metroETAs]
-      .map((m) => ({
-        m,
-        km: haversineKm(place.lat, place.lng, 0, 0), // no coords on MetroETA — hinted only
-        hinted: m.nearestPandalIds.includes(place.id),
-      }))
-      .sort((a, b) => (b.hinted ? 1 : 0) - (a.hinted ? 1 : 0))
-      .slice(0, 2)
-  }, [place])
-  const nearBlood = useMemo(() => {
-    if (!place) return []
-    return [...bloodBanks]
-      .map((b) => ({ b, km: haversineKm(place.lat, place.lng, b.lat, b.lng) }))
-      .sort((x, y) => x.km - y.km)
-      .slice(0, 3)
-  }, [place])
+  // Logistics sections live in PandalLogistics (proximity-sorted parking,
+  // metro timetable, blood banks) — one responsibility per module.
 
   // Hero parallax — the backdrop image drifts and zooms subtly as you scroll.
   const heroRef = useRef<HTMLDivElement>(null)
@@ -436,7 +389,7 @@ export default function PandalDetail() {
                 {place.pastEditions?.map((e) => (
                   <button key={e.year} onClick={() => setZoom({ title: `${e.year} — ${e.theme}`, sub: `Past edition of ${place.name}`, palette: e.palette })} className="w-32 shrink-0 text-left">
                     <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
-                      <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" />
+                      <Img palette={e.palette} alt={`${e.year} theme`} className="h-20" sizes="128px" />
                       <div className="p-2">
                         <p className="text-xs font-semibold">{e.year}</p>
                         <p className="text-[11px] text-ink-soft">{e.theme}</p>
@@ -479,54 +432,8 @@ export default function PandalDetail() {
           </div>
         </section>
 
-        {reviewOpen && createPortal(
-          <div
-            className="fixed inset-0 z-50 flex items-end justify-center bg-night/60"
-            onClick={() => setReviewOpen(false)}
-            onKeyDown={(e) => { if (e.key === 'Escape') setReviewOpen(false) }}
-            role="presentation"
-          >
-            <motion.div
-              ref={dialogRef}
-              tabIndex={-1}
-              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-              className="w-full max-w-lg rounded-t-2xl bg-card p-4 outline-none"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="review-modal-title"
-            >
-              <h3 id="review-modal-title" className="text-base font-semibold">{t('rateThis')} — {place.name}</h3>
-              <div className="mt-3 flex justify-center gap-1" role="radiogroup" aria-label="Star rating, 1 to 5">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    role="radio"
-                    aria-checked={draftRating === n}
-                    aria-label={`Rate ${n} star${n > 1 ? 's' : ''}`}
-                    onClick={() => setDraftRating(n)}
-                    className="p-1 text-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-vermilion rounded"
-                  >
-                    <span className={n <= draftRating ? 'text-gold-bright' : 'text-ink/20'}>★</span>
-                  </button>
-                ))}
-              </div>
-              <textarea
-                value={draftText}
-                onChange={(e) => setDraftText(e.target.value)}
-                placeholder="Optional: what stood out?"
-                rows={3}
-                aria-label="Optional review text"
-                className="mt-3 w-full rounded-card border border-ink/10 bg-ivory-deep p-3 text-sm outline-none focus:border-vermilion"
-              />
-              <div className="mt-3 flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setReviewOpen(false)}>Cancel</Button>
-                <Button className="flex-1" disabled={draftRating === 0} onClick={submitReview}>Save review</Button>
-              </div>
-              <p className="mt-2 text-[10px] text-faint">Reviews stay on this device in the demo build — no account, no upload.</p>
-            </motion.div>
-          </div>,
-          document.body,
+        {reviewOpen && (
+          <ReviewSheet placeName={place.name} onSubmit={submitReview} onCancel={() => setReviewOpen(false)} />
         )}
 
         {toast && (
@@ -587,90 +494,9 @@ export default function PandalDetail() {
           )}
         </section>
 
-        {/* Parking — closest grounds with walk-time + rate chip. Sample data
-            (capacity varies on puja evening — verify on-site). */}
-        {nearParking.length > 0 && (
-          <section className="mt-5">
-            <SectionHeader title={t('parking')} />
-            <div className="space-y-2">
-              {nearParking.map(({ p, km, hinted }) => (
-                <Card key={p.id} className="flex items-center gap-3 p-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{p.name}</p>
-                    <p className="text-[11px] text-faint">{p.area} · {km.toFixed(1)} km · {p.walkTimeMin} min walk</p>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-ivory-deep px-2 py-1 text-[10px] text-ink capitalize">
-                    {p.capacityHint}
-                  </span>
-                  <span className="shrink-0 text-[11px] font-medium text-ink tabular-nums">₹{p.ratePerHour}/h</span>
-                  {hinted && <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700">Serves this pandal</span>}
-                  <button onClick={() => openDirections(p.name, p.area)} aria-label={`Directions to ${p.name}`} className="shrink-0 rounded-full border border-vermilion/40 p-1.5 text-vermilion">
-                    <MapPin size={13} />
-                  </button>
-                </Card>
-              ))}
-            </div>
-            <p className="mt-1 text-[10px] text-faint">Capacity varies on puja evening — verify on-site.</p>
-          </section>
-        )}
-
-        {/* Metro timetable — nearest stations with first/last train + headway.
-            Static reference data, honestly labelled. */}
-        {nearMetro.length > 0 && (
-          <section className="mt-5">
-            <SectionHeader title={t('metroTimetable')} />
-            <div className="space-y-2">
-              {nearMetro.map(({ m, hinted }) => (
-                <Card key={m.id} className="p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold">{m.station}</p>
-                    <span className="rounded-full bg-ivory-deep px-2 py-0.5 text-[10px] text-ink">{m.line}</span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-faint">
-                    <span>First {m.firstTrain}</span>
-                    <span>Last {m.lastTrain}</span>
-                    <span>Every {m.frequencyMin} min</span>
-                    {hinted && <span className="font-medium text-emerald-700">Nearest to this pandal</span>}
-                    <button onClick={() => openDirections(m.station, 'Metro')} aria-label={`Directions to ${m.station} station`} className="ml-auto flex items-center gap-1 rounded-full border border-vermilion/40 px-2 py-0.5 text-[10px] font-medium text-vermilion">
-                      <MapPin size={11} /> Directions
-                    </button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            <p className="mt-1 text-[10px] text-faint">Timetable sample — check on-site for Puja-week special services.</p>
-          </section>
-        )}
-
-        {/* Blood banks — closest 3 with available groups + phone. Emergency
-            resources; kept compact so they're findable at a glance. */}
-        {nearBlood.length > 0 && (
-          <section className="mt-5">
-            <SectionHeader title={t('bloodBanks')} />
-            <div className="space-y-2">
-              {nearBlood.map(({ b, km }) => (
-                <Card key={b.id} className="p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold">{b.name}</p>
-                      <p className="text-[11px] text-faint">{b.hospital} · {b.area} · {km.toFixed(1)} km</p>
-                    </div>
-                    <a href={`tel:${b.phone.replace(/\s+/g, '')}`} className="shrink-0 rounded-full bg-vermilion px-3 py-1 text-[11px] font-semibold text-white">
-                      Call
-                    </a>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {b.availableGroups.map((g) => (
-                      <span key={g} className="rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">{g}</span>
-                    ))}
-                  </div>
-                  <p className="mt-1 text-[10px] text-faint">{b.hours}</p>
-                </Card>
-              ))}
-            </div>
-            <p className="mt-1 text-[10px] text-faint">Availability is illustrative — always phone before travelling.</p>
-          </section>
-        )}
+        {/* Parking / metro timetable / blood banks — proximity-sorted seeded
+            reference data, honestly labelled (extracted to PandalLogistics). */}
+        <PandalLogistics place={place} />
 
         {/* Similar */}
         <section className="mt-5">
@@ -693,7 +519,7 @@ export default function PandalDetail() {
               {nearMeetups.map((m) => (
                 <button key={m.id} onClick={() => nav('/meets')} className="w-full text-left">
                   <Card className="flex items-center gap-3 p-3">
-                    <Img palette={m.palette} alt={m.title} className="h-11 w-11 rounded-lg" />
+                    <Img palette={m.palette} alt={m.title} className="h-11 w-11 rounded-lg" sizes="44px" />
                     <div className="flex-1">
                       <p className="text-sm font-semibold">{m.title}</p>
                       <p className="text-xs text-faint">{m.date} • {m.time}</p>

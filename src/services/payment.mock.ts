@@ -4,6 +4,12 @@
 // 'demo_completed' so the UI can always show the honest "DEMO — no real payment
 // processed" label. Data lives in the Supabase `transactions` table when a
 // backend is connected; otherwise it is session-local.
+//
+// Trust boundary: with a backend connected, the transaction row is created by
+// the confirm_demo_payment RPC (supabase/migrations/002_*.sql), which copies
+// the amount from the server-side ORDER row — this client never submits money
+// amounts or financial statuses. A future real gateway replaces the RPC bodies
+// with intent + webhook verification; the call shape stays the same.
 
 import { supabase } from '../lib/supabase'
 import type { MarketplaceOrder, PaymentMethod, Transaction } from '../data/types'
@@ -18,7 +24,18 @@ const DEMO_METHODS: PaymentMethod[] = [
 
 export class MockPaymentAdapter implements PaymentService {
   async createPayment(order: MarketplaceOrder): Promise<Transaction> {
-    const txn: Omit<Transaction, 'id' | 'created_at'> = {
+    if (supabase) {
+      // Server decides everything: amount comes from the stored order row,
+      // status is fixed to 'demo_completed'. Idempotent — a repeat call
+      // returns the existing transaction.
+      const { data, error } = await supabase.rpc('confirm_demo_payment', { p_order_id: order.id })
+      if (error) throw error
+      if (!data) throw new Error('Payment could not be recorded')
+      return data as Transaction
+    }
+    // Session-local demo path (no backend): never claims a real payment.
+    const row: Transaction = {
+      id: `txn_${crypto.randomUUID()}`,
       user_id: order.buyer_id,
       order_id: order.id,
       type: 'purchase',
@@ -27,20 +44,16 @@ export class MockPaymentAdapter implements PaymentService {
       status: 'demo_completed',
       provider_txn_id: `demo_${crypto.randomUUID()}`,
       is_demo: true,
+      created_at: new Date().toISOString(),
     }
-    if (supabase && order.buyer_id) {
-      const { data, error } = await supabase.from('transactions').insert(txn).select().single()
-      if (error) throw error
-      return data as Transaction
-    }
-    const row: Transaction = { ...txn, id: `txn_${crypto.randomUUID()}`, created_at: new Date().toISOString() }
     local.unshift(row)
     return row
   }
 
   async verifyPayment(txnId: string): Promise<PaymentStatus> {
     if (supabase) {
-      const { data } = await supabase.from('transactions').select('status').eq('id', txnId).maybeSingle()
+      const { data, error } = await supabase.from('transactions').select('status').eq('id', txnId).maybeSingle()
+      if (error) throw error
       return ((data?.status as PaymentStatus) ?? 'pending')
     }
     return local.find((t) => t.id === txnId)?.status ?? 'pending'
@@ -48,7 +61,10 @@ export class MockPaymentAdapter implements PaymentService {
 
   async refundPayment(txnId: string): Promise<void> {
     if (supabase) {
-      await supabase.from('transactions').update({ status: 'refunded' }).eq('id', txnId)
+      // RPC validates ownership and that the row is a refundable DEMO
+      // transaction; a client can no longer flip statuses directly.
+      const { error } = await supabase.rpc('refund_demo_payment', { p_txn_id: txnId })
+      if (error) throw error
       return
     }
     const t = local.find((x) => x.id === txnId)

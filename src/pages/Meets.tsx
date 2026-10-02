@@ -70,7 +70,7 @@ export default function Meets() {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenMeet(m) } }}
             >
               <div className="flex gap-3">
-                <Img palette={m.palette} alt={m.title} className="h-16 w-16 shrink-0 rounded-lg" />
+                <Img palette={m.palette} alt={m.title} className="h-16 w-16 shrink-0 rounded-lg" sizes="64px" />
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate text-sm font-semibold">{m.title}</h3>
                   <p className="text-xs text-ink-soft">{m.date} • {m.time}</p>

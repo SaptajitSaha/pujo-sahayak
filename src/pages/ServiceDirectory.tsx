@@ -11,7 +11,7 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Clock, MapPin, Phone, Search, Info } from 'lucide-react'
-import { Card, Chip, Page, Reveal } from '../components/ui'
+import { Card, Chip, CollapsibleList, Page, Reveal } from '../components/ui'
 import {
   SERVICE_DIRECTORIES, busRoutes, directoryItems,
 } from '../data/transport'
@@ -84,9 +84,25 @@ export default function ServiceDirectory() {
 
       <Reveal>
         <div className="mt-3 space-y-2">
-          {dir.kind === 'route'
-            ? (items as BusRoute[]).map((r) => <RouteCard key={r.id} r={r} />)
-            : (items as { it: DirectoryItem; km: number | null }[]).map(({ it, km }) => <PointCard key={it.id} it={it} km={km} />)}
+          {dir.kind === 'route' ? (
+            <CollapsibleList
+              key={cat}
+              items={items as BusRoute[]}
+              preview={8}
+              renderItem={(r) => <RouteCard key={r.id} r={r} />}
+              expandLabel={(total) => (bn ? `সব ${total}টি রুট দেখুন` : `View all ${total} routes`)}
+              collapseLabel={bn ? 'কম দেখুন' : 'Show less'}
+            />
+          ) : (
+            <CollapsibleList
+              key={cat}
+              items={items as { it: DirectoryItem; km: number | null }[]}
+              preview={8}
+              renderItem={({ it, km }) => <PointCard key={it.id} it={it} km={km} />}
+              expandLabel={(total) => (bn ? `সব ${total}টি দেখুন` : `View all ${total} places`)}
+              collapseLabel={bn ? 'কম দেখুন' : 'Show less'}
+            />
+          )}
           {items.length === 0 && <p className="py-6 text-center text-sm text-faint">Nothing matches “{query}”.</p>}
         </div>
       </Reveal>

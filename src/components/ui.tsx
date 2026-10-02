@@ -1,7 +1,7 @@
 // ─── Shared UI — the mockups' design language as primitives ────────────────
 import { motion, AnimatePresence, useInView, useMotionValue, useReducedMotion, useTransform, animate, type HTMLMotionProps } from 'framer-motion'
 import { Children, useEffect, useId, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
-import { Bookmark, ChevronRight, Home, MapPin, Search, Star, Users, User, LayoutGrid, Heart, Moon, Sun, X } from 'lucide-react'
+import { Bookmark, ChevronRight, ChevronDown, Home, MapPin, Search, Star, Users, User, LayoutGrid, Heart, Moon, Sun, X } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import type { Palette } from '../data/types'
@@ -692,6 +692,42 @@ export function AmbientBackground() {
       <div className="blob blob-a" />
       <div className="blob blob-b" />
     </div>
+  )
+}
+
+/**
+ * Renders a long list as a short preview with a "view full list" toggle, so a
+ * page never dumps dozens of rows inline. The toggle only appears when `items`
+ * is longer than `preview`; short lists render in full, untouched. Relies on the
+ * parent's `space-y-*` for row spacing (adds no margin of its own).
+ */
+export function CollapsibleList<T>({
+  items, preview = 6, renderItem, expandLabel, collapseLabel = 'Show less',
+}: {
+  items: T[]
+  preview?: number
+  renderItem: (item: T, index: number) => ReactNode
+  expandLabel: (total: number, hidden: number) => string
+  collapseLabel?: string
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const isLong = items.length > preview
+  const visible = expanded || !isLong ? items : items.slice(0, preview)
+  return (
+    <>
+      {visible.map((it, i) => renderItem(it, i))}
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((e) => !e)}
+          aria-expanded={expanded}
+          className="flex w-full items-center justify-center gap-1 rounded-full border border-ink/10 bg-card py-2 text-xs font-medium text-ink-soft transition-colors hover:text-ink"
+        >
+          {expanded ? collapseLabel : expandLabel(items.length, items.length - preview)}
+          <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        </button>
+      )}
+    </>
   )
 }
 

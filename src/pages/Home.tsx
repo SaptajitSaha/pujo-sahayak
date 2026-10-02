@@ -10,6 +10,7 @@ import { TonightDashboard } from '../components/TonightDashboard'
 import { WhatNextSheet } from '../components/WhatNextSheet'
 import { offers, shopping, tithis, walks, eventsIn, pandalsIn, restaurantsIn, placeById, DEMO_USER } from '../data/demo'
 import { suggestNext, type NextSuggestion } from '../lib/whatsnext'
+import { planDayForInstant } from '../lib/kolkataTime'
 import { useApp } from '../store'
 import { useProducts } from '../services/marketplace'
 import { productImage, productPalette } from '../services/marketplace.mock'
@@ -58,20 +59,18 @@ export default function Home() {
     setTimeout(() => setHomeToast(null), 2200)
   }
 
-  // Real-calendar-aware "Today" chip. Only lights up when the visitor's local
-  // date actually falls inside the 2026 Durga Puja window (Oct 3 â€“ Oct 8).
-  // Outside the puja week the chip hides rather than faking a date â€” unless
+  // Real-calendar-aware "Today" chip. Only lights up when the current Kolkata
+  // date actually falls inside the 2026 Durga Puja window (Oct 3 – Oct 8).
+  // Outside the puja week the chip hides rather than faking a date — unless
   // the user flips on `tithiDemoMode` in Settings, in which case we pin
   // Ashtami so the flow is still demo-able for reviewers + diaspora users
   // pre-puja. Honesty: the chip shows a small "demo" tag when on the fake
   // path so nothing pretends to be live calendar data.
   const todayTithi = useMemo(() => {
-    const iso = new Date().toISOString().slice(0, 10)
-    const dateMap: Record<string, string> = {
-      '2026-10-03': 'panchami', '2026-10-04': 'shashthi', '2026-10-05': 'saptami',
-      '2026-10-06': 'ashtami', '2026-10-07': 'navami', '2026-10-08': 'dashami',
-    }
-    const planDay = dateMap[iso]
+    // Kolkata's calendar day decides the tithi — the device clock and the UTC
+    // date both disagree with it for hours at a time (00:00–05:30 IST is still
+    // "yesterday" in UTC). Same source the check-in scorecard uses.
+    const planDay = planDayForInstant(Date.now())
     if (planDay) return { th: tithis.find((x) => x.planDay === planDay) ?? null, demo: false }
     if (tithiDemoMode) return { th: tithis.find((x) => x.planDay === 'ashtami') ?? null, demo: true }
     return { th: null as null | (typeof tithis)[number], demo: false }

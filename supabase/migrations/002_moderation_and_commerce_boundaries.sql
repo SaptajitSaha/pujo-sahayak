@@ -33,6 +33,16 @@ CREATE UNIQUE INDEX uniq_live_note_reports
   ON user_reports (reporter_id, target_type, target_id)
   WHERE target_type = 'live_note';
 
+-- Missing-person reports: the client posts target_type = 'missing_person', but
+-- 001's CHECK constraint did not allow the value, so every such insert failed
+-- on the database while the UI still reported success. The constraint is
+-- widened to what the code actually writes (002 has never been applied to any
+-- project, so it is corrected in place instead of stacking a forward migration).
+ALTER TABLE user_reports DROP CONSTRAINT IF EXISTS user_reports_target_type_check;
+ALTER TABLE user_reports
+  ADD CONSTRAINT user_reports_target_type_check
+  CHECK (target_type IN ('live_note','product','user','order','place_info','missing_person','authority_info'));
+
 -- Atomic, idempotent report: inserts the report row AND bumps the note's
 -- reported_count in one server-side call, so neither half can silently fail
 -- the way the old two-request client flow could. SECURITY DEFINER so the
@@ -51,9 +61,13 @@ BEGIN
     RAISE EXCEPTION 'authentication required';
   END IF;
 
+  -- The arbiter must repeat the partial index's predicate, or Postgres cannot
+  -- infer the constraint and raises 42P10 ("no unique or exclusion constraint
+  -- matching the ON CONFLICT specification") on every call.
   INSERT INTO user_reports (reporter_id, target_type, target_id, reason)
   VALUES (v_uid, 'live_note', p_note_id::text, coalesce(nullif(trim(p_reason), ''), 'unspecified'))
-  ON CONFLICT (reporter_id, target_type, target_id) DO NOTHING;
+  ON CONFLICT (reporter_id, target_type, target_id) WHERE target_type = 'live_note'
+    DO NOTHING;
   GET DIAGNOSTICS v_rows = ROW_COUNT;
 
   -- Only bump the counter when the report is new: repeat reports by the same
@@ -145,12 +159,16 @@ $$;
 
 -- Grants: report/helpful are client-facing (signed-in users only); the
 -- moderation pass is service-role only (invoked by the scheduled Edge
--- Function), never from a user session.
+-- Function), never from a user session. Postgres 15 stops granting function
+-- EXECUTE to PUBLIC by default, so the service-role grant is stated
+-- explicitly — the Edge Function authenticates as service_role and would
+-- otherwise fail the RPC with a permission error.
 REVOKE ALL ON FUNCTION report_live_note(uuid, text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION report_live_note(uuid, text) TO authenticated;
 REVOKE ALL ON FUNCTION increment_note_helpful(uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION increment_note_helpful(uuid) TO authenticated;
 REVOKE ALL ON FUNCTION run_note_moderation() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION run_note_moderation() TO service_role;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 2. COMMERCE — amounts & statuses are server-controlled

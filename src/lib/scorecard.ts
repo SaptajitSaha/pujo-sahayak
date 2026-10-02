@@ -1,6 +1,6 @@
-import { PLAN_DAY_DATES } from '../data/demo'
 import type { PlanDay, Walk } from '../data/types'
 import { haversineKm } from './geo'
+import { kolkataDayIndex, kolkataHour, planDayForInstant } from './kolkataTime'
 
 /**
  * Pure, offline logic behind the Pandal-Hopping Scorecard.
@@ -31,41 +31,54 @@ export const CHECKIN_RADIUS_M = 150
 export interface LngLat { lat: number; lng: number }
 
 /**
+ * Ceiling on how much a device's own error may widen the gate. Without it a
+ * poor fix (browser Wi-Fi/cell positioning routinely reports ±500–2000 m)
+ * would certify someone 1.5 km away as "GPS-verified on-site" — a claim the UI
+ * makes out loud, so the gate must be no looser than the words.
+ */
+export const MAX_ACCURACY_M = 300
+
+/**
  * Is `user` close enough to `place` to legitimately check in?
  *
  * The gate widens to the device's own accuracy radius when that is larger than
- * CHECKIN_RADIUS_M — a phone that admits ±500 m shouldn't punish an honest
- * user standing right at the pandal. It never shrinks below the base radius.
+ * CHECKIN_RADIUS_M — a phone that admits ±250 m shouldn't punish an honest user
+ * standing right at the pandal — but it never widens past MAX_ACCURACY_M, and a
+ * fix worse than that is refused outright (see evaluateCheckIn for the reason).
  */
 export function withinGeofence(user: LngLat, place: LngLat, accuracyM = 0, radiusM = CHECKIN_RADIUS_M): boolean {
+  if (accuracyM > MAX_ACCURACY_M) return false
   const distM = haversineKm(user.lat, user.lng, place.lat, place.lng) * 1000
-  return distM <= Math.max(radiusM, accuracyM)
+  return distM <= Math.min(Math.max(radiusM, accuracyM), MAX_ACCURACY_M)
 }
 
-// Build an ISO-date -> PlanDay lookup once from the authoritative demo calendar.
-const DATE_TO_PLAN_DAY: Record<string, PlanDay> = Object.entries(PLAN_DAY_DATES).reduce(
-  (acc, [day, iso]) => { acc[iso] = day as PlanDay; return acc },
-  {} as Record<string, PlanDay>,
-)
+export type CheckInVerdict = 'ok' | 'poor-signal' | 'far'
 
-function isoLocalDate(ts: number): string {
-  const d = new Date(ts)
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+/**
+ * Why a check-in was or wasn't allowed, so the UI can offer the right next step
+ * instead of one generic failure: an unusable fix deserves a retry in the open,
+ * a genuinely distant one deserves "move closer".
+ */
+export function evaluateCheckIn(user: LngLat, place: LngLat, accuracyM: number): CheckInVerdict {
+  if (accuracyM > MAX_ACCURACY_M) return 'poor-signal'
+  return withinGeofence(user, place, accuracyM) ? 'ok' : 'far'
 }
 
-/** Which plan day (tithi) a check-in fell on, in the user's local date. */
+// Date maths lives in ./kolkataTime: the puja window is a set of Kolkata
+// calendar days, so a device clock or a UTC ISO string must not decide which
+// tithi a check-in belongs to.
+
+/** Which plan day (tithi) a check-in fell on, on the Kolkata calendar. */
 export function tithiForTs(ts: number): PlanDay | null {
-  return DATE_TO_PLAN_DAY[isoLocalDate(ts)] ?? null
+  return planDayForInstant(ts)
 }
 
-/** Whole-day ordinal from a local calendar date (DST-safe, Kolkata has none). */
+/** Whole-day ordinal from a Kolkata calendar date (DST-safe; Kolkata has none). */
 function dayIndex(ts: number): number {
-  const d = new Date(ts)
-  return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86_400_000
+  return kolkataDayIndex(ts)
 }
 
-/** Longest run of consecutive local days that each have at least one check-in. */
+/** Longest run of consecutive Kolkata days that each have at least one check-in. */
 export function longestStreak(checkins: Checkin[]): number {
   const days = [...new Set(checkins.map((c) => dayIndex(c.ts)))].sort((a, b) => a - b)
   let best = 0
@@ -113,8 +126,8 @@ export const BADGES: BadgeDef[] = [
   {
     id: 'midnight-darshan',
     label: 'Midnight Darshan',
-    hint: 'A check-in between 10 PM and 2 AM',
-    test: (cs) => cs.some((c) => { const h = new Date(c.ts).getHours(); return h >= 22 || h < 2 }),
+    hint: 'A check-in between 10 PM and 2 AM (Kolkata time)',
+    test: (cs) => cs.some((c) => { const h = kolkataHour(c.ts); return h >= 22 || h < 2 }),
   },
   {
     id: 'walk-finisher',

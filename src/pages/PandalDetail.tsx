@@ -25,7 +25,7 @@ import { demoProductsNear } from '../services/marketplace.mock'
 import { meetups, pandals, placeById, restaurants } from '../data/demo'
 import { useApp } from '../store'
 import { getCurrentLocationPrecise, haversineKm } from '../lib/geo'
-import { tithiForTs, withinGeofence } from '../lib/scorecard'
+import { evaluateCheckIn, tithiForTs } from '../lib/scorecard'
 import { makeShareCard, shareCardFile } from '../lib/shareCard'
 import { useT } from '../i18n'
 
@@ -51,8 +51,10 @@ export default function PandalDetail() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   // On-site check-in: the sole way a visit enters the Scorecard. Gated by real
-  // GPS — no location, no check-in. Honest failure states, never a fake success.
-  const [checkIn, setCheckIn] = useState<'idle' | 'locating' | 'ok' | 'far' | 'denied'>('idle')
+  // GPS — no location, no check-in. A fix too coarse to prove on-site presence
+  // is refused with a retry path rather than waved through, so "GPS-verified"
+  // means exactly what it says. Honest failure states, never a fake success.
+  const [checkIn, setCheckIn] = useState<'idle' | 'locating' | 'ok' | 'far' | 'denied' | 'poor'>('idle')
   const [checkInMsg, setCheckInMsg] = useState('')
   const todayTithi = tithiForTs(Date.now())
   const checkedInToday = !!place && checkins.some((c) => c.placeId === place.id && c.tithi === todayTithi)
@@ -62,13 +64,19 @@ export default function PandalDetail() {
     setCheckInMsg('')
     try {
       const loc = await getCurrentLocationPrecise()
-      if (withinGeofence(loc, { lat: place.lat, lng: place.lng }, loc.accuracyM)) {
+      const verdict = evaluateCheckIn(loc, { lat: place.lat, lng: place.lng }, loc.accuracyM)
+      if (verdict === 'ok') {
         addCheckin({ placeId: place.id, tithi: todayTithi, ts: Date.now(), lat: loc.lat, lng: loc.lng, accuracyM: loc.accuracyM })
         setCheckIn('ok')
-      } else {
-        setCheckIn('far')
-        setCheckInMsg('You’re not at this pandal yet — move closer and try again.')
+        return
       }
+      if (verdict === 'poor-signal') {
+        setCheckIn('poor')
+        setCheckInMsg(`GPS signal too weak to confirm you’re on-site (±${Math.round(loc.accuracyM)} m). Move somewhere open and try again.`)
+        return
+      }
+      setCheckIn('far')
+      setCheckInMsg('You’re not at this pandal yet — move closer and try again.')
     } catch (e) {
       const msg = (e as Error).message
       setCheckIn(msg.toLowerCase().includes('denied') ? 'denied' : 'far')

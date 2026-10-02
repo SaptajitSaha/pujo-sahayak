@@ -4,6 +4,7 @@
 import type {
   Artist, BloodBank, CategoryDef, City, CityDef, Dish, EventItem, Meetup, MetroETA, Offer, Palette, ParkingSpot, Phrase, Place, PlanDay, SafetyPoint, ShoppingProduct, SponsoredItem, Tithi, Walk,
 } from './types'
+import { isUpcoming } from '../lib/meetupDate'
 
 export const IS_DEMO = true
 
@@ -234,8 +235,17 @@ export const places: Place[] = [
 export const placesIn = (city: City) => places.filter((x) => x.cityId === city)
 export const pandalsIn = (city: City) => placesIn(city).filter((x) => x.type === 'pandal')
 export const restaurantsIn = (city: City) => placesIn(city).filter((x) => x.type === 'restaurant')
-export const eventsIn = (city: City) => events.filter((e) => e.cityId === city)
+/**
+ * Events for a city that have not already happened. The seeded board is dated
+ * against the 2026 puja week, so without this filter an October event kept
+ * advertising itself as upcoming for the rest of the year.
+ */
+export const eventsIn = (city: City) => events.filter((e) => e.cityId === city && isUpcoming(e.date, e.time))
+/** Same past-date filter across all cities (the Beyond-Puja board). */
+export const upcomingEvents = () => events.filter((e) => isUpcoming(e.date, e.time))
 export const meetupsIn = (city: City) => meetups.filter((m) => m.cityId === city)
+/** Seeded meetups past their date, dropped — same reason as `eventsIn`. */
+export const upcomingMeetups = () => meetups.filter((m) => isUpcoming(m.date, m.time))
 
 export const pandals = places.filter((x) => x.type === 'pandal')
 export const restaurants = places.filter((x) => x.type === 'restaurant')
@@ -293,10 +303,10 @@ export const shopping: ShoppingProduct[] = [
 ]
 
 export const meetups: Meetup[] = [
-  { id: 'm1', title: 'South Kolkata Pandal Hop', date: 'Sat, 12 Oct', time: '7:00 PM', location: 'Gariahat', lat: 22.5195, lng: 88.3660, description: 'A curated evening covering Deshapriya, Mudiali and Suruchi. Easy pace, great adda.', interests: ['Pandal hopping', 'Food'], attendees: 12, maxParticipants: 20, visibility: 'public', palette: fire, host: 'Pujo Sahayak Members' },
-  { id: 'm2', title: 'Photography Walk', date: 'Sun, 13 Oct', time: '5:00 PM', location: 'Maidan', lat: 22.5400, lng: 88.3550, description: 'Golden-hour to night-lights. Bring your wide angle — we shoot pandals and people.', interests: ['Photography', 'Art'], attendees: 8, maxParticipants: 12, visibility: 'public', palette: dusk, host: 'Kolkata Lens Club' },
-  { id: 'm3', title: 'Late-night Puja Food Crawl', date: 'Mon, 14 Oct', time: '9:30 PM', location: 'Park Street', lat: 22.5460, lng: 88.3570, description: 'Roll, biryani, cha and phuchka — the after-puja food trail for night explorers.', interests: ['Food', 'Night exploration'], attendees: 15, maxParticipants: 15, visibility: 'restricted', palette: night, host: 'Backstreet Bites' },
-  { id: 'm4', title: 'Heritage Barowari Trail', date: 'Fri, 11 Oct', time: '4:00 PM', location: 'North Kolkata', lat: 22.5803, lng: 88.3738, description: 'Ekdalia to Baghbazar on foot — the century-old pujas and the stories between them.', interests: ['Heritage', 'Pandal hopping'], attendees: 6, maxParticipants: 10, visibility: 'public', palette: brass, host: 'Kolkata At It\'s Best' },
+  { id: 'm1', title: 'South Kolkata Pandal Hop', date: 'Mon, 12 Oct', time: '7:00 PM', location: 'Gariahat', lat: 22.5195, lng: 88.3660, description: 'A curated evening covering Deshapriya, Mudiali and Suruchi. Easy pace, great adda.', interests: ['Pandal hopping', 'Food'], attendees: 12, maxParticipants: 20, visibility: 'public', palette: fire, host: 'Pujo Sahayak Members' },
+  { id: 'm2', title: 'Photography Walk', date: 'Tue, 13 Oct', time: '5:00 PM', location: 'Maidan', lat: 22.5400, lng: 88.3550, description: 'Golden-hour to night-lights. Bring your wide angle — we shoot pandals and people.', interests: ['Photography', 'Art'], attendees: 8, maxParticipants: 12, visibility: 'public', palette: dusk, host: 'Kolkata Lens Club' },
+  { id: 'm3', title: 'Late-night Puja Food Crawl', date: 'Wed, 14 Oct', time: '9:30 PM', location: 'Park Street', lat: 22.5460, lng: 88.3570, description: 'Roll, biryani, cha and phuchka — the after-puja food trail for night explorers.', interests: ['Food', 'Night exploration'], attendees: 15, maxParticipants: 15, visibility: 'restricted', palette: night, host: 'Backstreet Bites' },
+  { id: 'm4', title: 'Heritage Barowari Trail', date: 'Sun, 11 Oct', time: '4:00 PM', location: 'North Kolkata', lat: 22.5803, lng: 88.3738, description: 'Ekdalia to Baghbazar on foot — the century-old pujas and the stories between them.', interests: ['Heritage', 'Pandal hopping'], attendees: 6, maxParticipants: 10, visibility: 'public', palette: brass, host: 'Kolkata At It\'s Best' },
 ]
 
 // Default-city assignment for the Kolkata legacy data (events + meetups + any

@@ -107,7 +107,12 @@ export default function Planner() {
       avgDwellMin: Math.round(totalDwell / stops.length),
     })
     const existing = new Map<string, PlanStop>(stops.map((s) => [s.placeId, s]))
-    const reordered: PlanStop[] = result.ordered.map((p, i) => {
+    // Built with push, not map: the projection for stop i reads stop i-1, and
+    // a `const reordered = ordered.map(...)` self-reference is a
+    // temporal-dead-zone read — it threw "Cannot access 'reordered' before
+    // initialization" for every day with 2+ stops.
+    const reordered: PlanStop[] = []
+    result.ordered.forEach((p, i) => {
       const prev = existing.get(p.id)!
       // Re-project start times from the optimised sequence — each hop adds
       // (travel + 3 min overhead); the stop's own duration carries over.
@@ -117,7 +122,7 @@ export default function Planner() {
       const base = i === 0 ? h * 60 + m : h * 60 + m + legMin + prev.durationMin
       const nh = Math.min(23, Math.floor(base / 60))
       const nm = Math.round((base % 60) / 5) * 5
-      return { ...prev, time: `${String(nh).padStart(2, '0')}:${String(nm % 60).padStart(2, '0')}` }
+      reordered.push({ ...prev, time: `${String(nh).padStart(2, '0')}:${String(nm % 60).padStart(2, '0')}` })
     })
     const finishBase = (() => {
       const t = reordered[reordered.length - 1]
@@ -278,7 +283,7 @@ export default function Planner() {
             {preview.overBy > 0 && (
               <b> That is ~{Math.round(preview.overBy / 5) * 5} min past a {DEFAULT_BUDGET_MIN / 60} h evening. </b>
             )}
-            {preview.stops.length === stops.length ? 'No stop is removed.' : ''}
+            {' '}{preview.stops.length === stops.length ? 'No stop is removed.' : ''}
           </p>
           <div className="mt-2.5 flex gap-2">
             <Button size="sm" variant="outline" className="flex-1" onClick={() => setPreview(null)}>Keep current order</Button>

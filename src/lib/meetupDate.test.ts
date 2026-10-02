@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { isUpcoming, parseMeetupStart } from './meetupDate'
+import { meetups } from '../data/demo'
 
 // The seeded meetup date is display text ('Sat, 12 Oct'), which no code could
 // compare against "now" — so past meetups kept rendering as if upcoming.
@@ -31,6 +32,24 @@ describe('parseMeetupStart', () => {
     expect(parseMeetupStart('whenever, sometime', '6:00 PM', NOW)).toBeNull()
     expect(parseMeetupStart('12 Xyz', '6:00 PM', NOW)).toBeNull()
     expect(parseMeetupStart('2026-10-12', '25:00', NOW)).toBeNull()
+  })
+  it('reads the month-first label the events board uses', () => {
+    expect(parseMeetupStart('Oct 10', '6:30 PM', NOW)).toEqual(new Date(2026, 9, 10, 18, 30))
+  })
+
+  it('keeps every seeded meetup weekday label honest', () => {
+    // The seeds originally claimed Fri/Sat/Sun/Mon for 11–14 Oct 2026, which are
+    // actually Sun/Mon/Tue/Wed — a wrong weekday on a real calendar is a data
+    // defect, not styling, so it is now asserted rather than eyeballed.
+    const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const seeder = new Date(2026, 8, 1) // any 'now' before October pins the year to 2026
+    for (const m of meetups) {
+      const claimed = /^(\w{3}),/.exec(m.date)?.[1]
+      const at = parseMeetupStart(m.date, m.time, seeder)
+      expect(at, m.date).not.toBeNull()
+      expect(claimed, `no weekday prefix in "${m.date}"`).toBeDefined()
+      expect(WD[at!.getDay()]).toBe(claimed)
+    }
   })
 })
 

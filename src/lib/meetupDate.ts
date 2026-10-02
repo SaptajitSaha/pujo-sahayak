@@ -12,6 +12,10 @@ const MONTHS: Record<string, number> = {
 }
 
 const DATE_RE = /(\d{1,2})\s*[-\s]?\s*([A-Za-z]{3,9})/
+// The events board writes the month first ('Oct 10'); meetups write the day
+// first ('Sat, 12 Oct'). Both are the same kind of label — a day and a month
+// with no year — so both are read here.
+const MONTH_FIRST_RE = /([A-Za-z]{3,9})\.?\s*(\d{1,2})/
 const ISO_RE = /^(\d{4})-(\d{2})-(\d{2})$/
 const TIME_RE = /^(\d{1,2}):(\d{2})\s*([AP]M)$/i
 const TIME24_RE = /^(\d{1,2}):(\d{2})$/
@@ -33,9 +37,11 @@ export function parseMeetupStart(date: string, time: string, now: Date = new Dat
     year = Number(iso[1]); month = Number(iso[2]) - 1; day = Number(iso[3])
   } else {
     const dm = DATE_RE.exec(date)
-    if (!dm) return null
-    day = Number(dm[1])
-    month = MONTHS[dm[2].slice(0, 3).toLowerCase()]
+    const mf = dm ? null : MONTH_FIRST_RE.exec(date)
+    if (!dm && !mf) return null
+    day = dm ? Number(dm[1]) : Number(mf![2])
+    const monthName = dm ? dm[2] : mf![1]
+    month = MONTHS[monthName.slice(0, 3).toLowerCase()]
     if (!Number.isFinite(day) || month === undefined) return null
     if (month < now.getMonth()) year += 1
   }

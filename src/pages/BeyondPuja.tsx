@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { Card, Img, Page, Rail, SectionHeader } from '../components/ui'
 import { RailCard } from '../components/PlaceCard'
-import { events, meetups, restaurants } from '../data/demo'
+import { upcomingEvents, upcomingMeetups, restaurants } from '../data/demo'
 import { useT } from '../i18n'
 
 /** The off-season promise (doc §36): the same discovery system, without the pandals. */
@@ -42,7 +42,7 @@ export default function BeyondPuja() {
         <section className="mt-5">
           <SectionHeader title="Events & Activities" />
           <div className="space-y-2">
-            {events.map((e) => (
+            {upcomingEvents().map((e) => (
               <button key={e.id} onClick={() => nav(`/search?q=${encodeURIComponent(e.name)}`)} className="w-full text-left">
                 <Card className="flex items-center gap-3 p-3 transition-transform hover:scale-[1.01]">
                   <Img palette={e.palette} alt={e.name} className="h-12 w-12 rounded-lg" sizes="48px" />
@@ -60,7 +60,7 @@ export default function BeyondPuja() {
         <section className="mt-5">
           <SectionHeader title="Meetups" action={t('meets')} onAction={() => nav('/meets')} />
           <Rail>
-            {meetups.map((m) => (
+            {upcomingMeetups().map((m) => (
               <button key={m.id} onClick={() => nav('/meets')} className="text-left">
                 <Card className="w-52 shrink-0 transition-transform hover:scale-[1.02]">
                   <Img palette={m.palette} alt={m.title} className="h-20" />

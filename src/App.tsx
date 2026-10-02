@@ -45,6 +45,7 @@ const loaders = {
   ServiceDirectory: () => import('./pages/ServiceDirectory'),
   Passport: () => import('./pages/Passport'),
   Diary: () => import('./pages/Diary'),
+  Premium: () => import('./pages/Premium'),
 }
 
 const Explore = lazy(loaders.Explore)
@@ -79,6 +80,7 @@ const MetroMap = lazy(loaders.MetroMap)
 const ServiceDirectory = lazy(loaders.ServiceDirectory)
 const Passport = lazy(loaders.Passport)
 const Diary = lazy(loaders.Diary)
+const Premium = lazy(loaders.Premium)
 
 /** Warm every code-split page's JS chunk — but only AFTER the boot splash has
     handed off (main.tsx calls this from hideBoot), and one chunk per browser
@@ -222,6 +224,7 @@ function Shell() {
       <Route path="/trip/:day" element={<TripMap />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/profile/settings" element={<Settings />} />
+      <Route path="/premium" element={<Premium />} />
       <Route path="/passport" element={<Passport />} />
       <Route path="/diary" element={<Diary />} />
       <Route path="/safety" element={<Safety />} />

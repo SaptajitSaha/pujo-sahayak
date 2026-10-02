@@ -135,13 +135,14 @@ export default function Profile() {
       {flags.ENABLE_MARKETPLACE && <MyOrders />}
       {flags.ENABLE_WALLET && <Wallet userId={userId} />}
 
-      {/* Premium CTA */}
-      <button onClick={() => nav('/profile/settings')} className="mt-4 w-full text-left">
+      {/* Premium CTA — dedicated upgrade screen when the surface is enabled;
+          falls back to Settings (which also hosts the demo toggle) when off. */}
+      <button onClick={() => nav(flags.ENABLE_PREMIUM ? '/premium' : '/profile/settings')} className="mt-4 w-full text-left">
         <Card className="flex items-center gap-3 bg-gradient-to-r from-night to-night-soft p-3.5 text-on-image">
           <span className="rounded-full bg-gold/20 p-2 text-gold-bright"><Sparkles size={16} /></span>
           <div className="flex-1">
-            <p className="text-sm font-semibold">{t('upgrade')}</p>
-            <p className="text-[11px] text-on-image/60">{t('upgradeSub')}</p>
+            <p className="text-sm font-semibold">{premium ? "You're a Premium Member" : t('upgrade')}</p>
+            <p className="text-[11px] text-on-image/60">{premium ? 'Manage your plan' : t('upgradeSub')}</p>
           </div>
           <ChevronRight size={16} className="text-gold-bright" />
         </Card>

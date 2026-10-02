@@ -30,6 +30,8 @@ export type FeatureFlag =
   | 'ENABLE_INFO_REPORTS'
   // Animated full-network Kolkata Metro map on the Metro guide (2026-10).
   | 'ENABLE_METRO_MAP'
+  // Dedicated Premium / upgrade screen (2026-10) — a demo concept surface, no payment.
+  | 'ENABLE_PREMIUM'
 
 /** Compile-time defaults read from .env.local at build time. */
 export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
@@ -60,6 +62,7 @@ export const DEFAULT_FLAGS: Record<FeatureFlag, boolean> = {
   ENABLE_FESTIVAL_NOTICES: import.meta.env.VITE_FLAG_FESTIVAL_NOTICES !== 'false',
   ENABLE_INFO_REPORTS: import.meta.env.VITE_FLAG_INFO_REPORTS !== 'false',
   ENABLE_METRO_MAP: import.meta.env.VITE_FLAG_METRO_MAP !== 'false',
+  ENABLE_PREMIUM: import.meta.env.VITE_FLAG_PREMIUM !== 'false',
 }
 
 /** Runtime flag state — merged from defaults + user overrides (via Zustand). */

@@ -61,22 +61,44 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Keep urgent help within the first screenful instead of below the
+          activity, memory, and commerce sections. */}
+      <section className="mt-5">
+        <SectionHeader title={t('emergency')} />
+        <div className="grid grid-cols-4 gap-2 text-center">
+          {[
+            { label: 'Ambulance', icon: Phone },
+            { label: 'Police', icon: Siren },
+            { label: 'Women', icon: BadgeCheck },
+            { label: 'Child', icon: Baby },
+          ].map(({ label, icon: Icon }) => (
+            <button key={label} onClick={() => nav('/safety')} className="flex flex-col items-center gap-1.5 rounded-card bg-card p-3 shadow-card">
+              <span className="rounded-full bg-vermilion-tint p-2.5 text-vermilion"><Icon size={16} /></span>
+              <span className="text-[10px] text-ink-soft">{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Stats — from real local activity only; each tile deep-links to the
           screen that shows the underlying items. */}
-      <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        {[
-          { n: visited.length, label: 'Visits', icon: CalendarCheck, to: '/favorites' },
-          { n: saved.length, label: 'Saved', icon: Bookmark, to: '/favorites' },
-          { n: joined.length, label: 'Meets', icon: Users, to: '/meets' },
-        ].map(({ n, label, icon: Icon, to }) => (
-          <button key={label} onClick={() => nav(to)} aria-label={`${n} ${label} — open details`} className="text-center">
-            <Card className="p-3 transition-transform hover:scale-[1.03]">
-              <p className="text-xl font-semibold">{n}</p>
-              <p className="flex items-center justify-center gap-1 text-[11px] text-faint"><Icon size={11} /> {label}</p>
-            </Card>
-          </button>
-        ))}
-      </div>
+      <section className="mt-5">
+        <SectionHeader title="Your activity" />
+        <div className="grid grid-cols-3 gap-2 text-center">
+          {[
+            { n: visited.length, label: 'Visits', icon: CalendarCheck, to: '/favorites' },
+            { n: saved.length, label: 'Saved', icon: Bookmark, to: '/favorites' },
+            { n: joined.length, label: 'Meets', icon: Users, to: '/meets' },
+          ].map(({ n, label, icon: Icon, to }) => (
+            <button key={label} onClick={() => nav(to)} aria-label={`${n} ${label} — open details`} className="text-center">
+              <Card className="p-3 transition-transform hover:scale-[1.03]">
+                <p className="text-xl font-semibold">{n}</p>
+                <p className="flex items-center justify-center gap-1 text-[11px] text-faint"><Icon size={11} /> {label}</p>
+              </Card>
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* Scorecard — counts only what the user actually verified on-site. */}
       <section className="mt-5">
@@ -130,9 +152,28 @@ export default function Profile() {
       {flags.ENABLE_PUJA_STATS && <PujaStatsPanel />}
       {flags.ENABLE_PUJA_RECAP && <PujaRecap />}
 
-      {/* Cross-feature sections — each independently flag-gated. */}
-      {flags.ENABLE_MARKETPLACE && <MyOrders />}
-      {flags.ENABLE_WALLET && <Wallet userId={userId} />}
+      {/* Personal records are grouped separately from commerce and account
+          controls so the lower half of the page scans by purpose. */}
+      {(flags.ENABLE_PUJA_PASSPORT || flags.ENABLE_PUJA_DIARY) && (
+        <section className="mt-5">
+          <SectionHeader title="Your Puja" />
+          <div className="space-y-2">
+            {flags.ENABLE_PUJA_PASSPORT && <ProfileRow icon={Stamp} label={t('passport')} onClick={() => nav('/passport')} />}
+            {flags.ENABLE_PUJA_DIARY && <ProfileRow icon={Notebook} label={t('diary')} onClick={() => nav('/diary')} />}
+          </div>
+        </section>
+      )}
+
+      {/* Cross-feature commerce sections — each independently flag-gated. */}
+      {(flags.ENABLE_MARKETPLACE || flags.ENABLE_WALLET) && (
+        <section className="mt-5">
+          <SectionHeader title="Orders & payments" />
+          <div className="space-y-2">
+            {flags.ENABLE_MARKETPLACE && <MyOrders />}
+            {flags.ENABLE_WALLET && <Wallet userId={userId} />}
+          </div>
+        </section>
+      )}
 
       {/* Premium — the single entry point to the plan surface. Hidden entirely
           when the flag is off (a disabled feature shows no UI), so there is no
@@ -150,54 +191,29 @@ export default function Profile() {
         </button>
       )}
 
-      {/* Emergency shortcuts — never buried (doc §31) */}
+      {/* Account controls stay together at the end; profile activity tiles
+          already provide the visits and saved links, so don't repeat them. */}
       <section className="mt-5">
-        <SectionHeader title={t('emergency')} />
-        <div className="grid grid-cols-4 gap-2 text-center">
-          {[
-            { label: 'Ambulance', icon: Phone },
-            { label: 'Police', icon: Siren },
-            { label: 'Women', icon: BadgeCheck },
-            { label: 'Child', icon: Baby },
-          ].map(({ label, icon: Icon }) => (
-            <button key={label} onClick={() => nav('/safety')} className="flex flex-col items-center gap-1.5 rounded-card bg-card p-3 shadow-card">
-              <span className="rounded-full bg-vermilion-tint p-2.5 text-vermilion"><Icon size={16} /></span>
-              <span className="text-[10px] text-ink-soft">{label}</span>
-            </button>
-          ))}
+        <SectionHeader title="Account" />
+        <div className="space-y-2">
+          <ProfileRow icon={LogIn} label={isAuthenticated ? 'Account settings' : 'Sign in'} onClick={() => nav('/auth')} />
+          <ProfileRow icon={SettingsIcon} label={t('settings')} onClick={() => nav('/profile/settings')} />
         </div>
       </section>
 
-      {/* Rows — one entry per destination. Appearance, language, city, safety
-          circle and plan management live inside Settings / Premium, so nothing
-          here duplicates them (the Payments row and the Appearance row that
-          pointed at Settings were both removed). */}
-      <div className="mt-5 space-y-2">
-        {[
-          { icon: CalendarCheck, label: t('allVisits'), to: '/favorites' },
-          ...(flags.ENABLE_PUJA_PASSPORT ? [{ icon: Stamp, label: t('passport'), to: '/passport' }] : []),
-          ...(flags.ENABLE_PUJA_DIARY ? [{ icon: Notebook, label: t('diary'), to: '/diary' }] : []),
-          { icon: LogIn, label: isAuthenticated ? 'Account settings' : 'Sign in', to: '/auth' },
-          { icon: SettingsIcon, label: t('settings'), to: '/profile/settings' },
-        ].map(({ icon: Icon, label, to }) => (
-          <button key={label} onClick={() => nav(to)} className="w-full">
-            <Card className="flex items-center gap-3 p-3.5">
-              <span className="rounded-full bg-ivory-deep p-2 text-ink-soft"><Icon size={16} /></span>
-              <span className="flex-1 text-left text-sm font-medium">{label}</span>
-              <ArrowRight size={15} className="text-faint" />
-            </Card>
-          </button>
-        ))}
-        <button onClick={() => nav('/safety')}>
-          <Card className="flex items-center gap-3 border border-vermilion/25 bg-vermilion-tint/50 p-3.5">
-            <span className="rounded-full bg-vermilion p-2 text-on-image"><Siren size={16} /></span>
-            <span className="flex-1 text-left text-sm font-semibold text-vermilion">{t('needHelp')}</span>
-            <ArrowRight size={15} className="text-vermilion" />
-          </Card>
-        </button>
-      </div>
-
       <p className="mt-4 text-center text-[10px] text-faint">{t('commerceDemoNote')}</p>
     </Page>
+  )
+}
+
+function ProfileRow({ icon: Icon, label, onClick }: { icon: typeof CalendarCheck; label: string; onClick: () => void }) {
+  return (
+    <button onClick={onClick} className="w-full text-left">
+      <Card className="flex items-center gap-3 p-3.5">
+        <span className="rounded-full bg-ivory-deep p-2 text-ink-soft"><Icon size={16} /></span>
+        <span className="flex-1 text-sm font-medium">{label}</span>
+        <ArrowRight size={15} className="text-faint" />
+      </Card>
+    </button>
   )
 }

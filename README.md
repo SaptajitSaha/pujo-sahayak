@@ -15,19 +15,19 @@
 
 > **Project status:** This is a demo/prototype. Some ratings, crowd levels, opening times, reviews, event and meetup details, distances, and commerce information are sample data. Backend-dependent features need a configured Supabase project. Check the labels in the app before relying on time-sensitive information.
 
-## Explore the app
+## Inside the app
 
-<details>
-<summary>Open fresh app screenshots</summary>
+Fresh captures from the running app at a 430 px mobile viewport. Select any screen to open it at full size.
 
-These screens were captured from the running app at a 430 px mobile viewport. The hero above combines the real Home, Explore, and Pandal detail captures with device frames.
+<p align="center">
+  <a href="assets/screens/readme/home.jpg"><img src="assets/screens/readme/home.jpg" alt="Home screen with pandal spotlight and nearby restaurants" width="260" /></a>
+  &nbsp;&nbsp;
+  <a href="assets/screens/readme/explore.jpg"><img src="assets/screens/readme/explore.jpg" alt="Explore screen with pandal filters and directions" width="260" /></a>
+  &nbsp;&nbsp;
+  <a href="assets/screens/readme/pandal.jpg"><img src="assets/screens/readme/pandal.jpg" alt="Pandal detail with visit information and crowd guidance" width="260" /></a>
+</p>
 
-- [Home](assets/screens/readme/home.jpg)
-- [Explore](assets/screens/readme/explore.jpg)
-- [Pandal detail](assets/screens/readme/pandal.jpg)
-- [Categories](assets/screens/readme/categories.jpg)
-
-</details>
+<p align="center"><sub><b>Home</b> · Discover places &nbsp;&nbsp; <b>Explore</b> · Filter and compare &nbsp;&nbsp; <b>Pandal detail</b> · Plan a visit</sub></p>
 
 ## What you can do
 

@@ -47,7 +47,7 @@ assets/screens/raw/
 /maya-*.png
 /nav-*.png
 /.qoder-splash.png
-/_resume_card.png
+/_*.png
 
 # Qoder IDE per-workspace cache (agent scratch, verification screenshots).
 .qoder/

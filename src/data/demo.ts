@@ -319,7 +319,10 @@ export const safetyPoints: SafetyPoint[] = [
 export const categories: CategoryDef[] = [
   { id: 'c-pandals', label: 'Pandals', labelBn: 'প্যান্ডেল', icon: 'pandal', group: 'places', route: '/explore' },
   { id: 'c-restaurants', label: 'Restaurants', labelBn: 'রেস্টুরেন্ট', icon: 'restaurant', group: 'places', route: '/search?type=restaurant' },
-  { id: 'c-places', label: 'Places', labelBn: 'জায়গা', icon: 'place', group: 'places', route: '/search?type=place' },
+  // 'Places' has no filter of its own in Search (its types are pandal and
+  // restaurant), and ?type=place silently fell back to All — so the tile now
+  // opens the view it actually shows instead of pretending to filter.
+  { id: 'c-places', label: 'Places', labelBn: 'জায়গা', icon: 'place', group: 'places', route: '/search' },
   { id: 'c-metro', label: 'Metro', labelBn: 'মেট্রো', icon: 'metro', group: 'transport', route: '/transport/metro' },
   { id: 'c-bus', label: 'Bus', labelBn: 'বাস', icon: 'bus', group: 'transport', route: '/services/bus' },
   { id: 'c-parking', label: 'Parking', labelBn: 'পার্কিং', icon: 'parking', group: 'transport', route: '/services/parking' },

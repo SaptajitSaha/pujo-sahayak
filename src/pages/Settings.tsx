@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  ArrowRight, Globe, Image as ImageIcon, Info, Lock, MapPin, Palette, Phone, Shield, FlaskConical,
+  ArrowRight, Globe, Image as ImageIcon, Info, MapPin, Palette, Phone, Shield, FlaskConical,
 } from 'lucide-react'
 import { BackHeader, Card, Chip, Logo, Page } from '../components/ui'
 import { AuthorityPanel } from '../components/AuthorityPanel'
@@ -75,8 +75,21 @@ export default function Settings() {
           reached from Profile; Notifications has its own page off the Home bell
           — duplicating them here as stubs contradicted working features. */}
       <div className="space-y-2">
-        <Row icon={Shield} label="Privacy" onClick={() => note('Location & photo data stay on this device in the demo.')} />
-        <Row icon={Lock} label="Security" onClick={() => note('Security options arrive with the backend.')} />
+        {/* Privacy and Security used to be two buttons that answered with a
+            toast — an affordance that promised controls which do not exist.
+            Stated plainly instead, as non-interactive content. */}
+        <Card className="p-3.5">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-ivory-deep p-2 text-ink-soft"><Shield size={15} /></span>
+            <span className="flex-1 text-sm font-medium">Privacy &amp; data on this device</span>
+          </div>
+          <ul className="mt-2 space-y-1 text-[11px] leading-relaxed text-faint">
+            <li>· Location, check-ins, saves, plan, diary and reviews stay in this browser/device storage.</li>
+            <li>· Nothing is uploaded until a backend is configured; with one connected, community posts, social preferences and reports go to it.</li>
+            <li>· Missing-person reports are held locally and can be deleted from the Safety Center.</li>
+            <li>· No account deletion or export flow exists in this build — clearing site data is the only erase.</li>
+          </ul>
+        </Card>
 
         {/* City — swaps the dataset across Explore, Home, Search, Categories,
             Planner, TripMap, PandalDetail, RestaurantDetail. Siliguri / Howrah
@@ -219,28 +232,35 @@ export default function Settings() {
           </div>
         </Card>
 
-        {/* Developer: feature flag toggles */}
-        <Card className="mt-4 p-3.5">
-          <div className="flex items-center gap-3">
+        {/* Developer: feature flag toggles. Collapsed behind an explicit
+            disclosure — these are build-time switches for whoever is developing
+            or reviewing the app, not settings an ordinary user should be shown. */}
+        <details className="mt-4 overflow-hidden rounded-card border border-ink/10 bg-card">
+          <summary className="flex cursor-pointer items-center gap-3 p-3.5 text-sm font-medium">
             <span className="rounded-full bg-amber-100 p-2 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"><FlaskConical size={15} /></span>
-            <span className="flex-1 text-sm font-medium">Feature Flags (Developer)</span>
+            Developer settings
+          </summary>
+          <div className="px-3.5 pb-3.5">
+            <p className="text-[10px] text-faint">
+              Feature flags for this build. Toggling hides a surface's UI and blocks its route
+              on this device only — it is not a setting for everyday use.
+            </p>
+            <div className="mt-2.5 space-y-2">
+              {(Object.entries(featureFlags) as [FeatureFlag, boolean][]).map(([flag, value]) => (
+                <label key={flag} className="flex items-center justify-between text-sm">
+                  <span className="text-ink-soft">{flag.replace('ENABLE_', '').split('_').join(' ').toLowerCase()}</span>
+                  <input
+                    type="checkbox"
+                    checked={value}
+                    onChange={(e) => setFeatureFlag(flag, e.target.checked)}
+                    className="h-5 w-5 accent-[#7c3aed]"
+                    aria-label={`Toggle ${flag}`}
+                  />
+                </label>
+              ))}
+            </div>
           </div>
-          <p className="mt-1.5 text-[10px] text-faint">Toggle experimental features. Disabled features hide all UI + block routes.</p>
-          <div className="mt-2.5 space-y-2">
-            {(Object.entries(featureFlags) as [FeatureFlag, boolean][]).map(([flag, value]) => (
-              <label key={flag} className="flex items-center justify-between text-sm">
-                <span className="text-ink-soft">{flag.replace('ENABLE_', '').split('_').join(' ').toLowerCase()}</span>
-                <input
-                  type="checkbox"
-                  checked={value}
-                  onChange={(e) => setFeatureFlag(flag, e.target.checked)}
-                  className="h-5 w-5 accent-[#7c3aed]"
-                  aria-label={`Toggle ${flag}`}
-                />
-              </label>
-            ))}
-          </div>
-        </Card>
+        </details>
 
         {/* Authority integration panel — providers + demo report form */}
         {featureFlags.ENABLE_AUTHORITY_INTEGRATION && <AuthorityPanel />}

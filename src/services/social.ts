@@ -51,6 +51,15 @@ export function useUpdatePreferences() {
 }
 
 /**
+ * Columns a match actually needs. `select('*')` shipped every stored field of
+ * every public profile to whoever opened the page — including rows RLS lets them
+ * see — so the query is narrowed to the inputs of filterMatches. RLS still
+ * limits which rows appear; this limits what leaves the database.
+ */
+const PROFILE_FIELDS =
+  'user_id, interests, preferred_areas, preferred_time, crowd_preference, outing_style, planned_tithi, display_name, visibility'
+
+/**
  * Public, visible preference profiles of *other* users. RLS restricts this to
  * rows marked `visibility = 'public'`. Empty when Supabase is unavailable —
  * we never fabricate people to match against.
@@ -60,7 +69,7 @@ export function useVisibleProfiles(excludeUserId: string | null) {
     queryKey: [...KEY, 'visible', excludeUserId ?? 'anon'],
     queryFn: async () => {
       if (!supabase) return []
-      let query = supabase.from('social_preferences').select('*').eq('visibility', 'public')
+      let query = supabase.from('social_preferences').select(PROFILE_FIELDS).eq('visibility', 'public')
       if (excludeUserId) query = query.neq('user_id', excludeUserId)
       const { data, error } = await query.limit(50)
       if (error) throw error

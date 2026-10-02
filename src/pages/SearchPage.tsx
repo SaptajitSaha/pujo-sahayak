@@ -83,7 +83,15 @@ export default function SearchPage() {
             </Card>
           ))}
           {!results.places.length && !results.events.length && (
-            <p className="pt-10 text-center text-sm text-faint">No matches. Try “Deshapriya”, “Bengali”, “metro”…</p>
+            <div className="pt-10 text-center">
+              <p className="text-sm text-faint">No matches. Try “Deshapriya”, “Bengali”, “metro”…</p>
+              <button
+                onClick={() => { setQ(''); setType('All') }}
+                className="mt-3 rounded-full border border-vermilion/40 px-4 py-1.5 text-xs font-medium text-vermilion"
+              >
+                Clear search
+              </button>
+            </div>
           )}
         </div>
       ) : (

@@ -98,8 +98,21 @@ export function PandalPulse({ place, notices, notes }: { place: Place; notices?:
         })}
       </ul>
 
+      {/* The disclosure has to match the rows above it: an "Illustrative
+          snapshot" line under rows that came from an official notice or a
+          visitor post wrongly dismissed real, sourced data as sample data. */}
       <p className="relative mt-2.5 text-[10px] leading-snug text-faint">
-        Illustrative snapshot — modelled from puja-timing patterns, not live sensors.
+        {(() => {
+          const sourced = items.filter((i) => i.source !== 'modelled')
+          const modelled = items.length - sourced.length
+          if (modelled === items.length) {
+            return 'Illustrative snapshot — modelled from puja-timing patterns, not live sensors.'
+          }
+          if (modelled === 0) {
+            return 'Every row is tagged with its source — an official notice or a visitor post. Nothing here is a live sensor reading.'
+          }
+          return `${sourced.length} row${sourced.length === 1 ? '' : 's'} above are tagged with their source (official notice or visitor post); the other ${modelled} ${modelled === 1 ? 'is' : 'are'} modelled from opening hours and typical crowd patterns, not live sensors.`
+        })()}
       </p>
     </motion.section>
   )

@@ -4,10 +4,10 @@
 // Matching is real only when Supabase is configured; the editor still works
 // locally so the flow is reviewable. We never invent people to match against.
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Flag, HeartHandshake, ShieldOff, Sparkles, Users } from 'lucide-react'
+import { HeartHandshake, ShieldOff, Sparkles, Users } from 'lucide-react'
 import { BackHeader, Button, Card, Chip, EASE, Page, QueryError, SectionHeader } from '../components/ui'
 import { interests as INTERESTS, pandals } from '../data/demo'
 import { useAuth, useUserId } from '../lib/auth'
@@ -43,19 +43,44 @@ export default function SocialMatch() {
   const { data: saved } = useMyPreferences(userId)
   const update = useUpdatePreferences()
 
-  // Editor state — seeded from the saved profile (or sensible defaults).
-  const [interests, setInterestList] = useState<string[]>(saved?.interests ?? [])
-  const [areasSel, setAreasSel] = useState<string[]>(saved?.preferred_areas ?? [])
-  const [time, setTime] = useState(saved?.preferred_time ?? 'Evening')
-  const [crowd, setCrowd] = useState(saved?.crowd_preference ?? 'Moderate')
-  const [style, setStyle] = useState(saved?.outing_style ?? 'Relaxed')
-  const [tithi, setTithi] = useState<string | null>(saved?.planned_tithi ?? null)
-  const [visibility, setVisibility] = useState<'public' | 'hidden'>(saved?.visibility ?? 'public')
+  // Editor state — sensible defaults first, then the saved profile.
+  const [interests, setInterestList] = useState<string[]>([])
+  const [areasSel, setAreasSel] = useState<string[]>([])
+  const [time, setTime] = useState('Evening')
+  const [crowd, setCrowd] = useState('Moderate')
+  const [style, setStyle] = useState('Relaxed')
+  const [tithi, setTithi] = useState<string | null>(null)
+  const [visibility, setVisibility] = useState<'public' | 'hidden'>('public')
   const [toast, setToast] = useState<string | null>(null)
   const note = (s: string) => { setToast(s); setTimeout(() => setToast(null), 2400) }
 
-  const toggle = (arr: string[], v: string, set: (x: string[]) => void) =>
+  // The saved profile arrives asynchronously, so the useState seeds above are
+  // always the defaults on the render that mattered — a returning user's stored
+  // preferences never reached the form. Hydrate once when it lands, but only if
+  // the user has not started editing, so a slow load can never swallow typing.
+  const editing = useRef(false)
+  const hydratedFrom = useRef<string | null>(null)
+  useEffect(() => {
+    if (!saved || hydratedFrom.current === saved.user_id) return
+    hydratedFrom.current = saved.user_id
+    if (editing.current) return
+    setInterestList(saved.interests ?? [])
+    setAreasSel(saved.preferred_areas ?? [])
+    if (saved.preferred_time) setTime(saved.preferred_time)
+    if (saved.crowd_preference) setCrowd(saved.crowd_preference)
+    if (saved.outing_style) setStyle(saved.outing_style)
+    setTithi(saved.planned_tithi ?? null)
+    setVisibility(saved.visibility ?? 'public')
+  }, [saved])
+
+  const toggle = (arr: string[], v: string, set: (x: string[]) => void) => {
+    editing.current = true
     set(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
+  }
+  const pickTime = (v: string) => { editing.current = true; setTime(v) }
+  const pickCrowd = (v: string) => { editing.current = true; setCrowd(v) }
+  const pickStyle = (v: string) => { editing.current = true; setStyle(v) }
+  const pickTithi = (v: string) => { editing.current = true; setTithi(v) }
 
   const draft: SocialPreference = useMemo(
     () => ({
@@ -108,16 +133,16 @@ export default function SocialMatch() {
 
         <div className="grid grid-cols-2 gap-3">
           <Labeled title="Time">
-            {TIMES.map((v) => <Chip key={v} active={time === v} onClick={() => setTime(v)}>{v}</Chip>)}
+            {TIMES.map((v) => <Chip key={v} active={time === v} onClick={() => pickTime(v)}>{v}</Chip>)}
           </Labeled>
           <Labeled title="Crowd">
-            {CROWDS.map((v) => <Chip key={v} active={crowd === v} onClick={() => setCrowd(v)}>{v}</Chip>)}
+            {CROWDS.map((v) => <Chip key={v} active={crowd === v} onClick={() => pickCrowd(v)}>{v}</Chip>)}
           </Labeled>
           <Labeled title="Pace">
-            {STYLES.map((v) => <Chip key={v} active={style === v} onClick={() => setStyle(v)}>{v}</Chip>)}
+            {STYLES.map((v) => <Chip key={v} active={style === v} onClick={() => pickStyle(v)}>{v}</Chip>)}
           </Labeled>
           <Labeled title="Planned day">
-            {TITHIS.map((v) => <Chip key={v} active={tithi === v} onClick={() => setTithi(v)} className="capitalize">{v}</Chip>)}
+            {TITHIS.map((v) => <Chip key={v} active={tithi === v} onClick={() => pickTithi(v)} className="capitalize">{v}</Chip>)}
           </Labeled>
         </div>
 
@@ -141,13 +166,13 @@ export default function SocialMatch() {
       <section className="mt-6">
         <div className="flex items-center gap-1.5">
           <Users size={16} className="text-vermilion" />
-          <h2 className="text-sm font-semibold">Nearby plans that fit yours</h2>
+          <h2 className="text-sm font-semibold">Plans that fit yours</h2>
         </div>
 
         {!isAuthenticated ? (
           <p className="mt-2 text-xs text-ink-soft">Sign in to see people whose plans overlap with yours.</p>
         ) : matchesError ? (
-          <QueryError onRetry={refetchMatches} message="Couldn’t load nearby plans." />
+          <QueryError onRetry={refetchMatches} message="Couldn’t load other public profiles." />
         ) : matchesLoading ? (
           <div className="mt-2 space-y-2">{Array.from({ length: 2 }).map((_, i) => <div key={i} className="h-20 animate-pulse rounded-card bg-card" />)}</div>
         ) : matches.length === 0 ? (
@@ -193,11 +218,12 @@ export default function SocialMatch() {
                       <HeartHandshake size={13} /> Join a meetup
                     </Button>
                     <button
-                      onClick={() => { blockUser(m.userId); note('This profile is hidden from you.') }}
-                      aria-label="Block and report this profile"
+                      onClick={() => { blockUser(m.userId); note('This profile is hidden from you on this device. No report was filed — there is no moderation backend to receive one.') }}
+                      aria-label="Block this profile on this device"
+                      title="Block on this device (no report is filed)"
                       className="rounded-full p-2 text-faint transition-colors hover:text-vermilion"
                     >
-                      <Flag size={14} />
+                      <ShieldOff size={14} />
                     </button>
                   </div>
                 </Card>

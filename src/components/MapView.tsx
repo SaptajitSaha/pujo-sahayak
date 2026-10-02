@@ -33,9 +33,19 @@ export default function MapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Redraw only when the set of places (or the mode) actually changes. The
+  // effect used to run on every parent rerender, because `points` is a fresh
+  // array each time — and each run ended in fitBounds, which snapped the map
+  // back to the original bounds and threw away wherever the user had panned
+  // and zoomed.
+  const viewKey = useRef<string | null>(null)
+
   useEffect(() => {
     const m = map.current
     if (!m) return
+    const key = `${route ? 'route' : 'pins'}|${points.map((pt) => `${pt.label}@${pt.lat.toFixed(5)},${pt.lng.toFixed(5)}`).join(';')}`
+    if (viewKey.current === key) return
+    viewKey.current = key
     m.eachLayer((l) => { if (!(l as L.TileLayer).getTileUrl) m.removeLayer(l) })
     const bounds: [number, number][] = points.map((pt) => [pt.lat, pt.lng])
     points.forEach((pt, i) => {

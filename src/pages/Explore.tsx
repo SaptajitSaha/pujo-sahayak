@@ -128,9 +128,19 @@ export default function Explore() {
             ))}
           </AnimatePresence>
           {!filtered.length && (
-            <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="pt-10 text-center text-sm text-faint">
-              No pandals match these filters.
-            </motion.p>
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="pt-10 text-center">
+              <p className="text-sm text-faint">No pandals match these filters.</p>
+              {/* An empty filtered list with no way back was a dead end — the
+                  only exit used to be unpicking each chip one by one. */}
+              {Object.values(sel).some(Boolean) && (
+                <button
+                  onClick={() => { setSel({}); setOpen(null) }}
+                  className="mt-3 rounded-full border border-vermilion/40 px-4 py-1.5 text-xs font-medium text-vermilion"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </motion.div>
           )}
         </motion.div>
       ) : (
